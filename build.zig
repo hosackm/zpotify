@@ -15,7 +15,12 @@ pub fn build(b: *std.Build) void {
 
     // Examples
     const Example = enum {
+        audiobook,
         auth,
+        artist,
+        album,
+        chapter,
+        episode,
         user,
     };
     const example_option = b.option(Example, "example", "Example to run (default: auth)") orelse .auth;

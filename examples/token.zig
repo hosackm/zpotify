@@ -17,24 +17,24 @@ pub fn deinit(self: Token, alloc: std.mem.Allocator) void {
     alloc.free(self.refresh_token);
 }
 
-// Encodes a string for inclusion in a URL. Unsupported characters are converted
-// to their corresponding ASCII 2 digit hex codes preceded by a %.
-fn urlEncode(alloc: std.mem.Allocator, s: []const u8) ![]u8 {
-    var list = std.ArrayList(u8).init(alloc);
-    const convert: []const u8 = " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{`}~";
+// // Encodes a string for inclusion in a URL. Unsupported characters are converted
+// // to their corresponding ASCII 2 digit hex codes preceded by a %.
+// fn urlEncode(alloc: std.mem.Allocator, s: []const u8) ![]u8 {
+//     var list = std.ArrayList(u8).init(alloc);
+//     const convert: []const u8 = " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{`}~";
 
-    for (s, 0..) |c, n| {
-        const slice = s[n .. n + 1];
-        if (!std.mem.containsAtLeast(u8, convert, 1, slice)) {
-            try list.append(c);
-            continue;
-        }
-        var buf: [3]u8 = undefined;
-        for (try std.fmt.bufPrint(&buf, "%{X}", .{c})) |ch| try list.append(ch);
-    }
+//     for (s, 0..) |c, n| {
+//         const slice = s[n .. n + 1];
+//         if (!std.mem.containsAtLeast(u8, convert, 1, slice)) {
+//             try list.append(c);
+//             continue;
+//         }
+//         var buf: [3]u8 = undefined;
+//         for (try std.fmt.bufPrint(&buf, "%{X}", .{c})) |ch| try list.append(ch);
+//     }
 
-    return list.toOwnedSlice();
-}
+//     return list.toOwnedSlice();
+// }
 
 // An example of a token source. Must have a method called "get" that
 // returns []const u8 containing the access token in exchange for the
@@ -91,7 +91,8 @@ pub const TokenSource = struct {
     }
 
     fn refresh(self: TokenSource, token: *Token, creds: Credentials) !void {
-        if (!try self.isExpired()) return;
+        // Not quite working...
+        // if (!try self.isExpired()) return;
 
         const uri = try std.Uri.parse("https://accounts.spotify.com/api/token");
         var client = std.http.Client{ .allocator = self.allocator };
@@ -194,7 +195,7 @@ pub const TokenSource = struct {
         );
         defer req.deinit();
 
-        const uri_encoded = try urlEncode(self.allocator, creds.redirect_uri);
+        const uri_encoded = try zpotify.urls.encode(self.allocator, creds.redirect_uri);
         defer self.allocator.free(uri_encoded);
 
         const body = try std.fmt.allocPrint(
