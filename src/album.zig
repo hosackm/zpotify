@@ -1,7 +1,7 @@
 // ! Album from the web API reference
 const std = @import("std");
 const types = @import("types.zig");
-const urls = @import("urls.zig");
+const urls = @import("url.zig");
 const Image = @import("image.zig");
 const Artist = @import("artist.zig");
 const Track = @import("track.zig");

@@ -1,9 +1,10 @@
 //! Episodes from the web API reference
 const std = @import("std");
-const base_url = @import("urls.zig").base_url;
 const types = @import("types.zig");
 const Show = @import("show.zig");
 const Image = @import("image.zig");
+// const base_url = @import("url.zig").base_url;
+const url = @import("url.zig");
 
 description: []const u8,
 html_description: []const u8,
@@ -33,18 +34,19 @@ const Self = @This();
 pub fn getOne(
     alloc: std.mem.Allocator,
     client: anytype,
-    id: types.SpotifyId,
+    comptime id: types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
 ) !std.json.Parsed(Self) {
-    _ = opts;
-    const url = try std.fmt.allocPrint(
+    const ep_url = try url.build(
         alloc,
-        base_url ++ "/episodes/{s}",
-        .{id},
+        url.base_url,
+        "/episodes/{s}",
+        id,
+        .{ .market = opts.market },
     );
-    defer alloc.free(url);
+    defer alloc.free(ep_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(url));
+    const body = try client.get(alloc, try std.Uri.parse(ep_url));
     defer alloc.free(body);
 
     return try std.json.parseFromSlice(
@@ -66,14 +68,16 @@ pub fn getMany(
     const joined = try std.mem.join(alloc, "%2C", ids);
     defer alloc.free(joined);
 
-    const url = try std.fmt.allocPrint(
+    const ep_url = try url.build(
         alloc,
-        base_url ++ "/episodes?ids={s}",
-        .{joined},
+        url.base_url,
+        "/episodes",
+        null,
+        .{ .ids = ids },
     );
-    defer alloc.free(url);
+    defer alloc.free(ep_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(url));
+    const body = try client.get(alloc, try std.Uri.parse(ep_url));
     defer alloc.free(body);
 
     return try std.json.parseFromSlice(
@@ -90,8 +94,16 @@ pub fn getSaved(
     client: anytype,
     opts: struct { market: ?[]const u8 = null, limit: ?u8 = null, offset: ?u8 = null },
 ) !std.json.Parsed(types.Paginated(Saved)) {
-    _ = opts;
-    const body = try client.get(alloc, try std.Uri.parse(base_url ++ "/me/episodes"));
+    const ep_url = try url.build(
+        alloc,
+        url.base_url,
+        "/me/episodes",
+        null,
+        .{ .market = opts.market, .limit = opts.limit, .offset = opts.offset },
+    );
+    defer alloc.free(ep_url);
+
+    const body = try client.get(alloc, try std.Uri.parse(ep_url));
     defer alloc.free(body);
 
     return try std.json.parseFromSlice(
@@ -108,7 +120,7 @@ pub fn save(
     ids: []const types.SpotifyId,
 ) !void {
     const data: struct { ids: []const types.SpotifyId } = .{ .ids = ids };
-    const body = try client.put(alloc, try std.Uri.parse(base_url ++ "/me/episodes"), data);
+    const body = try client.put(alloc, try std.Uri.parse(url.base_url ++ "/me/episodes"), data);
     defer alloc.free(body);
 }
 
@@ -118,7 +130,7 @@ pub fn remove(
     ids: []const types.SpotifyId,
 ) !void {
     const data: struct { ids: []const types.SpotifyId } = .{ .ids = ids };
-    const body = try client.delete(alloc, try std.Uri.parse(base_url ++ "/me/episodes"), data);
+    const body = try client.delete(alloc, try std.Uri.parse(url.base_url ++ "/me/episodes"), data);
     defer alloc.free(body);
 }
 
@@ -127,17 +139,16 @@ pub fn contains(
     client: anytype,
     ids: []const types.SpotifyId,
 ) !std.json.Parsed([]bool) {
-    const joined = try std.mem.join(alloc, "%2C", ids);
-    defer alloc.free(joined);
-
-    const url = try std.fmt.allocPrint(
+    const ep_url = try url.build(
         alloc,
-        base_url ++ "/me/episodes/contains?ids={s}",
-        .{joined},
+        url.base_url,
+        "/me/episodes/contains",
+        null,
+        .{ .ids = ids },
     );
-    defer alloc.free(url);
+    defer alloc.free(ep_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(url));
+    const body = try client.get(alloc, try std.Uri.parse(ep_url));
     defer alloc.free(body);
 
     return try std.json.parseFromSlice(

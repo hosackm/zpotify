@@ -11,8 +11,8 @@ pub fn main() !void {
     defer client.deinit();
     const c = &client.client;
 
-    // const your_moms = "7pwe3F8sBnpf8NvqruLFrW";
-    // const bad_friends = "2dbSp6ewn5h3rXj1HqzyQE";
+    const your_moms = "7pwe3F8sBnpf8NvqruLFrW";
+    const bad_friends = "2dbSp6ewn5h3rXj1HqzyQE";
     // {
     //     // get an episode by it's id
     //     const ep = try zp.Episode.getOne(alloc, c, your_moms, .{});
@@ -54,20 +54,20 @@ pub fn main() !void {
     //     _ = try std.io.getStdOut().writeAll("\n");
     // }
 
-    // {
-    //     try zp.Episode.save(alloc, c, &.{ your_moms, bad_friends });
-    //     try zp.Episode.remove(alloc, c, &.{ your_moms, bad_friends });
+    {
+        try zp.Episode.save(alloc, c, &.{ your_moms, bad_friends });
+        try zp.Episode.remove(alloc, c, &.{ your_moms, bad_friends });
 
-    //     const contains = try zp.Episode.contains(alloc, c, &.{ your_moms, bad_friends });
-    //     defer contains.deinit();
+        const contains = try zp.Episode.contains(alloc, c, &.{ your_moms, bad_friends });
+        defer contains.deinit();
 
-    //     try std.json.stringify(
-    //         contains.value,
-    //         .{},
-    //         std.io.getStdOut().writer(),
-    //     );
-    //     _ = try std.io.getStdOut().writeAll("\n");
-    // }
+        try std.json.stringify(
+            contains.value,
+            .{},
+            std.io.getStdOut().writer(),
+        );
+        _ = try std.io.getStdOut().writeAll("\n");
+    }
 
     // list markets...
     // {

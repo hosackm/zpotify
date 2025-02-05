@@ -1,6 +1,6 @@
 const std = @import("std");
 const types = @import("types.zig");
-const urls = @import("urls.zig");
+const urls = @import("url.zig");
 const Album = @import("album.zig");
 const Track = @import("track.zig");
 

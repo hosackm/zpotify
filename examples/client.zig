@@ -15,24 +15,7 @@ pub fn init(alloc: std.mem.Allocator) !Self {
     var em = try std.process.getEnvMap(alloc);
     defer em.deinit();
 
-    // var auth = Auth.init(.{
-    //     .token_source = .{
-    //         .filename = try std.fmt.allocPrint(
-    //             alloc,
-    //             ".token.json",
-    //             .{},
-    //         ),
-    //         .allocator = alloc,
-    //     },
-    //     .credentials = .{
-    //         .redirect_uri = try alloc.dupe(u8, em.get("SPOTIFY_REDIRECT").?),
-    //         .client_id = try alloc.dupe(u8, em.get("SPOTIFY_ID").?),
-    //         .client_secret = try alloc.dupe(u8, em.get("SPOTIFY_SECRET").?),
-    //     },
-    //     .allocator = alloc,
-    // });
-
-    const auth = try alloc.create(Auth);
+    const auth: *Auth = try alloc.create(Auth);
     auth.* = .{
         .token_source = .{
             .filename = try std.fmt.allocPrint(

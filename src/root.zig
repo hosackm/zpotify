@@ -1,6 +1,6 @@
 pub usingnamespace @import("auth.zig");
 pub usingnamespace @import("scopes.zig");
-pub usingnamespace @import("urls.zig");
+pub usingnamespace @import("url.zig");
 
 // Spotify API Reference Stuff
 pub usingnamespace @import("categories.zig");

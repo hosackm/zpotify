@@ -1,7 +1,7 @@
 //! Genres from the web API reference
 const std = @import("std");
 const types = @import("types.zig");
-const base_url = @import("urls.zig").base_url;
+const base_url = @import("url.zig").base_url;
 
 const Genres = struct { genres: []const []const u8 };
 

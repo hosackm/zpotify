@@ -3,7 +3,7 @@ const std = @import("std");
 const types = @import("types.zig");
 const Image = @import("image.zig");
 const Chapter = @import("chapter.zig");
-const base_url = @import("urls.zig").base_url;
+const base_url = @import("url.zig").base_url;
 
 const Self = @This();
 

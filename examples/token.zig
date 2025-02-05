@@ -195,13 +195,13 @@ pub const TokenSource = struct {
         );
         defer req.deinit();
 
-        const uri_encoded = try zpotify.urls.encode(self.allocator, creds.redirect_uri);
-        defer self.allocator.free(uri_encoded);
+        const escaped = try zpotify.urls.escape(self.allocator, creds.redirect_uri);
+        defer self.allocator.free(escaped);
 
         const body = try std.fmt.allocPrint(
             self.allocator,
             "grant_type=authorization_code&code={s}&redirect_uri={s}",
-            .{ code, uri_encoded },
+            .{ code, escaped },
         );
         defer self.allocator.free(body);
 

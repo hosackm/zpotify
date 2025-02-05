@@ -1,7 +1,7 @@
 //! Users from the web API reference
 const std = @import("std");
 const types = @import("types.zig");
-const urls = @import("urls.zig");
+const urls = @import("url.zig");
 
 const Image = @import("image.zig");
 const Artist = @import("artist.zig");
@@ -144,10 +144,7 @@ pub fn followPlaylist(
     );
     defer alloc.free(url);
 
-    // plug this in
-    const data: struct { public: bool } = .{
-        .public = opts.public orelse true,
-    };
+    const data: struct { public: bool } = .{ .public = opts.public orelse true };
 
     const body = try client.put(
         alloc,
