@@ -20,5 +20,4 @@ pub const Episode = @import("episode.zig");
 pub const Playlist = @import("playlist.zig");
 pub const Player = @import("player.zig");
 pub const Show = @import("show.zig");
-pub const Genre = @import("genre.zig");
 pub const Markets = @import("markets.zig");
