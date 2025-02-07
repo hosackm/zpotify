@@ -83,15 +83,12 @@ pub fn Client(comptime T: type) type {
             try req.wait();
 
             switch (req.response.status) {
-                // 200
                 .ok, .created, .accepted, .no_content => {
                     std.debug.print("client: ok!\n", .{});
                 },
-                // 400, 401, 403, 404, 429
                 .bad_request, .unauthorized, .forbidden, .not_found, .too_many_requests => {
                     std.debug.print("client: user error - {s}\n", .{req.response.reason});
                 },
-                // 500, 502, 503
                 .internal_server_error, .bad_gateway, .service_unavailable => {
                     std.debug.print("server error\n", .{});
                 },

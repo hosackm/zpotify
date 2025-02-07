@@ -1,5 +1,6 @@
 const std = @import("std");
 const zp = @import("zpotify");
+const Client = @import("client.zig");
 const TokenSource = @import("token.zig").TokenSource;
 
 pub fn main() !void {
@@ -7,50 +8,31 @@ pub fn main() !void {
     const alloc = gpa.allocator();
     defer if (gpa.deinit() == .leak) std.debug.print("LEAK!\n", .{});
 
-    var em = try std.process.getEnvMap(alloc);
-    defer em.deinit();
-
-    const AuthType = zp.Authenticator(TokenSource);
-
-    var auth = AuthType.init(.{
-        .token_source = .{
-            .filename = ".token.json",
-            .allocator = alloc,
-        },
-        .credentials = .{
-            .redirect_uri = em.get("SPOTIFY_REDIRECT").?,
-            .client_id = em.get("SPOTIFY_ID").?,
-            .client_secret = em.get("SPOTIFY_SECRET").?,
-        },
-        .allocator = alloc,
-    });
-
-    const ClientType = zp.Client(zp.Authenticator(TokenSource));
-    const client = ClientType{
-        .authenticator = &auth,
-    };
+    const client = try Client.init(alloc);
+    defer client.deinit();
+    const c = &client.client;
 
     // 7MSUfLeTdDEoZiJPDSBXgi - brian eno
     // 0TnOYISbd1XYRBk9myaseg - pitbull
-    {
-        const artist = try zp.Artist.getOne(
-            alloc,
-            client,
-            "22wbnEMDvgVIAGdFeek6ET",
-        );
-        defer artist.deinit();
-        try std.json.stringify(
-            artist.value,
-            .{},
-            std.io.getStdOut().writer(),
-        );
-        _ = try std.io.getStdOut().write("\n");
-    }
+    // {
+    //     const artist = try zp.Artist.getOne(
+    //         alloc,
+    //         c,
+    //         "22wbnEMDvgVIAGdFeek6ET",
+    //     );
+    //     defer artist.deinit();
+    //     try std.json.stringify(
+    //         artist.value,
+    //         .{},
+    //         std.io.getStdOut().writer(),
+    //     );
+    //     _ = try std.io.getStdOut().write("\n");
+    // }
 
     // {
     //     const artists = try zp.Artist.getMany(
     //         alloc,
-    //         client,
+    //         c,
     //         &.{ "7MSUfLeTdDEoZiJPDSBXgi", "0TnOYISbd1XYRBk9myaseg" },
     //     );
     //     defer artists.deinit();
@@ -66,7 +48,7 @@ pub fn main() !void {
     // {
     //     const albums = try zp.Artist.getAlbums(
     //         alloc,
-    //         client,
+    //         c,
     //         "7MSUfLeTdDEoZiJPDSBXgi",
     //         .{},
     //     );
@@ -80,20 +62,20 @@ pub fn main() !void {
     //     _ = try std.io.getStdOut().write("\n");
     // }
 
-    // {
-    //     const tracks = try zp.Artist.getTopTracks(
-    //         alloc,
-    //         client,
-    //         "7MSUfLeTdDEoZiJPDSBXgi",
-    //         .{},
-    //     );
-    //     defer tracks.deinit();
+    {
+        const tracks = try zp.Artist.getTopTracks(
+            alloc,
+            c,
+            "7MSUfLeTdDEoZiJPDSBXgi",
+            .{},
+        );
+        defer tracks.deinit();
 
-    //     try std.json.stringify(
-    //         tracks.value,
-    //         .{},
-    //         std.io.getStdOut().writer(),
-    //     );
-    //     _ = try std.io.getStdOut().write("\n");
-    // }
+        try std.json.stringify(
+            tracks.value,
+            .{},
+            std.io.getStdOut().writer(),
+        );
+        _ = try std.io.getStdOut().write("\n");
+    }
 }

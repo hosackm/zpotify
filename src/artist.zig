@@ -1,8 +1,12 @@
 const std = @import("std");
 const types = @import("types.zig");
-const urls = @import("url.zig");
+const url = @import("url.zig");
 const Album = @import("album.zig");
 const Track = @import("track.zig");
+
+const Paged = types.Paginated;
+const M = types.Manyify;
+const P = std.json.Parsed;
 
 pub usingnamespace Simplified;
 
@@ -25,20 +29,18 @@ const Self = @This();
 pub fn getOne(
     alloc: std.mem.Allocator,
     client: anytype,
-    id: types.SpotifyId,
-) !std.json.Parsed(Self) {
-    const url = try std.fmt.allocPrint(
+    comptime id: types.SpotifyId,
+) !P(Self) {
+    const artist_url = try url.build(
         alloc,
-        urls.base_url ++ "/artists/{s}",
-        .{id},
+        url.base_url,
+        "/artists/{s}",
+        id,
+        .{},
     );
-    defer alloc.free(url);
+    defer alloc.free(artist_url);
 
-    // do something with the opts
-    const body = try client.get(
-        alloc,
-        try std.Uri.parse(url),
-    );
+    const body = try client.get(alloc, try std.Uri.parse(artist_url));
     defer alloc.free(body);
 
     return try std.json.parseFromSlice(
@@ -49,43 +51,32 @@ pub fn getOne(
     );
 }
 
-const ManyArtists = struct { artists: []const Self };
-
 pub fn getMany(
     alloc: std.mem.Allocator,
     client: anytype,
     ids: []const types.SpotifyId,
-) !std.json.Parsed(ManyArtists) {
-    const joined = try std.mem.join(
+) !P(M(Self, "artists")) {
+    const artist_url = try url.build(
         alloc,
-        "%2C",
-        ids,
+        url.base_url,
+        "/artists",
+        null,
+        .{ .ids = ids },
     );
-    defer alloc.free(joined);
+    defer alloc.free(artist_url);
 
-    const url = try std.fmt.allocPrint(
-        alloc,
-        urls.base_url ++ "/artists?ids={s}",
-        .{joined},
-    );
-    defer alloc.free(url);
-
-    // do something with the opts
-    const body = try client.get(
-        alloc,
-        try std.Uri.parse(url),
-    );
+    const body = try client.get(alloc, try std.Uri.parse(artist_url));
     defer alloc.free(body);
 
     return try std.json.parseFromSlice(
-        ManyArtists,
+        M(Self, "artists"),
         alloc,
         body,
         .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
     );
 }
 
-const PagedAlbum = types.Paginated(Album.Simplified);
+const PagedAlbum = Paged(Album.Simplified);
 const AlbumOpts = struct {
     include_groups: ?[]const []const u8 = null,
     market: ?[]const u8 = null,
@@ -95,22 +86,19 @@ const AlbumOpts = struct {
 pub fn getAlbums(
     alloc: std.mem.Allocator,
     client: anytype,
-    artist_id: types.SpotifyId,
+    comptime artist_id: types.SpotifyId,
     opts: AlbumOpts,
-) !std.json.Parsed(PagedAlbum) {
-    _ = opts;
-    const url = try std.fmt.allocPrint(
+) !P(PagedAlbum) {
+    const artist_url = try url.build(
         alloc,
-        urls.base_url ++ "/artists/{s}/albums",
-        .{artist_id},
+        url.base_url,
+        "/artists/{s}/albums",
+        artist_id,
+        .{ .market = opts.market, .limit = opts.limit, .offset = opts.offset },
     );
-    defer alloc.free(url);
+    defer alloc.free(artist_url);
 
-    // do something with the opts
-    const body = try client.get(
-        alloc,
-        try std.Uri.parse(url),
-    );
+    const body = try client.get(alloc, try std.Uri.parse(artist_url));
     defer alloc.free(body);
 
     return try std.json.parseFromSlice(
@@ -121,33 +109,28 @@ pub fn getAlbums(
     );
 }
 
-const ManyTracks = struct { tracks: []const Track.Simplified };
 pub fn getTopTracks(
     alloc: std.mem.Allocator,
     client: anytype,
-    artist_id: types.SpotifyId,
+    comptime artist_id: types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
-) !std.json.Parsed(ManyTracks) {
-    _ = opts;
-
-    const url = try std.fmt.allocPrint(
+) !P(M(Track.Simplified, "tracks")) {
+    const artist_url = try url.build(
         alloc,
-        urls.base_url ++ "/artists/{s}/top-tracks",
-        .{artist_id},
+        url.base_url,
+        "/artists/{s}/top-tracks",
+        artist_id,
+        .{ .market = opts.market },
     );
-    defer alloc.free(url);
+    defer alloc.free(artist_url);
 
-    // do something with the opts
-    const body = try client.get(
-        alloc,
-        try std.Uri.parse(url),
-    );
+    const body = try client.get(alloc, try std.Uri.parse(artist_url));
     defer alloc.free(body);
 
     std.debug.print("{s}\n", .{body});
 
     return try std.json.parseFromSlice(
-        ManyTracks,
+        M(Track.Simplified, "tracks"),
         alloc,
         body,
         .{
@@ -156,36 +139,3 @@ pub fn getTopTracks(
         },
     );
 }
-
-// Deprecated
-// pub fn getRelated(
-//     alloc: std.mem.Allocator,
-//     client: anytype,
-//     artist_id: types.SpotifyId,
-//     opts: struct {},
-// ) !std.json.Parsed(ManyArtists) {
-//     _ = opts;
-
-//     const url = try std.fmt.allocPrint(
-//         alloc,
-//         urls.base_url ++ "/artists/{s}/related-artists",
-//         .{artist_id},
-//     );
-//     defer alloc.free(url);
-
-//     const body = try client.get(
-//         alloc,
-//         try std.Uri.parse(url),
-//     );
-//     defer alloc.free(body);
-
-//     return try std.json.parseFromSlice(
-//         ManyArtists,
-//         alloc,
-//         body,
-//         .{
-//             .ignore_unknown_fields = true,
-//             .allocate = .alloc_always,
-//         },
-//     );
-// }

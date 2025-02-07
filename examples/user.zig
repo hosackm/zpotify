@@ -1,37 +1,18 @@
 const std = @import("std");
 const zp = @import("zpotify");
-const TokenSource = @import("token.zig").TokenSource;
+const Client = @import("client.zig");
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const alloc = gpa.allocator();
     defer if (gpa.deinit() == .leak) std.debug.print("LEAK!\n", .{});
 
-    var em = try std.process.getEnvMap(alloc);
-    defer em.deinit();
-
-    const AuthType = zp.Authenticator(TokenSource);
-
-    var auth = AuthType.init(.{
-        .token_source = .{
-            .filename = ".token.json",
-            .allocator = alloc,
-        },
-        .credentials = .{
-            .redirect_uri = em.get("SPOTIFY_REDIRECT").?,
-            .client_id = em.get("SPOTIFY_ID").?,
-            .client_secret = em.get("SPOTIFY_SECRET").?,
-        },
-        .allocator = alloc,
-    });
-
-    const ClientType = zp.Client(zp.Authenticator(TokenSource));
-    const client = ClientType{
-        .authenticator = &auth,
-    };
+    const client = try Client.init(alloc);
+    defer client.deinit();
+    const c = &client.client;
 
     // {
-    //     const me = try zp.User.getCurrentUser(alloc, client);
+    //     const me = try zp.User.getCurrentUser(alloc, c);
     //     defer me.deinit();
     //     try std.json.stringify(
     //         me.value,
@@ -42,7 +23,7 @@ pub fn main() !void {
     // }
 
     // {
-    //     const top_artists = try zp.User.topArtists(alloc, client, .{});
+    //     const top_artists = try zp.User.topArtists(alloc, c, .{});
     //     defer top_artists.deinit();
     //     try std.json.stringify(
     //         top_artists.value,
@@ -53,7 +34,7 @@ pub fn main() !void {
     // }
 
     // {
-    //     const top_tracks = try zp.User.topTracks(alloc, client, .{});
+    //     const top_tracks = try zp.User.topTracks(alloc, c, .{});
     //     defer top_tracks.deinit();
     //     try std.json.stringify(
     //         top_tracks.value,
@@ -64,7 +45,7 @@ pub fn main() !void {
     // }
 
     // {
-    //     const friend = try zp.User.get(alloc, client, "misskristen");
+    //     const friend = try zp.User.get(alloc, c, "misskristen");
     //     defer friend.deinit();
     //     try std.json.stringify(
     //         friend.value,
@@ -77,17 +58,17 @@ pub fn main() !void {
     // {
     //     // Kris's playlist - https://open.spotify.com/playlist/3CpnfLWptPPCyW3Mg6nCjv?si=ecrGtJQPQdC1SGOy4Ytfew
     //     const playlist_id = "3CpnfLWptPPCyW3Mg6nCjv";
-    //     if (try zp.User.isFollowingPlaylist(alloc, client, playlist_id)) {
-    //         try zp.User.unfollowPlaylist(alloc, client, playlist_id);
+    //     if (try zp.User.isFollowingPlaylist(alloc, c, playlist_id)) {
+    //         try zp.User.unfollowPlaylist(alloc, c, playlist_id);
     //         std.debug.print("Was following, now unfollowing!\n", .{});
     //     } else {
-    //         try zp.User.followPlaylist(alloc, client, playlist_id, .{});
+    //         try zp.User.followPlaylist(alloc, c, playlist_id, .{});
     //         std.debug.print("Wasn't following, now following!\n", .{});
     //     }
     // }
 
     // {
-    //     const artists = try zp.User.getFollowedArtists(alloc, client, .{});
+    //     const artists = try zp.User.getFollowedArtists(alloc, c, .{});
     //     defer artists.deinit();
     //     try std.json.stringify(
     //         artists.value,
@@ -104,14 +85,14 @@ pub fn main() !void {
     // {
     //     try zp.User.followArtists(
     //         alloc,
-    //         client,
+    //         c,
     //         &.{ nekrogoblikon, butcher_sisters },
     //     );
     //     std.debug.print("Following both...\n", .{});
 
     //     try zp.User.unfollowArtists(
     //         alloc,
-    //         client,
+    //         c,
     //         &.{ nekrogoblikon, butcher_sisters },
     //     );
     //     std.debug.print("Unfollowing both...\n", .{});
@@ -120,7 +101,7 @@ pub fn main() !void {
     {
         const json = try zp.User.isFollowingArtists(
             alloc,
-            client,
+            c,
             &.{ nekrogoblikon, butcher_sisters },
         );
         defer json.deinit();

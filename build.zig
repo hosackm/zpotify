@@ -21,6 +21,10 @@ pub fn build(b: *std.Build) void {
         album,
         chapter,
         episode,
+        playlist,
+        player,
+        show,
+        track,
         user,
     };
     const example_option = b.option(Example, "example", "Example to run (default: auth)") orelse .auth;

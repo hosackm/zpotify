@@ -1,10 +1,14 @@
 // ! Album from the web API reference
 const std = @import("std");
 const types = @import("types.zig");
-const urls = @import("url.zig");
+const url = @import("url.zig");
 const Image = @import("image.zig");
 const Artist = @import("artist.zig");
 const Track = @import("track.zig");
+
+const Paged = types.Paginated;
+const M = types.Manyify;
+const P = std.json.Parsed;
 
 pub const Simplified = struct {
     album_type: []const u8,
@@ -34,7 +38,7 @@ copyrights: []const struct { text: []const u8, type: []const u8 },
 genres: []const u8,
 label: []const u8,
 popularity: u8,
-tracks: types.Paginated(Track.Simplified),
+tracks: Paged(Track.Simplified),
 
 // restrictions: std.json.Value
 // external_ids: std.json.Value,
@@ -46,21 +50,21 @@ const Self = @This();
 pub fn getOne(
     alloc: std.mem.Allocator,
     client: anytype,
-    id: types.SpotifyId,
+    comptime id: types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
-) !std.json.Parsed(Self) {
-    _ = opts;
-    const url = try std.fmt.allocPrint(
+) !P(Self) {
+    const album_url = try url.build(
         alloc,
-        urls.base_url ++ "/albums/{s}",
-        .{id},
+        url.base_url,
+        "/albums/{s}",
+        id,
+        .{ .market = opts.market },
     );
-    defer alloc.free(url);
+    defer alloc.free(album_url);
 
-    // do something with the opts
     const body = try client.get(
         alloc,
-        try std.Uri.parse(url),
+        try std.Uri.parse(album_url),
     );
     defer alloc.free(body);
 
@@ -72,37 +76,29 @@ pub fn getOne(
     );
 }
 
-const ManyAlbums = struct {
-    albums: []const Self,
-};
-
 pub fn getMany(
     alloc: std.mem.Allocator,
     client: anytype,
     ids: []const types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
-) !std.json.Parsed(ManyAlbums) {
-    _ = opts;
-
-    const joined = try std.mem.join(alloc, "%2C", ids);
-    defer alloc.free(joined);
-
-    const url = try std.fmt.allocPrint(
+) !P(M(Self, "albums")) {
+    const album_url = try url.build(
         alloc,
-        urls.base_url ++ "/albums?ids={s}",
-        .{joined},
+        url.base_url,
+        "/albums",
+        null,
+        .{ .ids = ids, .market = opts.market },
     );
-    defer alloc.free(url);
+    defer alloc.free(album_url);
 
-    // do something with the opts
     const body = try client.get(
         alloc,
-        try std.Uri.parse(url),
+        try std.Uri.parse(album_url),
     );
     defer alloc.free(body);
 
     return try std.json.parseFromSlice(
-        ManyAlbums,
+        M(Self, "albums"),
         alloc,
         body,
         .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
@@ -112,26 +108,26 @@ pub fn getMany(
 pub fn getTracks(
     alloc: std.mem.Allocator,
     client: anytype,
-    id: types.SpotifyId,
+    comptime id: types.SpotifyId,
     opts: struct { market: ?[]const u8 = null, limit: ?u8 = null, offset: ?u8 = null },
-) !std.json.Parsed(types.Paginated(Track.Simplified)) {
-    _ = opts;
-    const url = try std.fmt.allocPrint(
+) !P(Paged(Track.Simplified)) {
+    const album_url = try url.build(
         alloc,
-        urls.base_url ++ "/albums/{s}/tracks",
-        .{id},
+        url.base_url,
+        "/albums/{s}/tracks",
+        id,
+        .{ .market = opts.market, .limit = opts.limit, .offset = opts.offset },
     );
-    defer alloc.free(url);
+    defer alloc.free(album_url);
 
-    // do something with the opts
     const body = try client.get(
         alloc,
-        try std.Uri.parse(url),
+        try std.Uri.parse(album_url),
     );
     defer alloc.free(body);
 
     return try std.json.parseFromSlice(
-        types.Paginated(Track.Simplified),
+        Paged(Track.Simplified),
         alloc,
         body,
         .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
@@ -147,18 +143,19 @@ pub fn getSaved(
     alloc: std.mem.Allocator,
     client: anytype,
     opts: struct { market: ?[]const u8 = null, limit: ?u8 = null, offset: ?u8 = null },
-) !std.json.Parsed(types.Paginated(Saved)) {
-    _ = opts;
-
-    // do something with the opts
-    const body = try client.get(
+) !P(Paged(Saved)) {
+    const album_url = try url.build(
         alloc,
-        try std.Uri.parse(urls.base_url ++ "/me/albums"),
+        url.base_url,
+        "/me/albums",
+        null,
+        .{ .market = opts.market, .limit = opts.limit, .offset = opts.offset },
     );
+    const body = try client.get(alloc, try std.Uri.parse(album_url));
     defer alloc.free(body);
 
     return try std.json.parseFromSlice(
-        types.Paginated(Saved),
+        Paged(Saved),
         alloc,
         body,
         .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
@@ -172,7 +169,7 @@ pub fn save(
 ) !void {
     const body = try client.put(
         alloc,
-        try std.Uri.parse(urls.base_url ++ "/me/albums"),
+        try std.Uri.parse(url.base_url ++ "/me/albums"),
         struct { ids: []const types.SpotifyId }{ .ids = ids },
     );
     defer alloc.free(body);
@@ -185,7 +182,7 @@ pub fn delete(
 ) !void {
     const body = try client.delete(
         alloc,
-        try std.Uri.parse(urls.base_url ++ "/me/albums"),
+        try std.Uri.parse(url.base_url ++ "/me/albums"),
         struct { ids: []const types.SpotifyId }{ .ids = ids },
     );
     defer alloc.free(body);
@@ -195,21 +192,19 @@ pub fn check(
     alloc: std.mem.Allocator,
     client: anytype,
     ids: []const types.SpotifyId,
-) !std.json.Parsed([]bool) {
-    const joined = try std.mem.join(alloc, "%2C", ids);
-    defer alloc.free(joined);
-
-    const url = try std.fmt.allocPrint(
+) !P([]bool) {
+    const album_url = try url.build(
         alloc,
-        urls.base_url ++ "/me/albums/contains?ids={s}",
-        .{joined},
+        url.base_url,
+        "/me/albums/contains",
+        null,
+        .{ .ids = ids },
     );
-    defer alloc.free(url);
+    defer alloc.free(album_url);
 
-    // do something with the opts
     const body = try client.get(
         alloc,
-        try std.Uri.parse(url),
+        try std.Uri.parse(album_url),
     );
     defer alloc.free(body);
 
@@ -222,19 +217,22 @@ pub fn check(
 }
 
 const PaginatedSimplified = struct {
-    albums: types.Paginated(Simplified),
+    albums: Paged(Simplified),
 };
 pub fn newReleases(
     alloc: std.mem.Allocator,
     client: anytype,
     opts: struct { limit: ?u8 = null, offset: ?u8 = null },
-) !std.json.Parsed(PaginatedSimplified) {
-    _ = opts;
-    // do something with the opts
-    const body = try client.get(
+) !P(PaginatedSimplified) {
+    const album_url = try url.build(
         alloc,
-        try std.Uri.parse(urls.base_url ++ "/browse/new-releases"),
+        url.base_url,
+        "/browse/new-releases",
+        null,
+        .{ .limit = opts.limit, .offset = opts.offset },
     );
+    defer alloc.free(album_url);
+    const body = try client.get(alloc, try std.Uri.parse(album_url));
     defer alloc.free(body);
 
     return try std.json.parseFromSlice(

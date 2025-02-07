@@ -1,5 +1,6 @@
 const std = @import("std");
 const zp = @import("zpotify");
+const Client = @import("client.zig");
 const TokenSource = @import("token.zig").TokenSource;
 
 pub fn main() !void {
@@ -7,35 +8,16 @@ pub fn main() !void {
     const alloc = gpa.allocator();
     defer if (gpa.deinit() == .leak) std.debug.print("LEAK!\n", .{});
 
-    var em = try std.process.getEnvMap(alloc);
-    defer em.deinit();
-
-    const AuthType = zp.Authenticator(TokenSource);
-
-    var auth = AuthType.init(.{
-        .token_source = .{
-            .filename = ".token.json",
-            .allocator = alloc,
-        },
-        .credentials = .{
-            .redirect_uri = em.get("SPOTIFY_REDIRECT").?,
-            .client_id = em.get("SPOTIFY_ID").?,
-            .client_secret = em.get("SPOTIFY_SECRET").?,
-        },
-        .allocator = alloc,
-    });
-
-    const ClientType = zp.Client(zp.Authenticator(TokenSource));
-    const client = ClientType{
-        .authenticator = &auth,
-    };
+    const client = try Client.init(alloc);
+    defer client.deinit();
+    const c = &client.client;
 
     // const id = "4aawyAB9vmqN3uQ7FjRGTy"; // pitbull https://open.spotify.com/album/4aawyAB9vmqN3uQ7FjRGTy?si=wgZeYibUQPy3Kx5tbNPVmA
     // const id = "3JK7UWkTqg4uyv2OfWRvQ9"; // franky baby https://open.spotify.com/album/3JK7UWkTqg4uyv2OfWRvQ9?si=Pd1M54m2SLeskzSb91DpWA
     // {
     //     const album = try zp.Album.getOne(
     //         alloc,
-    //         client,
+    //         c,
     //         id,
     //         .{},
     //     );
@@ -48,26 +30,26 @@ pub fn main() !void {
     //     _ = try std.io.getStdOut().write("\n");
     // }
 
-    // {
-    //     const albums = try zp.Album.getMany(
-    //         alloc,
-    //         client,
-    //         &.{ "4aawyAB9vmqN3uQ7FjRGTy", "3JK7UWkTqg4uyv2OfWRvQ9" },
-    //         .{},
-    //     );
-    //     defer albums.deinit();
-    //     try std.json.stringify(
-    //         albums.value,
-    //         .{},
-    //         std.io.getStdOut().writer(),
-    //     );
-    //     _ = try std.io.getStdOut().write("\n");
-    // }
+    {
+        const albums = try zp.Album.getMany(
+            alloc,
+            c,
+            &.{ "4aawyAB9vmqN3uQ7FjRGTy", "3JK7UWkTqg4uyv2OfWRvQ9" },
+            .{},
+        );
+        defer albums.deinit();
+        try std.json.stringify(
+            albums.value,
+            .{},
+            std.io.getStdOut().writer(),
+        );
+        _ = try std.io.getStdOut().write("\n");
+    }
 
     // {
     //     const tracks = try zp.Album.getTracks(
     //         alloc,
-    //         client,
+    //         c,
     //         "3JK7UWkTqg4uyv2OfWRvQ9",
     //         .{},
     //     );
@@ -83,7 +65,7 @@ pub fn main() !void {
     // {
     //     const saved = try zp.Album.getSaved(
     //         alloc,
-    //         client,
+    //         c,
     //         .{},
     //     );
     //     defer saved.deinit();
@@ -98,7 +80,7 @@ pub fn main() !void {
     // {
     //     try zp.Album.save(
     //         alloc,
-    //         client,
+    //         c,
     //         &.{"4aawyAB9vmqN3uQ7FjRGTy"},
     //     );
     //     std.debug.print("saved...\n", .{});
@@ -108,7 +90,7 @@ pub fn main() !void {
 
     //     try zp.Album.delete(
     //         alloc,
-    //         client,
+    //         c,
     //         &.{"4aawyAB9vmqN3uQ7FjRGTy"},
     //     );
     //     std.debug.print("deleted...\n", .{});
@@ -117,7 +99,7 @@ pub fn main() !void {
     // {
     //     const checked = try zp.Album.check(
     //         alloc,
-    //         client,
+    //         c,
     //         &.{ "4aawyAB9vmqN3uQ7FjRGTy", "3JK7UWkTqg4uyv2OfWRvQ9" },
     //     );
     //     defer checked.deinit();
@@ -132,7 +114,7 @@ pub fn main() !void {
     {
         const new = try zp.Album.newReleases(
             alloc,
-            client,
+            c,
             .{},
         );
         defer new.deinit();

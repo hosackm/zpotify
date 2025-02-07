@@ -1,11 +1,15 @@
 //! Users from the web API reference
 const std = @import("std");
 const types = @import("types.zig");
-const urls = @import("url.zig");
+const url = @import("url.zig");
 
 const Image = @import("image.zig");
 const Artist = @import("artist.zig");
 const Track = @import("track.zig");
+
+const Paged = types.Paginated;
+const M = types.Manyify;
+const P = std.json.Parsed;
 
 const Simplified = struct {
     display_name: []const u8,
@@ -30,11 +34,10 @@ const User = @This();
 pub fn getCurrentUser(
     alloc: std.mem.Allocator,
     client: anytype,
-) !std.json.Parsed(User) {
-    // do something with the opts
+) !P(User) {
     const body = try client.get(
         alloc,
-        try std.Uri.parse(urls.base_url ++ "/me"),
+        try std.Uri.parse(url.base_url ++ "/me"),
     );
     defer alloc.free(body);
 
@@ -58,23 +61,28 @@ pub fn topArtists(
     alloc: std.mem.Allocator,
     client: anytype,
     opts: struct {
-        // which: Which,
         time_range: ?TimeRange = null,
         limit: ?u8 = null,
         offset: ?u8 = null,
     },
-) !std.json.Parsed(types.Paginated(Artist)) {
-    _ = opts;
+) !P(Paged(Artist)) {
+    const user_url = try url.build(
+        alloc,
+        url.base_url,
+        "/me/top/artists",
+        null,
+        .{ .limit = opts.limit, .offset = opts.offset },
+    );
+    defer alloc.free(user_url);
+
     const body = try client.get(
         alloc,
-        try std.Uri.parse(
-            urls.base_url ++ "/me/top/artists",
-        ),
+        try std.Uri.parse(user_url),
     );
     defer alloc.free(body);
 
     return try std.json.parseFromSlice(
-        types.Paginated(Artist),
+        Paged(Artist),
         alloc,
         body,
         .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
@@ -90,18 +98,24 @@ pub fn topTracks(
         limit: ?u8 = null,
         offset: ?u8 = null,
     },
-) !std.json.Parsed(types.Paginated(Track.Simplified)) {
-    _ = opts;
+) !P(Paged(Track.Simplified)) {
+    const user_url = try url.build(
+        alloc,
+        url.base_url,
+        "/me/top/artists",
+        null,
+        .{ .limit = opts.limit, .offset = opts.offset },
+    );
+    defer alloc.free(user_url);
+
     const body = try client.get(
         alloc,
-        try std.Uri.parse(
-            urls.base_url ++ "/me/top/tracks",
-        ),
+        try std.Uri.parse(user_url),
     );
     defer alloc.free(body);
 
     return try std.json.parseFromSlice(
-        types.Paginated(Track.Simplified),
+        Paged(Track.Simplified),
         alloc,
         body,
         .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
@@ -111,16 +125,18 @@ pub fn topTracks(
 pub fn get(
     alloc: std.mem.Allocator,
     client: anytype,
-    user_id: types.SpotifyUserId,
-) !std.json.Parsed(Simplified) {
-    const url = try std.fmt.allocPrint(
+    comptime user_id: types.SpotifyUserId,
+) !P(Simplified) {
+    const user_url = try url.build(
         alloc,
-        urls.base_url ++ "/users/{s}",
-        .{user_id},
+        url.base_url,
+        "/users/{s}",
+        user_id,
+        .{},
     );
-    defer alloc.free(url);
+    defer alloc.free(user_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(url));
+    const body = try client.get(alloc, try std.Uri.parse(user_url));
     defer alloc.free(body);
 
     return try std.json.parseFromSlice(
@@ -134,21 +150,22 @@ pub fn get(
 pub fn followPlaylist(
     alloc: std.mem.Allocator,
     client: anytype,
-    playlist_id: types.SpotifyId,
+    comptime playlist_id: types.SpotifyId,
     opts: struct { public: ?bool = null },
 ) !void {
-    const url = try std.fmt.allocPrint(
+    const user_url = try url.build(
         alloc,
-        urls.base_url ++ "/playlists/{s}/followers",
-        .{playlist_id},
+        url.base_url,
+        "/playlists/{s}/followers",
+        playlist_id,
+        .{ .public = opts.public },
     );
-    defer alloc.free(url);
+    defer alloc.free(user_url);
 
     const data: struct { public: bool } = .{ .public = opts.public orelse true };
-
     const body = try client.put(
         alloc,
-        try std.Uri.parse(url),
+        try std.Uri.parse(user_url),
         data,
     );
     defer alloc.free(body);
@@ -157,32 +174,36 @@ pub fn followPlaylist(
 pub fn unfollowPlaylist(
     alloc: std.mem.Allocator,
     client: anytype,
-    playlist_id: types.SpotifyId,
+    comptime playlist_id: types.SpotifyId,
 ) !void {
-    const url = try std.fmt.allocPrint(
+    const user_url = try url.build(
         alloc,
-        urls.base_url ++ "/playlists/{s}/followers",
-        .{playlist_id},
+        url.base_url,
+        "/playlists/{s}/followers",
+        playlist_id,
+        .{},
     );
-    defer alloc.free(url);
+    defer alloc.free(user_url);
 
-    const body = try client.delete(alloc, try std.Uri.parse(url), .{});
+    const body = try client.delete(alloc, try std.Uri.parse(user_url), .{});
     defer alloc.free(body);
 }
 
 pub fn isFollowingPlaylist(
     alloc: std.mem.Allocator,
     client: anytype,
-    playlist_id: types.SpotifyId,
+    comptime playlist_id: types.SpotifyId,
 ) !bool {
-    const url = try std.fmt.allocPrint(
+    const user_url = try url.build(
         alloc,
-        urls.base_url ++ "/playlists/{s}/followers/contains",
-        .{playlist_id},
+        url.base_url,
+        "/playlists/{s}/followers/contains",
+        playlist_id,
+        .{},
     );
-    defer alloc.free(url);
+    defer alloc.free(user_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(url));
+    const body = try client.get(alloc, try std.Uri.parse(user_url));
     defer alloc.free(body);
 
     const object = try std.json.parseFromSlice([]bool, alloc, body, .{});
@@ -200,14 +221,16 @@ pub fn getFollowedArtists(
         after: ?[]const u8 = null,
         limit: ?u8 = null,
     },
-) !std.json.Parsed(CursoredArtists) {
-    _ = opts;
-    const body = try client.get(
+) !P(CursoredArtists) {
+    const user_url = try url.build(
         alloc,
-        try std.Uri.parse(
-            urls.base_url ++ "/me/following?type=artist",
-        ),
+        url.base_url,
+        "/me/following",
+        null,
+        .{ .type = @as(?[]const u8, "artist"), .after = opts.after, .limit = opts.limit },
     );
+    defer alloc.free(user_url);
+    const body = try client.get(alloc, try std.Uri.parse(user_url));
     defer alloc.free(body);
 
     std.debug.print("{s}\n", .{body});
@@ -228,9 +251,18 @@ pub fn followArtists(
     client: anytype,
     ids: []const types.SpotifyId,
 ) !void {
+    const artist_url = try url.build(
+        alloc,
+        url.base_url,
+        "/me/following",
+        null,
+        .{ .type = @as(?[]const u8, "artist") },
+    );
+    defer alloc.free(artist_url);
+
     const body = try client.put(
         alloc,
-        try std.Uri.parse(urls.base_url ++ "/me/following?type=artist"),
+        try std.Uri.parse(artist_url),
         struct { ids: @TypeOf(ids) }{ .ids = ids },
     );
     defer alloc.free(body);
@@ -241,10 +273,19 @@ pub fn unfollowArtists(
     client: anytype,
     ids: []const types.SpotifyId,
 ) !void {
+    const artist_url = try url.build(
+        alloc,
+        url.base_url,
+        "/me/following",
+        null,
+        .{ .type = @as(?[]const u8, "artist") },
+    );
+    defer alloc.free(artist_url);
+
     const body = try client.delete(
         alloc,
-        try std.Uri.parse(urls.base_url ++ "/me/following?type=artist"),
-        struct { ids: @TypeOf(ids) }{ .ids = ids },
+        try std.Uri.parse(artist_url),
+        .{ .ids = ids },
     );
     defer alloc.free(body);
 }
@@ -254,10 +295,19 @@ pub fn followUsers(
     client: anytype,
     ids: []const types.SpotifyId,
 ) !void {
+    const user_url = try url.build(
+        alloc,
+        url.base_url,
+        "/me/following",
+        null,
+        .{ .type = @as(?[]const u8, "user") },
+    );
+    defer alloc.free(user_url);
+
     const body = try client.put(
         alloc,
-        try std.Uri.parse(urls.base_url ++ "/me/following?type=user"),
-        struct { ids: @TypeOf(ids) }{ .ids = ids },
+        try std.Uri.parse(user_url),
+        .{ .ids = ids },
     );
     defer alloc.free(body);
 }
@@ -267,9 +317,18 @@ pub fn unfollowUsers(
     client: anytype,
     ids: []const types.SpotifyId,
 ) !void {
+    const user_url = try url.build(
+        alloc,
+        url.base_url,
+        "/me/following",
+        null,
+        .{ .type = @as(?[]const u8, "user") },
+    );
+    defer alloc.free(user_url);
+
     const body = try client.delete(
         alloc,
-        try std.Uri.parse(urls.base_url ++ "/me/following?type=user"),
+        try std.Uri.parse(user_url),
         struct { ids: @TypeOf(ids) }{ .ids = ids },
     );
     defer alloc.free(body);
@@ -279,18 +338,17 @@ pub fn isFollowingArtists(
     alloc: std.mem.Allocator,
     client: anytype,
     ids: []const types.SpotifyId,
-) !std.json.Parsed([]bool) {
-    const joined = try std.mem.join(alloc, "%2C", ids);
-    defer alloc.free(joined);
-
-    const url = try std.fmt.allocPrint(
+) !P([]bool) {
+    const artist_url = try url.build(
         alloc,
-        urls.base_url ++ "/me/following/contains?type=artist&ids={s}",
-        .{joined},
+        url.base_url,
+        "/me/following/contains",
+        null,
+        .{ .ids = ids, .type = @as(?[]const u8, "artist") },
     );
-    defer alloc.free(url);
+    defer alloc.free(artist_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(url));
+    const body = try client.get(alloc, try std.Uri.parse(artist_url));
     defer alloc.free(body);
 
     return try std.json.parseFromSlice(
@@ -305,18 +363,17 @@ pub fn isFollowingUsers(
     alloc: std.mem.Allocator,
     client: anytype,
     ids: []const types.SpotifyId,
-) !std.json.Parsed([]bool) {
-    const joined = try std.mem.join(alloc, "%2C", ids);
-    defer alloc.free(joined);
-
-    const url = try std.fmt.allocPrint(
+) !P([]bool) {
+    const user_url = try url.build(
         alloc,
-        urls.base_url ++ "/me/following/contains?type=user&ids={s}",
-        .{joined},
+        url.base_url,
+        "/me/following/contains",
+        null,
+        .{ .ids = ids, .type = @as(?[]const u8, "user") },
     );
-    defer alloc.free(url);
+    defer alloc.free(user_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(url));
+    const body = try client.get(alloc, try std.Uri.parse(user_url));
     defer alloc.free(body);
 
     return try std.json.parseFromSlice(

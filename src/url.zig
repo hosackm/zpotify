@@ -42,14 +42,18 @@ pub fn build(
     defer url.deinit();
 
     try url.appendSlice(host);
+
     if (spotify_id) |id| {
-        const interpolated = try std.fmt.allocPrint(
-            alloc,
+        var buffer: [256:0]u8 = undefined;
+        _ = std.mem.replace(
+            u8,
             path,
-            .{id},
+            "{s}",
+            id,
+            &buffer,
         );
-        defer alloc.free(interpolated);
-        try url.appendSlice(interpolated);
+        const len = path.len + id.len - 3;
+        try url.appendSlice(buffer[0..len]);
     } else {
         try url.appendSlice(path);
     }
@@ -68,7 +72,11 @@ pub fn build(
 
                             switch (opt.child) {
                                 u8, u16 => {
-                                    const s = try std.fmt.allocPrint(alloc, "{d}", .{value});
+                                    const s = try std.fmt.allocPrint(
+                                        alloc,
+                                        "{d}",
+                                        .{value},
+                                    );
                                     defer alloc.free(s);
                                     try url.appendSlice(s);
                                 },

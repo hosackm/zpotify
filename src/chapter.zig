@@ -2,7 +2,7 @@
 const std = @import("std");
 const types = @import("types.zig");
 const Image = @import("image.zig");
-const base_url = @import("url.zig").base_url;
+const url = @import("url.zig");
 
 const Self = @This();
 
@@ -43,18 +43,19 @@ pub usingnamespace Simplified;
 pub fn getOne(
     alloc: std.mem.Allocator,
     client: anytype,
-    id: types.SpotifyId,
+    comptime id: types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
 ) !std.json.Parsed(Simplified) {
-    _ = opts;
-    const url = try std.fmt.allocPrint(
+    const chapter_url = try url.build(
         alloc,
-        base_url ++ "/chapters/{s}",
-        .{id},
+        url.base_url,
+        "/chapters/{s}",
+        id,
+        .{ .market = opts.market },
     );
-    defer alloc.free(url);
+    defer alloc.free(chapter_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(url));
+    const body = try client.get(alloc, try std.Uri.parse(chapter_url));
     defer alloc.free(body);
 
     return try std.json.parseFromSlice(
@@ -72,18 +73,16 @@ pub fn getMany(
     ids: []const types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
 ) !std.json.Parsed(Many) {
-    _ = opts;
-    const joined = try std.mem.join(alloc, "%2C", ids);
-    defer alloc.free(joined);
-
-    const url = try std.fmt.allocPrint(
+    const chapter_url = try url.build(
         alloc,
-        base_url ++ "/chapters?ids={s}",
-        .{joined},
+        url.base_url,
+        "/chapters",
+        null,
+        .{ .ids = ids, .market = opts.market },
     );
-    defer alloc.free(url);
+    defer alloc.free(chapter_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(url));
+    const body = try client.get(alloc, try std.Uri.parse(chapter_url));
     defer alloc.free(body);
 
     return try std.json.parseFromSlice(

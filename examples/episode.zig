@@ -25,22 +25,22 @@ pub fn main() !void {
     //     _ = try std.io.getStdOut().writeAll("\n");
     // }
 
-    // {
-    //     // get episodes by their ids
-    //     const episodes = try zp.Episode.getMany(
-    //         alloc,
-    //         c,
-    //         &.{ your_moms, bad_friends },
-    //         .{},
-    //     );
-    //     defer episodes.deinit();
-    //     try std.json.stringify(
-    //         episodes.value,
-    //         .{},
-    //         std.io.getStdOut().writer(),
-    //     );
-    //     _ = try std.io.getStdOut().writeAll("\n");
-    // }
+    {
+        // get episodes by their ids
+        const episodes = try zp.Episode.getMany(
+            alloc,
+            c,
+            &.{ your_moms, bad_friends },
+            .{},
+        );
+        defer episodes.deinit();
+        try std.json.stringify(
+            episodes.value,
+            .{},
+            std.io.getStdOut().writer(),
+        );
+        _ = try std.io.getStdOut().writeAll("\n");
+    }
 
     // {
     //     // get current user's episodes
@@ -54,20 +54,20 @@ pub fn main() !void {
     //     _ = try std.io.getStdOut().writeAll("\n");
     // }
 
-    {
-        try zp.Episode.save(alloc, c, &.{ your_moms, bad_friends });
-        try zp.Episode.remove(alloc, c, &.{ your_moms, bad_friends });
+    // {
+    //     try zp.Episode.save(alloc, c, &.{ your_moms, bad_friends });
+    //     try zp.Episode.remove(alloc, c, &.{ your_moms, bad_friends });
 
-        const contains = try zp.Episode.contains(alloc, c, &.{ your_moms, bad_friends });
-        defer contains.deinit();
+    //     const contains = try zp.Episode.contains(alloc, c, &.{ your_moms, bad_friends });
+    //     defer contains.deinit();
 
-        try std.json.stringify(
-            contains.value,
-            .{},
-            std.io.getStdOut().writer(),
-        );
-        _ = try std.io.getStdOut().writeAll("\n");
-    }
+    //     try std.json.stringify(
+    //         contains.value,
+    //         .{},
+    //         std.io.getStdOut().writer(),
+    //     );
+    //     _ = try std.io.getStdOut().writeAll("\n");
+    // }
 
     // list markets...
     // {

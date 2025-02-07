@@ -15,29 +15,29 @@ pub fn main() !void {
     // Hitchiker's Guide
     // https://open.spotify.com/show/6yI0Np2UyigswnRqjSKN5V?si=bbd3a9c44f4e4d41
     const one = "4P3b73KGNxOZHIDFTKRLoT";
-    const another = "5zD0AIMbpgCZgY56JSYhYl";
-
-    // {
-    //     // get a chapter by it's id
-    //     const chapter = try zp.Chapter.getOne(alloc, c, one, .{});
-    //     defer chapter.deinit();
-    //     try std.json.stringify(
-    //         chapter.value,
-    //         .{},
-    //         std.io.getStdOut().writer(),
-    //     );
-    //     _ = try std.io.getStdOut().writeAll("\n");
-    // }
+    // const another = "5zD0AIMbpgCZgY56JSYhYl";
 
     {
-        // get multiple chapters by their ids
-        const chapters = try zp.Chapter.getMany(alloc, c, &.{ one, another }, .{});
-        defer chapters.deinit();
+        // get a chapter by it's id
+        const chapter = try zp.Chapter.getOne(alloc, c, one, .{});
+        defer chapter.deinit();
         try std.json.stringify(
-            chapters.value,
+            chapter.value,
             .{},
             std.io.getStdOut().writer(),
         );
         _ = try std.io.getStdOut().writeAll("\n");
     }
+
+    // {
+    //     // get multiple chapters by their ids
+    //     const chapters = try zp.Chapter.getMany(alloc, c, &.{ one, another }, .{});
+    //     defer chapters.deinit();
+    //     try std.json.stringify(
+    //         chapters.value,
+    //         .{},
+    //         std.io.getStdOut().writer(),
+    //     );
+    //     _ = try std.io.getStdOut().writeAll("\n");
+    // }
 }

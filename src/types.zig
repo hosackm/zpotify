@@ -45,6 +45,35 @@ pub fn Cursored(comptime T: type) type {
     };
 }
 
+const Field = std.builtin.Type.StructField;
+const Decl = std.builtin.Type.Declaration;
+
+// Create a new struct type wrapping a slice of type T with the field name set to name.
+// Spotify's API will return arrays of objects in a JSON object with a specific name as the key.
+//
+// For example, Manyify(Artist, "artists") -> struct { artists: []Artist }
+pub fn Manyify(
+    comptime T: type,
+    comptime name: [:0]const u8,
+) type {
+    return @Type(.{
+        .Struct = .{
+            .layout = .auto,
+            .fields = &[_]Field{
+                .{
+                    .name = name,
+                    .type = []const T,
+                    .default_value = null,
+                    .is_comptime = false,
+                    .alignment = @alignOf(T),
+                },
+            },
+            .decls = &[_]Decl{},
+            .is_tuple = false,
+        },
+    });
+}
+
 // Copies a dynamic JSON object by using comptime type reflection.
 fn deepCopy(comptime T: type, v: std.json.Value) T {
     _ = v;

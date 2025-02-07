@@ -3,7 +3,11 @@ const std = @import("std");
 const types = @import("types.zig");
 const Image = @import("image.zig");
 const Chapter = @import("chapter.zig");
-const base_url = @import("url.zig").base_url;
+const url = @import("url.zig");
+
+const Paged = types.Paginated;
+const M = types.Manyify;
+const P = std.json.Parsed;
 
 const Self = @This();
 
@@ -30,26 +34,26 @@ pub const Simplified = struct {
 };
 
 pub usingnamespace Simplified;
-chapters: types.Paginated(Chapter.Simplified),
+chapters: Paged(Chapter.Simplified),
 
 pub fn getOne(
     alloc: std.mem.Allocator,
     client: anytype,
-    id: types.SpotifyId,
+    comptime id: types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
-) !std.json.Parsed(Self) {
-    _ = opts;
-    const url = try std.fmt.allocPrint(
+) !P(Self) {
+    const audiobook_url = try url.build(
         alloc,
-        base_url ++ "/audiobooks/{s}",
-        .{id},
+        url.base_url,
+        "/audiobooks/{s}",
+        id,
+        .{ .market = opts.market },
     );
-    defer alloc.free(url);
+    defer alloc.free(audiobook_url);
 
-    // do something with the opts
     const body = try client.get(
         alloc,
-        try std.Uri.parse(url),
+        try std.Uri.parse(audiobook_url),
     );
     defer alloc.free(body);
 
@@ -61,33 +65,29 @@ pub fn getOne(
     );
 }
 
-const Many = struct { audiobooks: []const Self };
 pub fn getMany(
     alloc: std.mem.Allocator,
     client: anytype,
     ids: []const types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
-) !std.json.Parsed(Many) {
-    _ = opts;
-    const joined = try std.mem.join(alloc, "%2C", ids);
-    defer alloc.free(joined);
-
-    const url = try std.fmt.allocPrint(
+) !P(M(Self, "audiobooks")) {
+    const audiobook_url = try url.build(
         alloc,
-        base_url ++ "/audiobooks?ids={s}",
-        .{joined},
+        url.base_url,
+        "/audiobooks",
+        null,
+        .{ .ids = ids, .market = opts.market },
     );
-    defer alloc.free(url);
+    defer alloc.free(audiobook_url);
 
-    // do something with the opts
     const body = try client.get(
         alloc,
-        try std.Uri.parse(url),
+        try std.Uri.parse(audiobook_url),
     );
     defer alloc.free(body);
 
     return try std.json.parseFromSlice(
-        Many,
+        M(Self, "audiobooks"),
         alloc,
         body,
         .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
@@ -97,27 +97,26 @@ pub fn getMany(
 pub fn getChapters(
     alloc: std.mem.Allocator,
     client: anytype,
-    id: types.SpotifyId,
+    comptime id: types.SpotifyId,
     opts: struct { market: ?[]const u8 = null, limit: ?u8 = null, offset: ?u16 = null },
-) !std.json.Parsed(types.Paginated(Chapter.Simplified)) {
-    _ = opts;
-
-    const url = try std.fmt.allocPrint(
+) !P(Paged(Chapter.Simplified)) {
+    const audiobook_url = try url.build(
         alloc,
-        base_url ++ "/audiobooks/{s}/chapters",
-        .{id},
+        url.base_url,
+        "/audiobooks/{s}/chapters",
+        id,
+        .{ .market = opts.market, .limit = opts.limit, .offset = opts.offset },
     );
-    defer alloc.free(url);
+    defer alloc.free(audiobook_url);
 
-    // do something with the opts
     const body = try client.get(
         alloc,
-        try std.Uri.parse(url),
+        try std.Uri.parse(audiobook_url),
     );
     defer alloc.free(body);
 
     return try std.json.parseFromSlice(
-        types.Paginated(Chapter.Simplified),
+        Paged(Chapter.Simplified),
         alloc,
         body,
         .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
@@ -128,16 +127,20 @@ pub fn getSaved(
     alloc: std.mem.Allocator,
     client: anytype,
     opts: struct { limit: ?u8 = null, offset: ?u16 = null },
-) !std.json.Parsed(types.Paginated(Simplified)) {
-    _ = opts;
-    // do something with the opts
-    const body = try client.get(alloc, try std.Uri.parse(base_url ++ "/me/audiobooks"));
+) !P(Paged(Simplified)) {
+    const audiobook_url = try url.build(
+        alloc,
+        url.base_url,
+        "/me/audiobooks",
+        null,
+        .{ .limit = opts.limit, .offset = opts.offset },
+    );
+    defer alloc.free(audiobook_url);
+    const body = try client.get(alloc, try std.Uri.parse(audiobook_url));
     defer alloc.free(body);
 
-    std.debug.print("{s}\n", .{body});
-
     return try std.json.parseFromSlice(
-        types.Paginated(Simplified),
+        Paged(Simplified),
         alloc,
         body,
         .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
@@ -149,18 +152,18 @@ pub fn save(
     client: anytype,
     ids: []const types.SpotifyId,
 ) !void {
-    // do something with the opts
-    const joined = try std.mem.join(alloc, "%2C", ids);
-    defer alloc.free(joined);
+    // const joined = try std.mem.join(alloc, "%2C", ids);
+    // defer alloc.free(joined);
 
-    const url = try std.fmt.allocPrint(
+    const audiobook_url = try url.build(
         alloc,
-        base_url ++ "/me/audiobooks?ids={s}",
-        .{joined},
+        url.base_url,
+        "/me/audiobooks",
+        null,
+        .{ .ids = ids },
     );
-    defer alloc.free(url);
-
-    _ = try client.put(alloc, try std.Uri.parse(url), .{});
+    defer alloc.free(audiobook_url);
+    _ = try client.put(alloc, try std.Uri.parse(audiobook_url), .{});
 }
 
 pub fn remove(
@@ -168,37 +171,33 @@ pub fn remove(
     client: anytype,
     ids: []const types.SpotifyId,
 ) !void {
-    // do something with the opts
-    const joined = try std.mem.join(alloc, "%2C", ids);
-    defer alloc.free(joined);
-
-    const url = try std.fmt.allocPrint(
+    const audiobook_url = try url.build(
         alloc,
-        base_url ++ "/me/audiobooks?ids={s}",
-        .{joined},
+        url.base_url,
+        "/me/audiobooks",
+        null,
+        .{ .ids = ids },
     );
-    defer alloc.free(url);
+    defer alloc.free(audiobook_url);
 
-    _ = try client.delete(alloc, try std.Uri.parse(url), .{});
+    _ = try client.delete(alloc, try std.Uri.parse(audiobook_url), .{});
 }
 
 pub fn areSaved(
     alloc: std.mem.Allocator,
     client: anytype,
     ids: []const types.SpotifyId,
-) !std.json.Parsed([]bool) {
-    // do something with the opts
-    const joined = try std.mem.join(alloc, "%2C", ids);
-    defer alloc.free(joined);
-
-    const url = try std.fmt.allocPrint(
+) !P([]bool) {
+    const audiobook_url = try url.build(
         alloc,
-        base_url ++ "/me/audiobooks/contains?ids={s}",
-        .{joined},
+        url.base_url,
+        "/me/audiobooks/contains",
+        null,
+        .{ .ids = ids },
     );
-    defer alloc.free(url);
+    defer alloc.free(audiobook_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(url));
+    const body = try client.get(alloc, try std.Uri.parse(audiobook_url));
     defer alloc.free(body);
 
     return try std.json.parseFromSlice(

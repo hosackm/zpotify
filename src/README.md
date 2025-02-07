@@ -4,7 +4,7 @@
 
 ## Endpoints
 
-> 40 of 88
+> 53 of 84
 
 - [x] Get Album
 - [x] Get Several Albums
@@ -78,24 +78,20 @@
 
 - [ ] Search for Item
 
-- [ ] Get Show
-- [ ] Get Several Shows
-- [ ] Get Show Episodes
-- [ ] Get User's Saved Shows
-- [ ] Save Shows for Current User
-- [ ] Remove User's Saved Shows
-- [ ] Check User's Saved Shows
+- [x] Get Show
+- [x] Get Several Shows
+- [x] Get Show Episodes
+- [x] Get User's Saved Shows
+- [x] Save Shows for Current User
+- [x] Remove User's Saved Shows
+- [x] Check User's Saved Shows
 
-- [ ] Get Track
-- [ ] Get Several Tracks
-- [ ] Get User's Saved Tracks
-- [ ] Save Tracks for Current User
-- [ ] Remove User's Saved Tracks
-- [ ] Check User's Saved Tracks
-- [ ] Get Several Tracks' Audio Features
-- [ ] Get Track's Audio Features
-- [ ] Get Track's Audio Analysis
-- [ ] Get Recommendations
+- [x] Get Track
+- [x] Get Several Tracks
+- [x] Get User's Saved Tracks
+- [x] Save Tracks for Current User
+- [x] Remove User's Saved Tracks
+- [x] Check User's Saved Tracks
 
 - [x] Get Current User's Profile
 - [x] Get User's Top Items

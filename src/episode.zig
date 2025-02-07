@@ -3,25 +3,37 @@ const std = @import("std");
 const types = @import("types.zig");
 const Show = @import("show.zig");
 const Image = @import("image.zig");
-// const base_url = @import("url.zig").base_url;
 const url = @import("url.zig");
 
-description: []const u8,
-html_description: []const u8,
-duration_ms: usize,
-explicit: bool,
-external_urls: std.json.Value,
-href: []const u8,
-id: types.SpotifyId,
-images: []const Image,
-is_externally_hosted: bool,
-language: []const u8,
-languages: []const []const u8,
-name: []const u8,
-release_date: []const u8,
-release_date_precision: []const u8,
-type: []const u8,
-uri: types.SpotifyUri,
+const Paged = types.Paginated;
+const M = types.Manyify;
+const P = std.json.Parsed;
+
+const Self = @This();
+
+pub usingnamespace Simplified;
+
+pub const Simplified = struct {
+    audio_preview_url: []const u8,
+    description: []const u8,
+    html_description: []const u8,
+    duration_ms: usize,
+    explicit: bool,
+    external_urls: std.json.Value,
+    href: []const u8,
+    id: types.SpotifyId,
+    images: []const Image,
+    is_externally_hosted: bool,
+    language: []const u8,
+    languages: []const []const u8,
+    name: []const u8,
+    release_date: []const u8,
+    release_date_precision: []const u8,
+    type: []const u8,
+    uri: types.SpotifyUri,
+};
+
+// extended
 show: Show,
 
 // missing
@@ -29,14 +41,13 @@ show: Show,
 // resume_point
 // restrictions
 
-const Self = @This();
-
+// Retrieve one Episode by SpotifyId
 pub fn getOne(
     alloc: std.mem.Allocator,
     client: anytype,
     comptime id: types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
-) !std.json.Parsed(Self) {
+) !P(Simplified) {
     const ep_url = try url.build(
         alloc,
         url.base_url,
@@ -50,30 +61,25 @@ pub fn getOne(
     defer alloc.free(body);
 
     return try std.json.parseFromSlice(
-        Self,
+        Simplified,
         alloc,
         body,
         .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
     );
 }
 
-const Many = struct { episodes: []const Self };
 pub fn getMany(
     alloc: std.mem.Allocator,
     client: anytype,
     ids: []const types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
-) !std.json.Parsed(Many) {
-    _ = opts;
-    const joined = try std.mem.join(alloc, "%2C", ids);
-    defer alloc.free(joined);
-
+) !P(M(Simplified, "episodes")) {
     const ep_url = try url.build(
         alloc,
         url.base_url,
         "/episodes",
         null,
-        .{ .ids = ids },
+        .{ .ids = ids, .market = opts.market },
     );
     defer alloc.free(ep_url);
 
@@ -81,7 +87,7 @@ pub fn getMany(
     defer alloc.free(body);
 
     return try std.json.parseFromSlice(
-        Many,
+        M(Simplified, "episodes"),
         alloc,
         body,
         .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
@@ -93,7 +99,7 @@ pub fn getSaved(
     alloc: std.mem.Allocator,
     client: anytype,
     opts: struct { market: ?[]const u8 = null, limit: ?u8 = null, offset: ?u8 = null },
-) !std.json.Parsed(types.Paginated(Saved)) {
+) !P(Paged(Saved)) {
     const ep_url = try url.build(
         alloc,
         url.base_url,
@@ -107,7 +113,7 @@ pub fn getSaved(
     defer alloc.free(body);
 
     return try std.json.parseFromSlice(
-        types.Paginated(Saved),
+        Paged(Saved),
         alloc,
         body,
         .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
@@ -138,7 +144,7 @@ pub fn contains(
     alloc: std.mem.Allocator,
     client: anytype,
     ids: []const types.SpotifyId,
-) !std.json.Parsed([]bool) {
+) !P([]bool) {
     const ep_url = try url.build(
         alloc,
         url.base_url,
