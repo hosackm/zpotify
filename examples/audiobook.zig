@@ -44,18 +44,18 @@ pub fn main() !void {
     //     _ = try std.io.getStdOut().writeAll("\n");
     // }
 
-    // {
-    //     // get chapters for a specific book
-    //     _ = elton;
-    //     const chapters = try zp.Audiobook.getChapters(alloc, c, hitch, .{});
-    //     defer chapters.deinit();
-    //     try std.json.stringify(
-    //         chapters.value,
-    //         .{},
-    //         std.io.getStdOut().writer(),
-    //     );
-    //     _ = try std.io.getStdOut().writeAll("\n");
-    // }
+    {
+        // get chapters for a specific book
+        _ = elton;
+        const chapters = try zp.Audiobook.getChapters(alloc, c, hitch, .{});
+        defer chapters.deinit();
+        try std.json.stringify(
+            chapters.value,
+            .{},
+            std.io.getStdOut().writer(),
+        );
+        _ = try std.io.getStdOut().writeAll("\n");
+    }
 
     // {
     //     // get the current user's saved books

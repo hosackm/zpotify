@@ -92,3 +92,55 @@ fn deepCopy(comptime T: type, v: std.json.Value) T {
     _ = v;
     return .{};
 }
+
+test "optional stringify" {
+    const Details = struct {
+        name: ?[]const u8 = null,
+        public: ?bool = null,
+        collaborative: ?bool = null,
+        description: ?[]const u8 = null,
+
+        pub fn jsonStringify(self: @This(), writer: anytype) !void {
+            try optionalStringify(
+                self,
+                writer,
+            );
+        }
+    };
+
+    var list = std.ArrayList(u8).init(std.testing.allocator);
+    defer list.deinit();
+
+    const expected: []const struct { input: Details, output: []const u8 } = &.{
+        .{
+            .input = .{ .collaborative = true, .description = "this is a description", .name = "a name", .public = true },
+            .output =
+            \\{"name":"a name","public":true,"collaborative":true,"description":"this is a description"}
+            ,
+        },
+        .{
+            .input = .{ .collaborative = true, .name = "a name", .public = true },
+            .output =
+            \\{"name":"a name","public":true,"collaborative":true}
+            ,
+        },
+        .{
+            .input = .{ .name = "a name", .public = true },
+            .output =
+            \\{"name":"a name","public":true}
+            ,
+        },
+        .{
+            .input = .{ .name = "a name" },
+            .output =
+            \\{"name":"a name"}
+            ,
+        },
+    };
+
+    for (expected) |exp| {
+        list.clearAndFree();
+        try std.json.stringify(exp.input, .{}, list.writer());
+        try std.testing.expect(std.mem.eql(u8, list.items, exp.output));
+    }
+}

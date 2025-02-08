@@ -29,7 +29,7 @@ const Self = @This();
 pub fn getOne(
     alloc: std.mem.Allocator,
     client: anytype,
-    comptime id: types.SpotifyId,
+    id: types.SpotifyId,
 ) !P(Self) {
     const artist_url = try url.build(
         alloc,

@@ -79,9 +79,20 @@ pub const PlaylistTrack = struct {
 };
 
 pub const Details = struct {
+    // The new name for the playlist,
     name: ?[]const u8 = null,
+
+    // The playlist's public/private status (if it should be added to
+    // the user's profile or not): true the playlist will be public,
+    // false the playlist will be private, null the playlist status
+    // is not relevant.
     public: ?bool = null,
+
+    // If true, the playlist will become collaborative and other users
+    // will be able to modify the playlist in their Spotify client.
     collaborative: ?bool = null,
+
+    // Value for playlist description as displayed in Spotify Clients and in the Web API.
     description: ?[]const u8 = null,
 
     pub fn jsonStringify(self: @This(), writer: anytype) !void {
@@ -92,11 +103,32 @@ pub const Details = struct {
     }
 };
 
-pub const Insert = struct {
+pub const Update = struct {
+    // URI of items to update
     uris: ?[]const types.SpotifyUri = null,
+
+    //The position of the first item to be reordered.
     range_start: ?u16 = null,
+
+    // The position where the items should be inserted.
+    // To reorder the items to the end of the playlist, simply set insert_before
+    // to the position after the last item.
+    // Examples:
+    // To reorder the first item to the last position in a playlist with 10 items,
+    // set range_start to 0, and insert_before to 10.
+    // To reorder the last item in a playlist with 10 items to the start of the playlist,
+    // set range_start to 9, and insert_before to 0.
     insert_before: ?u16 = null,
+
+    // The amount of items to be reordered. Defaults to 1 if not set.
+    // The range of items to be reordered begins from the range_start position,
+    // and includes the range_length subsequent items.
+    // Example:
+    // To move the items at index 9-10 to the start of the playlist, range_start
+    // is set to 9, and range_length is set to 2.
     range_length: ?u16 = null,
+
+    // The playlist's snapshot ID against which you want to make the changes.
     snapshot_id: ?[]const u8 = null,
 
     pub fn jsonStringify(self: @This(), writer: anytype) !void {
@@ -150,7 +182,7 @@ uri: types.SpotifyUri,
 pub fn getOne(
     alloc: std.mem.Allocator,
     client: anytype,
-    comptime id: types.SpotifyId,
+    id: types.SpotifyId,
     opts: struct {
         market: ?[]const u8 = null,
         fields: ?[]const u8 = null,
@@ -184,7 +216,7 @@ pub fn getOne(
 pub fn setDetails(
     alloc: std.mem.Allocator,
     client: anytype,
-    comptime id: types.SpotifyId,
+    id: types.SpotifyId,
     details: Details,
 ) !void {
     const playlist_url = try url.build(
@@ -203,7 +235,7 @@ pub fn setDetails(
 pub fn getTracks(
     alloc: std.mem.Allocator,
     client: anytype,
-    comptime id: types.SpotifyId,
+    id: types.SpotifyId,
     opts: struct {
         market: ?[]const u8 = null,
         fields: ?[]const u8 = null,
@@ -238,32 +270,35 @@ pub fn getTracks(
     );
 }
 
+// Either reorder or replace items in a playlist depending on the request's parameters.
+//
+// To reorder items, include range_start, insert_before, range_length and snapshot_id
+// in the request's body.
+//
+// To replace items, include uris as either a query parameter or in the request's body.
+//
+// Replacing items in a playlist will overwrite its existing items. This operation
+// can be used for replacing or clearing items in a playlist.
 pub fn update(
     alloc: std.mem.Allocator,
     client: anytype,
-    comptime id: types.SpotifyId,
-    opts: struct { uris: []const types.SpotifyUri },
-    insert: Insert,
-) !P(Paged(PlaylistTrack)) {
+    id: types.SpotifyId,
+    insert: Update,
+) !P([]const u8) {
     const playlist_url = try url.build(
         alloc,
         url.base_url,
         "/playlists/{s}/tracks",
         id,
-        .{
-            .market = opts.market,
-            .fields = opts.fields,
-            .additional_types = opts.additional_types,
-        },
+        .{},
     );
     defer alloc.free(playlist_url);
 
-    _ = insert;
-    const body = try client.put(alloc, try std.Uri.parse(playlist_url), .{});
+    const body = try client.put(alloc, try std.Uri.parse(playlist_url), insert);
     defer alloc.free(body);
 
     return try std.json.parseFromSlice(
-        Paged(PlaylistTrack),
+        []const u8,
         alloc,
         body,
         .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
@@ -273,25 +308,19 @@ pub fn update(
 pub fn add(
     alloc: std.mem.Allocator,
     client: anytype,
-    comptime id: types.SpotifyId,
-    opts: struct { uris: []const types.SpotifyUri },
-    info: Add,
+    id: types.SpotifyId,
+    add_info: Add,
 ) !P([]const u8) {
     const playlist_url = try url.build(
         alloc,
         url.base_url,
         "/playlists/{s}/tracks",
         id,
-        .{
-            .market = opts.market,
-            .fields = opts.fields,
-            .additional_types = opts.additional_types,
-        },
+        .{},
     );
     defer alloc.free(playlist_url);
 
-    _ = info;
-    const body = try client.put(alloc, try std.Uri.parse(playlist_url), .{});
+    const body = try client.post(alloc, try std.Uri.parse(playlist_url), add_info);
     defer alloc.free(body);
 
     return try std.json.parseFromSlice(
@@ -305,7 +334,7 @@ pub fn add(
 pub fn remove(
     alloc: std.mem.Allocator,
     client: anytype,
-    comptime id: types.SpotifyId,
+    id: types.SpotifyId,
     opts: struct { uris: []const types.SpotifyUri },
     rem: Remove,
 ) !P([]const u8) {
@@ -332,86 +361,4 @@ pub fn remove(
         body,
         .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
     );
-}
-
-test "test optional details serialization" {
-    var list = std.ArrayList(u8).init(std.testing.allocator);
-    defer list.deinit();
-
-    const expected: []const struct { input: Details, output: []const u8 } = &.{
-        .{
-            .input = .{ .collaborative = true, .description = "this is a description", .name = "a name", .public = true },
-            .output =
-            \\{"name":"a name","public":true,"collaborative":true,"description":"this is a description"}
-            ,
-        },
-        .{
-            .input = .{ .collaborative = true, .name = "a name", .public = true },
-            .output =
-            \\{"name":"a name","public":true,"collaborative":true}
-            ,
-        },
-        .{
-            .input = .{ .name = "a name", .public = true },
-            .output =
-            \\{"name":"a name","public":true}
-            ,
-        },
-        .{
-            .input = .{ .name = "a name" },
-            .output =
-            \\{"name":"a name"}
-            ,
-        },
-    };
-
-    for (expected) |exp| {
-        list.clearAndFree();
-        try std.json.stringify(exp.input, .{}, list.writer());
-        try std.testing.expect(std.mem.eql(u8, list.items, exp.output));
-    }
-}
-
-test "test optional insert serialization" {
-    var list = std.ArrayList(u8).init(std.testing.allocator);
-    defer list.deinit();
-
-    const expected: []const struct { input: Insert, output: []const u8 } = &.{
-        .{
-            .input = .{ .insert_before = 123, .range_length = 456, .range_start = 789, .snapshot_id = "abcdefg", .uris = &.{ "xyz", "789" } },
-            .output =
-            \\{"uris":["xyz","789"],"range_start":789,"insert_before":123,"range_length":456,"snapshot_id":"abcdefg"}
-            ,
-        },
-        .{
-            .input = .{ .insert_before = 123, .range_length = 456, .range_start = 789, .uris = &.{ "xyz", "789" } },
-            .output =
-            \\{"uris":["xyz","789"],"range_start":789,"insert_before":123,"range_length":456}
-            ,
-        },
-        .{
-            .input = .{ .insert_before = 123, .range_start = 789, .uris = &.{ "xyz", "789" } },
-            .output =
-            \\{"uris":["xyz","789"],"range_start":789,"insert_before":123}
-            ,
-        },
-        .{
-            .input = .{ .range_start = 789, .uris = &.{ "xyz", "789" } },
-            .output =
-            \\{"uris":["xyz","789"],"range_start":789}
-            ,
-        },
-        .{
-            .input = .{ .uris = &.{ "xyz", "789" } },
-            .output =
-            \\{"uris":["xyz","789"]}
-            ,
-        },
-    };
-
-    for (expected) |exp| {
-        list.clearAndFree();
-        try std.json.stringify(exp.input, .{}, list.writer());
-        try std.testing.expect(std.mem.eql(u8, list.items, exp.output));
-    }
 }

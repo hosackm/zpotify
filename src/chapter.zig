@@ -43,7 +43,7 @@ pub usingnamespace Simplified;
 pub fn getOne(
     alloc: std.mem.Allocator,
     client: anytype,
-    comptime id: types.SpotifyId,
+    id: types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
 ) !std.json.Parsed(Simplified) {
     const chapter_url = try url.build(

@@ -39,7 +39,7 @@ chapters: Paged(Chapter.Simplified),
 pub fn getOne(
     alloc: std.mem.Allocator,
     client: anytype,
-    comptime id: types.SpotifyId,
+    id: types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
 ) !P(Self) {
     const audiobook_url = try url.build(
@@ -97,7 +97,7 @@ pub fn getMany(
 pub fn getChapters(
     alloc: std.mem.Allocator,
     client: anytype,
-    comptime id: types.SpotifyId,
+    id: types.SpotifyId,
     opts: struct { market: ?[]const u8 = null, limit: ?u8 = null, offset: ?u16 = null },
 ) !P(Paged(Chapter.Simplified)) {
     const audiobook_url = try url.build(

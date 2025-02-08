@@ -14,20 +14,20 @@ pub fn main() !void {
 
     // 7MSUfLeTdDEoZiJPDSBXgi - brian eno
     // 0TnOYISbd1XYRBk9myaseg - pitbull
-    // {
-    //     const artist = try zp.Artist.getOne(
-    //         alloc,
-    //         c,
-    //         "22wbnEMDvgVIAGdFeek6ET",
-    //     );
-    //     defer artist.deinit();
-    //     try std.json.stringify(
-    //         artist.value,
-    //         .{},
-    //         std.io.getStdOut().writer(),
-    //     );
-    //     _ = try std.io.getStdOut().write("\n");
-    // }
+    {
+        const artist = try zp.Artist.getOne(
+            alloc,
+            c,
+            "22wbnEMDvgVIAGdFeek6ET",
+        );
+        defer artist.deinit();
+        try std.json.stringify(
+            artist.value,
+            .{},
+            std.io.getStdOut().writer(),
+        );
+        _ = try std.io.getStdOut().write("\n");
+    }
 
     // {
     //     const artists = try zp.Artist.getMany(
@@ -62,20 +62,20 @@ pub fn main() !void {
     //     _ = try std.io.getStdOut().write("\n");
     // }
 
-    {
-        const tracks = try zp.Artist.getTopTracks(
-            alloc,
-            c,
-            "7MSUfLeTdDEoZiJPDSBXgi",
-            .{},
-        );
-        defer tracks.deinit();
+    // {
+    //     const tracks = try zp.Artist.getTopTracks(
+    //         alloc,
+    //         c,
+    //         "7MSUfLeTdDEoZiJPDSBXgi",
+    //         .{},
+    //     );
+    //     defer tracks.deinit();
 
-        try std.json.stringify(
-            tracks.value,
-            .{},
-            std.io.getStdOut().writer(),
-        );
-        _ = try std.io.getStdOut().write("\n");
-    }
+    //     try std.json.stringify(
+    //         tracks.value,
+    //         .{},
+    //         std.io.getStdOut().writer(),
+    //     );
+    //     _ = try std.io.getStdOut().write("\n");
+    // }
 }

@@ -12,18 +12,18 @@ pub fn main() !void {
     const c = &client.client;
 
     const bad_friends = "3gaGfrqgnVqUBNDdtv5p3S";
-    const your_moms = "7i59GubTw3CcNy9M6m7DTX";
-    // {
-    //     // get a show by it's id
-    //     const show = try zp.Show.getOne(alloc, c, bad_friends, .{});
-    //     defer show.deinit();
-    //     try std.json.stringify(
-    //         show.value,
-    //         .{},
-    //         std.io.getStdOut().writer(),
-    //     );
-    //     _ = try std.io.getStdOut().writeAll("\n");
-    // }
+    // const your_moms = "7i59GubTw3CcNy9M6m7DTX";
+    {
+        // get a show by it's id
+        const show = try zp.Show.getOne(alloc, c, bad_friends, .{});
+        defer show.deinit();
+        try std.json.stringify(
+            show.value,
+            .{},
+            std.io.getStdOut().writer(),
+        );
+        _ = try std.io.getStdOut().writeAll("\n");
+    }
 
     // {
     //     // get shows by their ids
@@ -71,20 +71,20 @@ pub fn main() !void {
     //     _ = try std.io.getStdOut().writeAll("\n");
     // }
 
-    {
-        try zp.Show.save(alloc, c, &.{ your_moms, bad_friends });
-        try zp.Show.remove(alloc, c, &.{ your_moms, bad_friends });
+    // {
+    //     try zp.Show.save(alloc, c, &.{ your_moms, bad_friends });
+    //     try zp.Show.remove(alloc, c, &.{ your_moms, bad_friends });
 
-        const contains = try zp.Show.contains(alloc, c, &.{ your_moms, bad_friends });
-        defer contains.deinit();
+    //     const contains = try zp.Show.contains(alloc, c, &.{ your_moms, bad_friends });
+    //     defer contains.deinit();
 
-        try std.json.stringify(
-            contains.value,
-            .{},
-            std.io.getStdOut().writer(),
-        );
-        _ = try std.io.getStdOut().writeAll("\n");
-    }
+    //     try std.json.stringify(
+    //         contains.value,
+    //         .{},
+    //         std.io.getStdOut().writer(),
+    //     );
+    //     _ = try std.io.getStdOut().writeAll("\n");
+    // }
 
     // list markets...
     // {

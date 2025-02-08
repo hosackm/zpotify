@@ -50,7 +50,7 @@ pub const Simplified = struct {
 pub fn getOne(
     alloc: std.mem.Allocator,
     client: anytype,
-    comptime id: types.SpotifyId,
+    id: types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
 ) !P(Self) {
     const ep_url = try url.build(

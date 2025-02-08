@@ -12,18 +12,18 @@ pub fn main() !void {
     const c = &client.client;
 
     const sayonara = "21ASDrtKfBL3Gx4TtkfBzZ";
-    const melancholy = "0q6LuUqGLUiCPP1cbdwFs3";
-    // {
-    //     // get a track by it's id
-    //     const track = try zp.Track.getOne(alloc, c, sayonara, .{});
-    //     defer track.deinit();
-    //     try std.json.stringify(
-    //         track.value,
-    //         .{},
-    //         std.io.getStdOut().writer(),
-    //     );
-    //     _ = try std.io.getStdOut().writeAll("\n");
-    // }
+    // const melancholy = "0q6LuUqGLUiCPP1cbdwFs3";
+    {
+        // get a track by it's id
+        const track = try zp.Track.getOne(alloc, c, sayonara, .{});
+        defer track.deinit();
+        try std.json.stringify(
+            track.value,
+            .{},
+            std.io.getStdOut().writer(),
+        );
+        _ = try std.io.getStdOut().writeAll("\n");
+    }
 
     // {
     //     // get tracks by their ids
@@ -54,17 +54,17 @@ pub fn main() !void {
     //     _ = try std.io.getStdOut().writeAll("\n");
     // }
 
-    {
-        try zp.Track.remove(alloc, c, &.{ sayonara, melancholy });
-        try zp.Track.save(alloc, c, &.{ sayonara, melancholy });
-        const contains = try zp.Track.contains(alloc, c, &.{ sayonara, melancholy });
-        defer contains.deinit();
+    // {
+    //     try zp.Track.remove(alloc, c, &.{ sayonara, melancholy });
+    //     try zp.Track.save(alloc, c, &.{ sayonara, melancholy });
+    //     const contains = try zp.Track.contains(alloc, c, &.{ sayonara, melancholy });
+    //     defer contains.deinit();
 
-        try std.json.stringify(
-            contains.value,
-            .{},
-            std.io.getStdOut().writer(),
-        );
-        _ = try std.io.getStdOut().writeAll("\n");
-    }
+    //     try std.json.stringify(
+    //         contains.value,
+    //         .{},
+    //         std.io.getStdOut().writer(),
+    //     );
+    //     _ = try std.io.getStdOut().writeAll("\n");
+    // }
 }

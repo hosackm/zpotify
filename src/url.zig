@@ -35,7 +35,7 @@ pub fn build(
     alloc: std.mem.Allocator,
     comptime host: []const u8,
     comptime path: []const u8,
-    comptime spotify_id: ?types.SpotifyId,
+    spotify_id: ?types.SpotifyId,
     params: anytype,
 ) ![]const u8 {
     var url = std.ArrayList(u8).init(alloc);

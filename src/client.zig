@@ -104,6 +104,58 @@ pub fn Client(comptime T: type) type {
             );
         }
 
+        pub fn post(
+            self: @This(),
+            alloc: std.mem.Allocator,
+            uri: std.Uri,
+            body: anytype,
+        ) ![]const u8 {
+            var client = std.http.Client{ .allocator = alloc };
+            defer client.deinit();
+
+            var buffer: [1024 * 10]u8 = undefined;
+            var req = try client.open(
+                .POST,
+                uri,
+                .{ .server_header_buffer = &buffer },
+            );
+            defer req.deinit();
+
+            const json = try std.json.stringifyAlloc(
+                alloc,
+                body,
+                .{},
+            );
+            defer alloc.free(json);
+
+            req.transfer_encoding = .{ .content_length = json.len };
+            req.headers.content_type = .{ .override = "application/x-www-form-urlencoded" };
+            try self.authenticator.authenticate(&req);
+
+            try req.send();
+            try req.writeAll(json);
+            try req.finish();
+            try req.wait();
+
+            switch (req.response.status) {
+                .ok, .created, .accepted, .no_content => {
+                    std.debug.print("client: ok!\n", .{});
+                },
+                .bad_request, .unauthorized, .forbidden, .not_found, .too_many_requests => {
+                    std.debug.print("client: user error - {s}\n", .{req.response.reason});
+                },
+                .internal_server_error, .bad_gateway, .service_unavailable => {
+                    std.debug.print("server error\n", .{});
+                },
+                else => unreachable,
+            }
+
+            return try req.reader().readAllAlloc(
+                alloc,
+                self.max_read_size,
+            );
+        }
+
         pub fn delete(
             self: @This(),
             alloc: std.mem.Allocator,

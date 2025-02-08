@@ -13,17 +13,17 @@ pub fn main() !void {
 
     const your_moms = "7pwe3F8sBnpf8NvqruLFrW";
     const bad_friends = "2dbSp6ewn5h3rXj1HqzyQE";
-    // {
-    //     // get an episode by it's id
-    //     const ep = try zp.Episode.getOne(alloc, c, your_moms, .{});
-    //     defer ep.deinit();
-    //     try std.json.stringify(
-    //         ep.value,
-    //         .{},
-    //         std.io.getStdOut().writer(),
-    //     );
-    //     _ = try std.io.getStdOut().writeAll("\n");
-    // }
+    {
+        // get an episode by it's id
+        const ep = try zp.Episode.getOne(alloc, c, your_moms, .{});
+        defer ep.deinit();
+        try std.json.stringify(
+            ep.value,
+            .{},
+            std.io.getStdOut().writer(),
+        );
+        _ = try std.io.getStdOut().writeAll("\n");
+    }
 
     {
         // get episodes by their ids
