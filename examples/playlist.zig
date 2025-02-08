@@ -11,7 +11,7 @@ pub fn main() !void {
     defer client.deinit();
     const c = &client.client;
 
-    const playlist_id = "1LyBnDxdG9CdJ8be4SrmOU";
+    // const playlist_id = "1LyBnDxdG9CdJ8be4SrmOU";
     // {
     //     // get a playlist by it's id
     //     const playlist = try zp.Playlist.getOne(alloc, c, playlist_id, .{});
@@ -23,21 +23,34 @@ pub fn main() !void {
     //     );
     //     _ = try std.io.getStdOut().writeAll("\n");
     // }
-    {
-        // get a playlist tracks
-        const tracks = try zp.Playlist.getTracks(alloc, c, playlist_id, .{});
-        defer tracks.deinit();
-        try std.json.stringify(
-            tracks.value,
-            .{},
-            std.io.getStdOut().writer(),
-        );
-        _ = try std.io.getStdOut().writeAll("\n");
-    }
-
     // {
-    //     zp.Playlist.setDetails(alloc, c, playlist_id, .{});
+    //     // get a playlist tracks
+    //     const tracks = try zp.Playlist.getTracks(alloc, c, playlist_id, .{});
+    //     defer tracks.deinit();
+    //     try std.json.stringify(
+    //         tracks.value,
+    //         .{},
+    //         std.io.getStdOut().writer(),
+    //     );
+    //     _ = try std.io.getStdOut().writeAll("\n");
     // }
+
+    {
+        var buffer: [128]u8 = undefined;
+        const description_str = try std.fmt.bufPrint(
+            &buffer,
+            "Updated description. Value: {d}",
+            .{std.time.nanoTimestamp()},
+        );
+        std.debug.print("setting playlist description to: {s}\n", .{description_str});
+
+        try zp.Playlist.setDetails(
+            alloc,
+            c,
+            "0pG5NJccBHQOUj3ihujaxo",
+            .{ .description = description_str },
+        );
+    }
 
     // {
     //     // get current user's tracks

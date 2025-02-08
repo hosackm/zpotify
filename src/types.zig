@@ -74,6 +74,19 @@ pub fn Manyify(
     });
 }
 
+// Custom JSON serialization to only include key/value
+// pairs if their optional is non-null.
+pub fn optionalStringify(object: anytype, writer: anytype) !void {
+    try writer.beginObject();
+    inline for (@typeInfo(@TypeOf(object)).Struct.fields) |s_field| {
+        if (@field(object, s_field.name)) |value| {
+            try writer.objectField(s_field.name);
+            try writer.write(value);
+        }
+    }
+    try writer.endObject();
+}
+
 // Copies a dynamic JSON object by using comptime type reflection.
 fn deepCopy(comptime T: type, v: std.json.Value) T {
     _ = v;
