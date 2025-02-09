@@ -14,7 +14,7 @@ pub fn build(b: *std.Build) void {
     );
 
     // Examples
-    const Example = enum {
+    const Examples = enum {
         audiobook,
         auth,
         artist,
@@ -23,23 +23,33 @@ pub fn build(b: *std.Build) void {
         episode,
         playlist,
         player,
+        search,
         show,
         track,
         user,
     };
-    const example_option = b.option(Example, "example", "Example to run (default: auth)") orelse .auth;
-    const example_step = b.step("example", "Run example");
-    const example = b.addExecutable(.{
-        .name = "example",
-        // future versions should use b.path, see zig PR #19597
-        .root_source_file = b.path(
-            b.fmt("examples/{s}.zig", .{@tagName(example_option)}),
-        ),
-        .target = target,
-        .optimize = optimize,
-    });
-    example.root_module.addImport("zpotify", zpotify);
 
-    const example_run = b.addRunArtifact(example);
-    example_step.dependOn(&example_run.step);
+    const example_step = b.step("example", "Run example");
+    const example_option = b.option(
+        Examples,
+        "example",
+        "Example to run (default: auth)",
+    ) orelse .auth;
+
+    inline for (@typeInfo(Examples).Enum.fields) |e_field| {
+        if (std.mem.eql(u8, @tagName(example_option), e_field.name)) {
+            const example = b.addExecutable(.{
+                .name = e_field.name,
+                .root_source_file = b.path("examples/" ++ e_field.name ++ ".zig"),
+                .target = target,
+                .optimize = optimize,
+            });
+            example.root_module.addImport("zpotify", zpotify);
+            b.installArtifact(example);
+
+            const example_run = b.addRunArtifact(example);
+            example_step.dependOn(b.getInstallStep());
+            example_step.dependOn(&example_run.step);
+        }
+    }
 }

@@ -147,7 +147,10 @@ pub fn Client(comptime T: type) type {
                 .internal_server_error, .bad_gateway, .service_unavailable => {
                     std.debug.print("server error\n", .{});
                 },
-                else => unreachable,
+                else => {
+                    std.debug.print("unhandled - {d}\n", .{req.response.status});
+                    unreachable;
+                },
             }
 
             return try req.reader().readAllAlloc(

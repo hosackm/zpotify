@@ -139,6 +139,30 @@ pub const Update = struct {
     }
 };
 
+const Remove = struct {
+    // An array of objects containing Spotify URIs of the tracks or episodes to remove.
+    // For example:
+    // { "tracks": [
+    //      { "uri": "spotify:track:4iV5W9uYEdYUVa79Axb7Rh" },
+    //      { "uri": "spotify:track:1301WleyT98MSxVHPZCA6M" }
+    // ]}
+    // A maximum of 100 objects can be sent at once.
+    tracks: []const types.SpotifyUri,
+
+    // The playlist's snapshot ID against which you want to make the changes.
+    // The API will validate that the specified items exist and in the specified
+    // positions and make the changes, even if more recent changes have
+    // been made to the playlist.
+    snapshot_id: []const u8,
+
+    pub fn jsonStringify(self: @This(), writer: anytype) !void {
+        try types.optionalStringify(
+            self,
+            writer,
+        );
+    }
+};
+
 pub const Add = struct {
     uris: ?[]const types.SpotifyUri,
     position: ?u16,
@@ -151,33 +175,28 @@ pub const Add = struct {
     }
 };
 
-pub const Remove = struct {
-    tracks: ?[]const types.SpotifyUri = null,
-    snapshot_id: ?[]const u8 = null,
-
-    pub fn jsonStringify(self: @This(), writer: anytype) !void {
-        try types.optionalStringify(
-            self,
-            writer,
-        );
-    }
-};
-
 collaborative: bool,
 description: []const u8,
 external_urls: std.json.Value,
-followers: std.json.Value,
 href: []const u8,
 id: []const u8,
-images: []const Image,
 name: []const u8,
 owner: std.json.Value,
 public: bool,
-// primary_color: ?[]const u8,
 snapshot_id: []const u8,
-tracks: Paged(PlaylistTrack),
 type: []const u8,
 uri: types.SpotifyUri,
+
+// actually isn't completely paginated...
+// "tracks": {
+//     "href": "https://api.spotify.com/v1/playlists/0pG5NJccBHQOUj3ihujaxo/tracks",
+//     "total": 0
+// },
+// tracks: Paged(PlaylistTrack),
+
+primary_color: ?[]const u8 = null,
+images: ?[]const Image = null,
+followers: ?std.json.Value = null,
 
 pub fn getOne(
     alloc: std.mem.Allocator,
@@ -335,7 +354,6 @@ pub fn remove(
     alloc: std.mem.Allocator,
     client: anytype,
     id: types.SpotifyId,
-    opts: struct { uris: []const types.SpotifyUri },
     rem: Remove,
 ) !P([]const u8) {
     const playlist_url = try url.build(
@@ -343,20 +361,66 @@ pub fn remove(
         url.base_url,
         "/playlists/{s}/tracks",
         id,
-        .{
-            .market = opts.market,
-            .fields = opts.fields,
-            .additional_types = opts.additional_types,
-        },
+        .{},
     );
     defer alloc.free(playlist_url);
 
-    _ = rem;
-    const body = try client.put(alloc, try std.Uri.parse(playlist_url), .{});
+    const body = try client.delete(alloc, try std.Uri.parse(playlist_url), rem);
     defer alloc.free(body);
 
     return try std.json.parseFromSlice(
         []const u8,
+        alloc,
+        body,
+        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
+    );
+}
+
+pub fn saved(
+    alloc: std.mem.Allocator,
+    client: anytype,
+    opts: struct { limit: ?u8 = null, offset: ?u8 = null },
+) !P(Paged(Self)) {
+    const playlist_url = try url.build(
+        alloc,
+        url.base_url,
+        "/me/playlists",
+        null,
+        .{ .limit = opts.limit, .offset = opts.offset },
+    );
+    defer alloc.free(playlist_url);
+
+    const body = try client.get(alloc, try std.Uri.parse(playlist_url));
+    defer alloc.free(body);
+
+    return try std.json.parseFromSlice(
+        Paged(Self),
+        alloc,
+        body,
+        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
+    );
+}
+
+pub fn getPlaylistsForUser(
+    alloc: std.mem.Allocator,
+    client: anytype,
+    id: types.SpotifyUserId,
+    opts: struct { limit: ?u8 = null, offset: ?u8 = null },
+) !P(Paged(Self)) {
+    const playlist_url = try url.build(
+        alloc,
+        url.base_url,
+        "/users/{s}/playlists",
+        id,
+        .{ .limit = opts.limit, .offset = opts.offset },
+    );
+    defer alloc.free(playlist_url);
+
+    const body = try client.get(alloc, try std.Uri.parse(playlist_url));
+    defer alloc.free(body);
+
+    return try std.json.parseFromSlice(
+        Paged(Self),
         alloc,
         body,
         .{ .ignore_unknown_fields = true, .allocate = .alloc_always },

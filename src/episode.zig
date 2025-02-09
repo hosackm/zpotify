@@ -33,13 +33,10 @@ pub const Simplified = struct {
     uri: types.SpotifyUri,
 };
 
-// extended
 show: Show,
-
-// missing
-// is_playable: bool,
-// resume_point
-// restrictions
+is_playable: ?bool = null,
+resume_point: ?types.ResumePoint = null,
+restrictions: ?std.json.Value = null,
 
 // Retrieve one Episode by SpotifyId
 pub fn getOne(

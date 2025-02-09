@@ -71,7 +71,13 @@ pub fn build(
                             try url.append('=');
 
                             switch (opt.child) {
-                                u8, u16 => {
+                                u8,
+                                u16,
+                                u32,
+                                u64,
+                                u128,
+                                usize,
+                                => {
                                     const s = try std.fmt.allocPrint(
                                         alloc,
                                         "{d}",
@@ -80,6 +86,7 @@ pub fn build(
                                     defer alloc.free(s);
                                     try url.appendSlice(s);
                                 },
+                                bool => try url.appendSlice(if (value) "true" else "false"),
                                 []const u8 => {
                                     const escaped = try escape(alloc, value);
                                     defer alloc.free(escaped);

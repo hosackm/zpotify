@@ -12,17 +12,17 @@ pub fn main() !void {
     const c = &client.client;
 
     const playlist_id = "1LyBnDxdG9CdJ8be4SrmOU";
-    {
-        // get a playlist by it's id
-        const playlist = try zp.Playlist.getOne(alloc, c, playlist_id, .{});
-        defer playlist.deinit();
-        try std.json.stringify(
-            playlist.value,
-            .{},
-            std.io.getStdOut().writer(),
-        );
-        _ = try std.io.getStdOut().writeAll("\n");
-    }
+    // {
+    //     // get a playlist by it's id
+    //     const playlist = try zp.Playlist.getOne(alloc, c, playlist_id, .{});
+    //     defer playlist.deinit();
+    //     try std.json.stringify(
+    //         playlist.value,
+    //         .{},
+    //         std.io.getStdOut().writer(),
+    //     );
+    //     _ = try std.io.getStdOut().writeAll("\n");
+    // }
     {
         // get a playlist tracks
         const tracks = try zp.Playlist.getTracks(alloc, c, playlist_id, .{});
@@ -77,5 +77,26 @@ pub fn main() !void {
     //         std.io.getStdOut().writer(),
     //     );
     //     _ = try std.io.getStdOut().writeAll("\n");
+    // }
+
+    // {
+    //     const playlist = try zp.Playlist.saved(alloc, c, .{});
+    //     defer playlist.deinit();
+    //     try std.json.stringify(
+    //         playlist.value,
+    //         .{},
+    //         std.io.getStdOut().writer(),
+    //     );
+    //     _ = try std.io.getStdOut().write("\n");
+    // }
+    // {
+    //     const playlist = try zp.Playlist.getPlaylistsForUser(alloc, c, "hosackm", .{});
+    //     defer playlist.deinit();
+    //     try std.json.stringify(
+    //         playlist.value,
+    //         .{},
+    //         std.io.getStdOut().writer(),
+    //     );
+    //     _ = try std.io.getStdOut().write("\n");
     // }
 }

@@ -14,7 +14,7 @@ pub const Simplified = struct {
     album_type: []const u8,
     artists: []const Artist.Simplified,
     available_markets: []const []const u8,
-    external_urls: std.json.Value, // use std.StringHashMap ? pack the std.json.Value object into it.
+    external_urls: std.json.Value,
     href: []const u8,
     id: types.SpotifyId,
     images: []const Image,
@@ -39,11 +39,9 @@ genres: []const u8,
 label: []const u8,
 popularity: u8,
 tracks: Paged(Track.Simplified),
-
-// restrictions: std.json.Value
-// external_ids: std.json.Value,
-// missing on artist.getTopTracks, or maybe artist.getAlbums
-// album_group: []const u8,
+restrictions: ?std.json.Value = null,
+external_ids: ?std.json.Value = null,
+album_group: ?[]const u8 = null,
 
 const Self = @This();
 

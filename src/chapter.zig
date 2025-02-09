@@ -6,12 +6,6 @@ const url = @import("url.zig");
 
 const Self = @This();
 
-pub const ResumePoint = struct {
-    fully_played: bool,
-    resume_position_ms: usize,
-};
-
-// Can probably remove simplified because it contains all fields
 pub const Simplified = struct {
     available_markets: []const []const u8,
     chapter_number: usize,
@@ -29,13 +23,9 @@ pub const Simplified = struct {
     release_date_precision: []const u8,
     type: []const u8,
     uri: types.SpotifyUri,
-
-    // missing if you haven't played yet?
-    // resume_point: ResumePoint,
-    // is_playable: bool,
-
-    // missing
-    // restrictions: std.json.Value,
+    resume_point: ?types.ResumePoint = null,
+    is_playable: ?bool = null,
+    restrictions: ?std.json.Value = null,
 };
 
 pub usingnamespace Simplified;

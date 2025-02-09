@@ -4,30 +4,36 @@
 
 ## Endpoints
 
-> 63 of 84
+> 72 of 84
 
+### category
 - [ ] Get Several Browse Categories
 - [ ] Get Single Browse Category
+
+### player
 - [ ] Transfer Playback
-- [ ] Seek To Position
-- [ ] Set Repeat Mode
-- [ ] Set Playback Volume
-- [ ] Toggle Playback Shuffle
 - [ ] Get Recently Played Tracks
 - [ ] Get the User's Queue
 - [ ] Add Item to Playback Queue
-- [ ] Change Playlist Details
-- [ ] Add Items to Playlist
-- [ ] Remove Playlist Items
-- [ ] Get Current User's Playlists
-- [ ] Get User's Playlists
+
+### playlist
 - [ ] Create Playlist
 - [ ] Get Featured Playlists
 - [ ] Get Category's Playlists
 - [ ] Get Playlist Cover Image
 - [ ] Add Custom Playlist Cover Image
-- [ ] Search for Item
 
+### done
+- [x] Search for Item
+- [x] Set Repeat Mode
+- [x] Set Playback Volume
+- [x] Toggle Playback Shuffle
+- [x] Seek To Position
+- [x] Get Current User's Playlists
+- [x] Get User's Playlists
+- [x] Change Playlist Details
+- [x] Add Items to Playlist
+- [x] Remove Playlist Items
 - [x] Get Playlist Items
 - [x] Get Playlist
 - [x] Update Playlist Items

@@ -15,10 +15,6 @@ const Self = @This();
 // Extend from Simplified
 pub usingnamespace Simplified;
 
-album: Album.Simplified,
-external_ids: std.json.Value,
-popularity: u8,
-
 pub const Simplified = struct {
     artists: []const Artist.Simplified,
     available_markets: []const []const u8,
@@ -36,16 +32,12 @@ pub const Simplified = struct {
     uri: types.SpotifyUri,
 };
 
-// missing
-// linked_from: std.json.Value,
-// restrictions: std.json.Value,
-// missing often
-// name: []const u8, // missing from albums/{id}/tracks
-// popularity: u8,
-// external_ids: std.json.Value,
-// is_playable: bool,
-// linked_from: std.json.Value,
-// restrictions: std.json.Value,
+album: Album.Simplified,
+external_ids: std.json.Value,
+popularity: u8,
+is_playable: ?bool = null,
+linked_from: ?std.json.Value = null,
+restrictions: ?std.json.Value = null,
 
 pub fn getOne(
     alloc: std.mem.Allocator,

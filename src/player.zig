@@ -159,7 +159,7 @@ pub fn next(
     );
     defer alloc.free(player_url);
 
-    const body = try client.put(alloc, try std.Uri.parse(player_url), .{});
+    const body = try client.post(alloc, try std.Uri.parse(player_url), .{});
     defer alloc.free(body);
 }
 
@@ -177,18 +177,101 @@ pub fn previous(
     );
     defer alloc.free(player_url);
 
-    const body = try client.put(alloc, try std.Uri.parse(player_url), .{});
+    const body = try client.post(alloc, try std.Uri.parse(player_url), .{});
     defer alloc.free(body);
 }
 
 // https://developer.spotify.com/documentation/web-api/reference/seek-to-position-in-currently-playing-track
 // /seek?device_id=...&position_ms=integer
+pub fn seekTo(
+    alloc: std.mem.Allocator,
+    client: anytype,
+    device_id: []const u8,
+    position_ms: usize,
+) !void {
+    const player_url = try url.build(
+        alloc,
+        url.base_url,
+        "/me/player/seek",
+        null,
+        .{
+            .device_id = @as(?[]const u8, device_id),
+            .position_ms = @as(?usize, position_ms),
+        },
+    );
+    defer alloc.free(player_url);
+
+    const body = try client.put(alloc, try std.Uri.parse(player_url), .{});
+    defer alloc.free(body);
+}
 
 // https://developer.spotify.com/documentation/web-api/reference/set-repeat-mode-on-users-playback
-// /repeat?device_id=...&context=track|context|off
+pub fn setRepeat(
+    alloc: std.mem.Allocator,
+    client: anytype,
+    device_id: []const u8,
+    state: enum { track, context, off },
+) !void {
+    const player_url = try url.build(
+        alloc,
+        url.base_url,
+        "/me/player/repeat",
+        null,
+        .{
+            .device_id = @as(?[]const u8, device_id),
+            .state = @as(?[]const u8, @tagName(state)),
+        },
+    );
+    defer alloc.free(player_url);
+
+    const body = try client.put(alloc, try std.Uri.parse(player_url), .{});
+    defer alloc.free(body);
+}
 
 // https://developer.spotify.com/documentation/web-api/reference/set-volume-for-users-playback
 // /volume?device_id=...&volume_percent=(0-100)
+pub fn setVolume(
+    alloc: std.mem.Allocator,
+    client: anytype,
+    device_id: []const u8,
+    volume_percent: u8,
+) !void {
+    const player_url = try url.build(
+        alloc,
+        url.base_url,
+        "/me/player/volume",
+        null,
+        .{
+            .device_id = @as(?[]const u8, device_id),
+            .volume_percent = @as(?u8, volume_percent),
+        },
+    );
+    defer alloc.free(player_url);
+
+    const body = try client.put(alloc, try std.Uri.parse(player_url), .{});
+    defer alloc.free(body);
+}
 
 // https://developer.spotify.com/documentation/web-api/reference/toggle-shuffle-for-users-playback
 // /shuffle?device_id=...&state=true|false
+pub fn setShuffle(
+    alloc: std.mem.Allocator,
+    client: anytype,
+    device_id: []const u8,
+    shuffle: bool,
+) !void {
+    const player_url = try url.build(
+        alloc,
+        url.base_url,
+        "/me/player/shuffle",
+        null,
+        .{
+            .device_id = @as(?[]const u8, device_id),
+            .state = @as(?bool, shuffle),
+        },
+    );
+    defer alloc.free(player_url);
+
+    const body = try client.put(alloc, try std.Uri.parse(player_url), .{});
+    defer alloc.free(body);
+}

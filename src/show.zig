@@ -34,7 +34,7 @@ pub const Simplified = struct {
 };
 
 // extended
-// url: []const u8,  // missing in simplified
+url: ?[]const u8 = null,
 
 // Spotify API often returns null instead of episode objects.
 episodes: Paged(?Episode.Simplified),

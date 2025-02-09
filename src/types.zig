@@ -20,6 +20,11 @@ pub const SpotifyUserId = []const u8;
 // example URL: wizzler
 pub const SpotifyUrl = []const u8;
 
+pub const ResumePoint = struct {
+    fully_played: bool,
+    resume_position_ms: usize,
+};
+
 // For when Spotify returns a group of objects using pages for iteration
 pub fn Paginated(comptime T: type) type {
     return struct {
