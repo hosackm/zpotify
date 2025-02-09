@@ -56,7 +56,7 @@ const Decl = std.builtin.Type.Declaration;
 // Create a new struct type wrapping a slice of type T with the field name set to name.
 // Spotify's API will return arrays of objects in a JSON object with a specific name as the key.
 //
-// For example, Manyify(Artist, "artists") -> struct { artists: []Artist }
+// For example, Manyify(Artist, "artists") -> struct { artists: []const Artist }
 pub fn Manyify(
     comptime T: type,
     comptime name: [:0]const u8,

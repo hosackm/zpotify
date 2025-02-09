@@ -3,11 +3,11 @@ pub usingnamespace @import("scopes.zig");
 pub usingnamespace @import("url.zig");
 
 // Spotify API Reference Stuff
-pub usingnamespace @import("categories.zig");
 pub usingnamespace @import("player.zig");
 pub usingnamespace @import("error.zig");
 pub usingnamespace @import("types.zig");
 
+pub const Category = @import("category.zig");
 pub const Client = @import("client.zig").Client;
 pub const Artist = @import("artist.zig");
 pub const Album = @import("album.zig");

@@ -19,6 +19,7 @@ pub fn build(b: *std.Build) void {
         auth,
         artist,
         album,
+        category,
         chapter,
         episode,
         playlist,
