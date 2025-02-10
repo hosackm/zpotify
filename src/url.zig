@@ -11,7 +11,7 @@ pub const token_uri = std.Uri.parse(token_url[0..]) catch unreachable;
 
 // Escapes a string for inclusion in a URL. Unsupported characters are converted
 // to their corresponding ASCII 2 digit hex codes preceded by a %.
-fn escape(alloc: std.mem.Allocator, s: []const u8) ![]u8 {
+pub fn escape(alloc: std.mem.Allocator, s: []const u8) ![]u8 {
     var list = std.ArrayList(u8).init(alloc);
     const convert: []const u8 = " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{`}~";
 

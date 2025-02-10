@@ -28,12 +28,24 @@ pub fn main() !void {
 }
 
 fn displayCode(alloc: std.mem.Allocator, creds: Credentials) !void {
+    const scope_string = try zpotify.toStringAlloc(alloc, zpotify.Everything);
+    defer alloc.free(scope_string);
+
+    var buffer: [1024:0]u8 = undefined;
+    _ = std.mem.replace(
+        u8,
+        scope_string,
+        " ",
+        "%20",
+        &buffer,
+    );
+
     const url = try std.fmt.allocPrint(
         alloc,
         "{s}response_type=code&scope={s}&redirect_uri={s}&client_id={s}",
         .{
             "https://accounts.spotify.com/authorize?",
-            zpotify.AllScopes,
+            buffer[0..],
             creds.redirect_uri,
             creds.client_id,
         },

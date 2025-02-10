@@ -1,45 +1,96 @@
 const std = @import("std");
-// ScopeImageUpload seeks permission to upload images to Spotify on your behalf.
-pub const ScopeImageUpload = "ugc-image-upload";
-// ScopePlaylistReadPrivate seeks permission to read
-// a user's private playlists.
-pub const ScopePlaylistReadPrivate = "playlist-read-private";
-// ScopePlaylistModifyPublic seeks write access
-// to a user's public playlists.
-pub const ScopePlaylistModifyPublic = "playlist-modify-public";
-// ScopePlaylistModifyPrivate seeks write access to
-// a user's private playlists.
-pub const ScopePlaylistModifyPrivate = "playlist-modify-private";
-// ScopePlaylistReadCollaborative seeks permission to
-// access a user's collaborative playlists.
-pub const ScopePlaylistReadCollaborative = "playlist-read-collaborative";
-// ScopeUserFollowModify seeks write/delete access to
-// the list of artists and other users that a user follows.
-pub const ScopeUserFollowModify = "user-follow-modify";
-// ScopeUserFollowRead seeks read access to the list of
-// artists and other users that a user follows.
-pub const ScopeUserFollowRead = "user-follow-read";
-// ScopeUserLibraryModify seeks write/delete access to a
-// user's "Your Music" library.
-pub const ScopeUserLibraryModify = "user-library-modify";
-// ScopeUserLibraryRead seeks read access to a user's "Your Music" library.
-pub const ScopeUserLibraryRead = "user-library-read";
-// ScopeUserReadPrivate seeks read access to a user's
-// subscription details (type of user account).
-pub const ScopeUserReadPrivate = "user-read-private";
-// ScopeUserReadEmail seeks read access to a user's email address.
-pub const ScopeUserReadEmail = "user-read-email";
-// ScopeUserReadCurrentlyPlaying seeks read access to a user's currently playing track
-pub const ScopeUserReadCurrentlyPlaying = "user-read-currently-playing";
-// ScopeUserReadPlaybackState seeks read access to the user's current playback state
-pub const ScopeUserReadPlaybackState = "user-read-playback-state";
-// ScopeUserModifyPlaybackState seeks write access to the user's current playback state
-pub const ScopeUserModifyPlaybackState = "user-modify-playback-state";
-// ScopeUserReadRecentlyPlayed allows access to a user's recently-played songs
-pub const ScopeUserReadRecentlyPlayed = "user-read-recently-played";
-// ScopeUserTopRead seeks read access to a user's top tracks and artists
-pub const ScopeUserTopRead = "user-top-read";
-// ScopeStreaming seeks permission to play music and control playback on your other devices.
-pub const ScopeStreaming = "streaming";
 
-pub const AllScopes = ScopeImageUpload ++ "%20" ++ ScopePlaylistReadPrivate ++ "%20" ++ ScopePlaylistModifyPublic ++ "%20" ++ ScopePlaylistModifyPrivate ++ "%20" ++ ScopePlaylistReadCollaborative ++ "%20" ++ ScopeUserFollowModify ++ "%20" ++ ScopeUserFollowRead ++ "%20" ++ ScopeUserLibraryModify ++ "%20" ++ ScopeUserLibraryRead ++ "%20" ++ ScopeUserReadPrivate ++ "%20" ++ ScopeUserReadEmail ++ "%20" ++ ScopeUserReadCurrentlyPlaying ++ "%20" ++ ScopeUserReadPlaybackState ++ "%20" ++ ScopeUserModifyPlaybackState ++ "%20" ++ ScopeUserReadRecentlyPlayed ++ "%20" ++ ScopeUserTopRead ++ "%20" ++ ScopeStreaming;
+const Scopes = std.EnumSet(Keys);
+pub const Keys = enum(u17) {
+    // upload scopes
+    image_upload = 1 << 0,
+
+    // playlist scopes
+    playlist_read_private = 1 << 1,
+    playlist_modify_public = 1 << 2,
+    playlist_modify_private = 1 << 3,
+    playlist_read_collaborative = 1 << 4,
+
+    // user data scopes
+    user_follow_modify = 1 << 5,
+    user_follow_read = 1 << 6,
+    user_library_modify = 1 << 7,
+    user_library_read = 1 << 8,
+    user_read_private = 1 << 9,
+    user_read_email = 1 << 10,
+    user_read_currently_playing = 1 << 11,
+    user_read_playback_state = 1 << 12,
+    user_modify_playback_state = 1 << 13,
+    user_read_recently_played = 1 << 14,
+    user_top_read = 1 << 15,
+
+    // streaming scopes
+    streaming = 1 << 16,
+};
+
+pub const Everything = Scopes.init(.{
+    .image_upload = true,
+    .playlist_read_private = true,
+    .playlist_modify_public = true,
+    .playlist_modify_private = true,
+    .playlist_read_collaborative = true,
+    .user_follow_modify = true,
+    .user_follow_read = true,
+    .user_library_modify = true,
+    .user_library_read = true,
+    .user_read_private = true,
+    .user_read_email = true,
+    .user_read_currently_playing = true,
+    .user_read_playback_state = true,
+    .user_modify_playback_state = true,
+    .user_read_recently_played = true,
+    .user_top_read = true,
+});
+
+// Joins scopes as strings separated by whitespace.
+pub fn toStringAlloc(alloc: std.mem.Allocator, scopes: Scopes) ![]const u8 {
+    var list = std.ArrayList(u8).init(alloc);
+    defer list.deinit();
+
+    var iter = scopes.iterator();
+    while (iter.next()) |tag| {
+        if (list.items.len > 0) try list.append(' ');
+        try list.appendSlice(
+            switch (tag) {
+                .image_upload => "ugc-image-upload",
+                .playlist_read_private => "playlist-read-private",
+                .playlist_modify_public => "playlist-modify-public",
+                .playlist_modify_private => "playlist-modify-private",
+                .playlist_read_collaborative => "playlist-read-collaborative",
+                .user_follow_modify => "user-follow-modify",
+                .user_follow_read => "user-follow-read",
+                .user_library_modify => "user-library-modify",
+                .user_library_read => "user-library-read",
+                .user_read_private => "user-read-private",
+                .user_read_email => "user-read-email",
+                .user_read_currently_playing => "user-read-currently-playing",
+                .user_read_playback_state => "user-read-playback-state",
+                .user_modify_playback_state => "user-modify-playback-state",
+                .user_read_recently_played => "user-read-recently-played",
+                .user_top_read => "user-top-read",
+                .streaming => "streaming",
+            },
+        );
+    }
+    return list.toOwnedSlice();
+}
+
+test "can stringify scopes" {
+    const expected = "user-follow-modify user-read-email streaming";
+    const scopes = Scopes.init(.{
+        .user_follow_modify = true,
+        .user_read_email = true,
+        .streaming = true,
+    });
+    const scope_string = try toStringAlloc(
+        std.testing.allocator,
+        scopes,
+    );
+    defer std.testing.allocator.free(scope_string);
+    try std.testing.expectEqualStrings(scope_string, expected);
+}

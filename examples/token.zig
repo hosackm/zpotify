@@ -195,7 +195,7 @@ pub const TokenSource = struct {
         );
         defer req.deinit();
 
-        const escaped = try zpotify.urls.escape(self.allocator, creds.redirect_uri);
+        const escaped = try zpotify.escape(self.allocator, creds.redirect_uri);
         defer self.allocator.free(escaped);
 
         const body = try std.fmt.allocPrint(
