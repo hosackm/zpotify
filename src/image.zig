@@ -1,3 +1,5 @@
 url: []const u8,
-height: usize,
-width: usize,
+// playlists.saved returns null for height and width
+// of user uploaded content
+height: ?usize,
+width: ?usize,

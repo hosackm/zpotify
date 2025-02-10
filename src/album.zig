@@ -149,6 +149,8 @@ pub fn getSaved(
         null,
         .{ .market = opts.market, .limit = opts.limit, .offset = opts.offset },
     );
+    defer alloc.free(album_url);
+
     const body = try client.get(alloc, try std.Uri.parse(album_url));
     defer alloc.free(body);
 
@@ -186,7 +188,7 @@ pub fn delete(
     defer alloc.free(body);
 }
 
-pub fn check(
+pub fn contains(
     alloc: std.mem.Allocator,
     client: anytype,
     ids: []const types.SpotifyId,

@@ -1,6 +1,7 @@
 const std = @import("std");
 const zp = @import("zpotify");
 const Client = @import("client.zig");
+const printJson = @import("common.zig").printJson;
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -17,12 +18,7 @@ pub fn main() !void {
         // get an episode by it's id
         const ep = try zp.Episode.getOne(alloc, c, your_moms, .{});
         defer ep.deinit();
-        try std.json.stringify(
-            ep.value,
-            .{},
-            std.io.getStdOut().writer(),
-        );
-        _ = try std.io.getStdOut().writeAll("\n");
+        try printJson(ep);
     }
 
     {
@@ -34,50 +30,23 @@ pub fn main() !void {
             .{},
         );
         defer episodes.deinit();
-        try std.json.stringify(
-            episodes.value,
-            .{},
-            std.io.getStdOut().writer(),
-        );
-        _ = try std.io.getStdOut().writeAll("\n");
+        try printJson(episodes);
     }
 
-    // {
-    //     // get current user's episodes
-    //     const episodes = try zp.Episode.getSaved(alloc, c, .{});
-    //     defer episodes.deinit();
-    //     try std.json.stringify(
-    //         episodes.value,
-    //         .{},
-    //         std.io.getStdOut().writer(),
-    //     );
-    //     _ = try std.io.getStdOut().writeAll("\n");
-    // }
+    {
+        // get current user's episodes
+        const episodes = try zp.Episode.getSaved(alloc, c, .{});
+        defer episodes.deinit();
+        try printJson(episodes);
+    }
 
-    // {
-    //     try zp.Episode.save(alloc, c, &.{ your_moms, bad_friends });
-    //     try zp.Episode.remove(alloc, c, &.{ your_moms, bad_friends });
+    {
+        try zp.Episode.save(alloc, c, &.{ your_moms, bad_friends });
+        try zp.Episode.remove(alloc, c, &.{ your_moms, bad_friends });
 
-    //     const contains = try zp.Episode.contains(alloc, c, &.{ your_moms, bad_friends });
-    //     defer contains.deinit();
+        const contains = try zp.Episode.contains(alloc, c, &.{ your_moms, bad_friends });
+        defer contains.deinit();
 
-    //     try std.json.stringify(
-    //         contains.value,
-    //         .{},
-    //         std.io.getStdOut().writer(),
-    //     );
-    //     _ = try std.io.getStdOut().writeAll("\n");
-    // }
-
-    // list markets...
-    // {
-    //     const markets = try zp.Markets.list(alloc, c);
-    //     defer markets.deinit();
-    //     try std.json.stringify(
-    //         markets.value,
-    //         .{},
-    //         std.io.getStdOut().writer(),
-    //     );
-    //     _ = try std.io.getStdOut().writeAll("\n");
-    // }
+        try printJson(contains);
+    }
 }

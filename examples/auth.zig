@@ -6,7 +6,6 @@ const std = @import("std");
 const zpotify = @import("zpotify");
 const Credentials = zpotify.Credentials;
 const Authenticator = zpotify.Authenticator;
-// const TokenSource = zpotify.TokenSource;
 const TokenSource = @import("token.zig").TokenSource;
 
 pub fn main() !void {

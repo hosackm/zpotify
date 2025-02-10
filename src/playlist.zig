@@ -11,6 +11,28 @@ const M = types.Manyify;
 
 const Self = @This();
 
+collaborative: bool,
+description: []const u8,
+external_urls: std.json.Value,
+href: []const u8,
+id: []const u8,
+name: []const u8,
+owner: std.json.Value,
+public: bool,
+snapshot_id: []const u8,
+type: []const u8,
+uri: types.SpotifyUri,
+primary_color: ?[]const u8 = null,
+images: ?[]const Image = null,
+followers: ?std.json.Value = null,
+
+// actually isn't completely paginated...
+// "tracks": {
+//     "href": "https://api.spotify.com/v1/playlists/0pG5NJccBHQOUj3ihujaxo/tracks",
+//     "total": 0
+// },
+// tracks: Paged(PlaylistTrack),
+
 const TrackOrEpisode = union(enum) {
     track: Track.Simplified,
     episode: Episode.Simplified,
@@ -174,29 +196,6 @@ pub const Add = struct {
         );
     }
 };
-
-collaborative: bool,
-description: []const u8,
-external_urls: std.json.Value,
-href: []const u8,
-id: []const u8,
-name: []const u8,
-owner: std.json.Value,
-public: bool,
-snapshot_id: []const u8,
-type: []const u8,
-uri: types.SpotifyUri,
-
-// actually isn't completely paginated...
-// "tracks": {
-//     "href": "https://api.spotify.com/v1/playlists/0pG5NJccBHQOUj3ihujaxo/tracks",
-//     "total": 0
-// },
-// tracks: Paged(PlaylistTrack),
-
-primary_color: ?[]const u8 = null,
-images: ?[]const Image = null,
-followers: ?std.json.Value = null,
 
 pub fn getOne(
     alloc: std.mem.Allocator,
@@ -392,6 +391,8 @@ pub fn saved(
 
     const body = try client.get(alloc, try std.Uri.parse(playlist_url));
     defer alloc.free(body);
+
+    std.debug.print("{s}\n", .{body});
 
     return try std.json.parseFromSlice(
         Paged(Self),

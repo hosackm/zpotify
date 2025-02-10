@@ -93,7 +93,6 @@ pub fn topTracks(
     alloc: std.mem.Allocator,
     client: anytype,
     opts: struct {
-        // which: Which,
         time_range: ?TimeRange = null,
         limit: ?u8 = null,
         offset: ?u8 = null,
@@ -102,7 +101,7 @@ pub fn topTracks(
     const user_url = try url.build(
         alloc,
         url.base_url,
-        "/me/top/artists",
+        "/me/top/tracks",
         null,
         .{ .limit = opts.limit, .offset = opts.offset },
     );
@@ -113,6 +112,8 @@ pub fn topTracks(
         try std.Uri.parse(user_url),
     );
     defer alloc.free(body);
+
+    std.debug.print("{s}\n", .{body});
 
     return try std.json.parseFromSlice(
         Paged(Track.Simplified),

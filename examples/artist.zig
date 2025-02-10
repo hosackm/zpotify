@@ -2,6 +2,7 @@ const std = @import("std");
 const zp = @import("zpotify");
 const Client = @import("client.zig");
 const TokenSource = @import("token.zig").TokenSource;
+const printJson = @import("common.zig").printJson;
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -12,70 +13,47 @@ pub fn main() !void {
     defer client.deinit();
     const c = &client.client;
 
-    // 7MSUfLeTdDEoZiJPDSBXgi - brian eno
-    // 0TnOYISbd1XYRBk9myaseg - pitbull
+    const eno = "7MSUfLeTdDEoZiJPDSBXgi";
+    const benson = "22wbnEMDvgVIAGdFeek6ET";
     {
         const artist = try zp.Artist.getOne(
             alloc,
             c,
-            "22wbnEMDvgVIAGdFeek6ET",
+            benson,
         );
         defer artist.deinit();
-        try std.json.stringify(
-            artist.value,
-            .{},
-            std.io.getStdOut().writer(),
-        );
-        _ = try std.io.getStdOut().write("\n");
+        try printJson(artist);
     }
 
-    // {
-    //     const artists = try zp.Artist.getMany(
-    //         alloc,
-    //         c,
-    //         &.{ "7MSUfLeTdDEoZiJPDSBXgi", "0TnOYISbd1XYRBk9myaseg" },
-    //     );
-    //     defer artists.deinit();
+    {
+        const artists = try zp.Artist.getMany(
+            alloc,
+            c,
+            &.{ eno, "0TnOYISbd1XYRBk9myaseg" },
+        );
+        defer artists.deinit();
+        try printJson(artists);
+    }
 
-    //     try std.json.stringify(
-    //         artists.value,
-    //         .{},
-    //         std.io.getStdOut().writer(),
-    //     );
-    //     _ = try std.io.getStdOut().write("\n");
-    // }
+    {
+        const albums = try zp.Artist.getAlbums(
+            alloc,
+            c,
+            eno,
+            .{},
+        );
+        defer albums.deinit();
+        try printJson(albums);
+    }
 
-    // {
-    //     const albums = try zp.Artist.getAlbums(
-    //         alloc,
-    //         c,
-    //         "7MSUfLeTdDEoZiJPDSBXgi",
-    //         .{},
-    //     );
-    //     defer albums.deinit();
-
-    //     try std.json.stringify(
-    //         albums.value,
-    //         .{},
-    //         std.io.getStdOut().writer(),
-    //     );
-    //     _ = try std.io.getStdOut().write("\n");
-    // }
-
-    // {
-    //     const tracks = try zp.Artist.getTopTracks(
-    //         alloc,
-    //         c,
-    //         "7MSUfLeTdDEoZiJPDSBXgi",
-    //         .{},
-    //     );
-    //     defer tracks.deinit();
-
-    //     try std.json.stringify(
-    //         tracks.value,
-    //         .{},
-    //         std.io.getStdOut().writer(),
-    //     );
-    //     _ = try std.io.getStdOut().write("\n");
-    // }
+    {
+        const tracks = try zp.Artist.getTopTracks(
+            alloc,
+            c,
+            eno,
+            .{},
+        );
+        defer tracks.deinit();
+        try printJson(tracks);
+    }
 }

@@ -13,14 +13,15 @@ const Self = @This();
 
 pub usingnamespace Simplified;
 
+// May not need. Simplified is all-encompassing?
 pub const Simplified = struct {
     audio_preview_url: []const u8,
     description: []const u8,
-    html_description: []const u8,
     duration_ms: usize,
     explicit: bool,
     external_urls: std.json.Value,
     href: []const u8,
+    html_description: []const u8,
     id: types.SpotifyId,
     images: []const Image,
     is_externally_hosted: bool,
@@ -29,11 +30,11 @@ pub const Simplified = struct {
     name: []const u8,
     release_date: []const u8,
     release_date_precision: []const u8,
+    show: Show.Simplified,
     type: []const u8,
     uri: types.SpotifyUri,
 };
 
-show: Show,
 is_playable: ?bool = null,
 resume_point: ?types.ResumePoint = null,
 restrictions: ?std.json.Value = null,
@@ -91,7 +92,7 @@ pub fn getMany(
     );
 }
 
-const Saved = struct { added_at: []const u8, episode: Self };
+const Saved = struct { added_at: []const u8, episode: Simplified };
 pub fn getSaved(
     alloc: std.mem.Allocator,
     client: anytype,
@@ -102,12 +103,18 @@ pub fn getSaved(
         url.base_url,
         "/me/episodes",
         null,
-        .{ .market = opts.market, .limit = opts.limit, .offset = opts.offset },
+        .{
+            .market = opts.market,
+            .limit = opts.limit,
+            .offset = opts.offset,
+        },
     );
     defer alloc.free(ep_url);
 
     const body = try client.get(alloc, try std.Uri.parse(ep_url));
     defer alloc.free(body);
+
+    std.debug.print("{s}\n", .{body});
 
     return try std.json.parseFromSlice(
         Paged(Saved),

@@ -82,14 +82,13 @@ pub fn toStringAlloc(alloc: std.mem.Allocator, scopes: Scopes) ![]const u8 {
 
 test "can stringify scopes" {
     const expected = "user-follow-modify user-read-email streaming";
-    const scopes = Scopes.init(.{
-        .user_follow_modify = true,
-        .user_read_email = true,
-        .streaming = true,
-    });
     const scope_string = try toStringAlloc(
         std.testing.allocator,
-        scopes,
+        Scopes.init(.{
+            .user_follow_modify = true,
+            .user_read_email = true,
+            .streaming = true,
+        }),
     );
     defer std.testing.allocator.free(scope_string);
     try std.testing.expectEqualStrings(scope_string, expected);

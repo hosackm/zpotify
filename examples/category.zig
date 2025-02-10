@@ -2,6 +2,7 @@ const std = @import("std");
 const zp = @import("zpotify");
 const Client = @import("client.zig");
 const TokenSource = @import("token.zig").TokenSource;
+const printJson = @import("common.zig").printJson;
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -12,25 +13,15 @@ pub fn main() !void {
     defer client.deinit();
     const c = &client.client;
 
-    const id = "dinner";
     {
+        const id = "dinner";
         const category = try zp.Category.getOne(alloc, c, id, .{});
         defer category.deinit();
-        try std.json.stringify(
-            category.value,
-            .{},
-            std.io.getStdOut().writer(),
-        );
-        _ = try std.io.getStdOut().write("\n");
+        try printJson(category);
     }
     {
         const categories = try zp.Category.getMany(alloc, c, .{});
         defer categories.deinit();
-        try std.json.stringify(
-            categories.value,
-            .{},
-            std.io.getStdOut().writer(),
-        );
-        _ = try std.io.getStdOut().write("\n");
+        try printJson(categories);
     }
 }
