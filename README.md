@@ -1,29 +1,69 @@
-# Supported Endpoints
+# Zpotify
+
+This is a zig module for interacting with the Spotify [Web API](https://developer.spotify.com/web-api/).
+
+By using this library you agree to [Spotify's Developer Terms of Use](https://developer.spotify.com/developer-terms-of-use/).
+
+## Installation
+
+To use the module, run the following command to save it as a dependency:
+
+```bash
+zig fetch --save git+https://github.com/hosackm/zpotify.git
+```
+
+And add the module to your `build.zig` to import the dependency:
+
+```zig
+const zpotifty = b.dependency("zpotify", .{});
+exe.root_module.addImport("zpotify", zpotify);
+```
 
 ## How to Authenticate
 
+The example [auth.zig](/examples/auth.zig) shows the authorization process laid out in Spotify's [Documentation](https://developer.spotify.com/documentation/web-api/concepts/authorization). This assumes that you've already created an application through the Spotify [Developer Dashboard](https://developer.spotify.com/dashboard).
+
+> TODO
+
+## Creating a Client
+
+> TODO
+
+## API Examples
+
+Examples of the API can be found in the [examples](/examples) directory. The list of available examples can be found in [build.zig](build.zig).
+
+To build one run:
+
+```bash
+zig build examples -Dexample=auth
+```
+
+Or to build all, run:
+
+```bash
+zig build examples -Dexample=all
+```
+
 ## Endpoints
 
-> 72 of 84
+There are 84 endpoints specified in the Spotify Web API [reference](https://developer.spotify.com/web-api/endpoint-reference/). Currently, 75 are supported with the remaining 9 soon to be implemented.
 
-### category
-- [ ] Get Several Browse Categories
-- [ ] Get Single Browse Category
-
-### player
+### Player
 - [ ] Transfer Playback
 - [ ] Get Recently Played Tracks
 - [ ] Get the User's Queue
 - [ ] Add Item to Playback Queue
-
-### playlist
+### Playlists
 - [ ] Create Playlist
 - [ ] Get Featured Playlists
 - [ ] Get Category's Playlists
 - [ ] Get Playlist Cover Image
 - [ ] Add Custom Playlist Cover Image
 
-### done
+### Supported (75 of 84)
+- [x] Get Several Browse Categories
+- [x] Get Single Browse Category
 - [x] Search for Item
 - [x] Set Repeat Mode
 - [x] Set Playback Volume

@@ -52,7 +52,12 @@ fn displayCode(alloc: std.mem.Allocator, creds: Credentials) !void {
     defer alloc.free(url);
 
     std.debug.print(
-        "Navigate to the follow URL and complete the prompt to be redirected:\n\n{s}\n\n",
+        \\Navigate to the follow URL to authenticate:
+        \\
+        \\{s}
+        \\
+        \\
+    ,
         .{url},
     );
 }
