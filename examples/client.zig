@@ -1,8 +1,8 @@
 const std = @import("std");
 const zp = @import("zpotify");
-const TokenSource = @import("token.zig").TokenSource;
+const FilePersistedToken = @import("token.zig").FilePersistedToken;
 
-const Auth = zp.Authenticator(TokenSource);
+const Auth = zp.Authenticator(FilePersistedToken);
 const Client = zp.Client(Auth);
 
 client: Client,
@@ -15,14 +15,10 @@ pub fn init(alloc: std.mem.Allocator) !Self {
     var em = try std.process.getEnvMap(alloc);
     defer em.deinit();
 
-    const auth: *Auth = try alloc.create(Auth);
+    const auth = try alloc.create(Auth);
     auth.* = .{
         .token_source = .{
-            .filename = try std.fmt.allocPrint(
-                alloc,
-                ".token.json",
-                .{},
-            ),
+            .filename = try alloc.dupe(u8, ".token.json"),
             .allocator = alloc,
         },
         .credentials = .{

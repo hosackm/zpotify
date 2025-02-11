@@ -1,4 +1,4 @@
-//! Shows how to create a TokenSource to pass to the Authenticator
+//! Shows how to create a FilePersistedToken to pass to the Authenticator
 //! as a comptime type. The authenticator doesn't care how you acquire
 //! or refresh tokens. All it needs is a method called get() on
 //! the type you pass in as a comptime type. This method will be
@@ -9,6 +9,7 @@ const zpotify = @import("zpotify");
 const Credentials = zpotify.Credentials;
 
 const Token = @This();
+
 access_token: []const u8,
 refresh_token: []const u8,
 
@@ -17,30 +18,11 @@ pub fn deinit(self: Token, alloc: std.mem.Allocator) void {
     alloc.free(self.refresh_token);
 }
 
-// // Encodes a string for inclusion in a URL. Unsupported characters are converted
-// // to their corresponding ASCII 2 digit hex codes preceded by a %.
-// fn urlEncode(alloc: std.mem.Allocator, s: []const u8) ![]u8 {
-//     var list = std.ArrayList(u8).init(alloc);
-//     const convert: []const u8 = " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{`}~";
-
-//     for (s, 0..) |c, n| {
-//         const slice = s[n .. n + 1];
-//         if (!std.mem.containsAtLeast(u8, convert, 1, slice)) {
-//             try list.append(c);
-//             continue;
-//         }
-//         var buf: [3]u8 = undefined;
-//         for (try std.fmt.bufPrint(&buf, "%{X}", .{c})) |ch| try list.append(ch);
-//     }
-
-//     return list.toOwnedSlice();
-// }
-
 // An example of a token source. Must have a method called "get" that
 // returns []const u8 containing the access token in exchange for the
 // client credentials. The authenticator will store the client credentials
 // and pass them in when calling "get" to retrieve a new token.
-pub const TokenSource = struct {
+pub const FilePersistedToken = struct {
     // This example token source persists a token to disk
     filename: []const u8,
     allocator: std.mem.Allocator,
@@ -49,7 +31,7 @@ pub const TokenSource = struct {
     pub const Error = error{Something};
 
     // This method must exist, and is checked at compile-time to exist.
-    pub fn get(self: TokenSource, creds: Credentials) Error![]const u8 {
+    pub fn get(self: FilePersistedToken, creds: Credentials) Error![]const u8 {
         // Read the token from the token.json file
         var token = self.read() catch return Error.Something;
         defer token.deinit(self.allocator);
@@ -63,7 +45,7 @@ pub const TokenSource = struct {
         return self.allocator.dupe(u8, token.access_token) catch return Error.Something;
     }
 
-    fn read(self: TokenSource) !Token {
+    fn read(self: FilePersistedToken) !Token {
         const f = try std.fs.cwd().openFile(self.filename, .{});
         defer f.close();
 
@@ -90,7 +72,7 @@ pub const TokenSource = struct {
         };
     }
 
-    fn refresh(self: TokenSource, token: *Token, creds: Credentials) !void {
+    fn refresh(self: FilePersistedToken, token: *Token, creds: Credentials) !void {
         // Not quite working...
         // if (!try self.isExpired()) return;
 
@@ -151,7 +133,7 @@ pub const TokenSource = struct {
         token.*.access_token = try self.allocator.dupe(u8, new_token);
     }
 
-    fn persist(self: TokenSource, token: Token) !void {
+    fn persist(self: FilePersistedToken, token: Token) !void {
         const f = try std.fs.cwd().openFile(
             self.filename,
             .{ .mode = .write_only },
@@ -169,7 +151,7 @@ pub const TokenSource = struct {
         );
     }
 
-    fn isExpired(self: TokenSource) !bool {
+    fn isExpired(self: FilePersistedToken) !bool {
         const f = try std.fs.cwd().openFile(self.filename, .{});
         defer f.close();
         const stat = try f.stat();
@@ -182,7 +164,7 @@ pub const TokenSource = struct {
 
     // Only use this method when you are acquiring a Token for the first
     // time by going through the OAuth authentication flow.
-    pub fn acquire(self: TokenSource, creds: Credentials, code: []const u8) !void {
+    pub fn acquire(self: FilePersistedToken, creds: Credentials, code: []const u8) !void {
         const uri = try std.Uri.parse("https://accounts.spotify.com/api/token");
         var client = std.http.Client{ .allocator = self.allocator };
         defer client.deinit();

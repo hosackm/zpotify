@@ -13,7 +13,7 @@ pub fn main() !void {
     const c = &client.client;
 
     {
-        // get a playlist by it's id
+        // get the user's player object
         if (try zp.Player.get(alloc, c, .{})) |player| {
             defer player.deinit();
             try printJson(player);
@@ -24,6 +24,7 @@ pub fn main() !void {
 
     {
         // get the current device and toggle the playback from play/paused
+        const toggle: bool = false;
         const devices = try zp.Player.getDevices(alloc, c);
         defer devices.deinit();
 
@@ -32,13 +33,15 @@ pub fn main() !void {
             const player_state = try zp.Player.currentlyPlaying(alloc, c, .{});
             defer player_state.deinit();
 
-            if (player_state.value.is_playing) {
-                std.debug.print("was playing -> pausing...\n", .{});
-                try zp.Player.pause(alloc, c, device_id);
-            } else {
-                std.debug.print("was paused -> playing...\n", .{});
-                try zp.Player.play(alloc, c, device_id);
-            }
+            if (toggle) {
+                if (player_state.value.is_playing) {
+                    std.debug.print("was playing -> pausing...\n", .{});
+                    try zp.Player.pause(alloc, c, device_id);
+                } else {
+                    std.debug.print("was paused -> playing...\n", .{});
+                    try zp.Player.play(alloc, c, device_id);
+                }
+            } else try printJson(player_state);
         } else {
             std.debug.print("no device found. start one to test.\n", .{});
         }
@@ -49,13 +52,14 @@ pub fn main() !void {
         const device = try getDevice(alloc, c);
         if (device) |dev| {
             defer alloc.free(dev);
-            // other options
+            // toggle a setting or seek to a track etc.
             // try zp.Player.seekTo(alloc, c, dev, 1);
             // try zp.Player.next(alloc, c, dev);
             // try zp.Player.previous(alloc, c, dev);
             // try zp.Player.setRepeat(alloc, c, dev, .track);
             // try zp.Player.setVolume(alloc, c, dev, 95);
-            try zp.Player.setShuffle(alloc, c, dev, true);
+            // try zp.Player.setShuffle(alloc, c, dev, true);
+            std.debug.print("{s}\n", .{dev});
         } else {
             std.debug.print("No device available.\n", .{});
         }

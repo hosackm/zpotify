@@ -6,7 +6,7 @@ const std = @import("std");
 const zpotify = @import("zpotify");
 const Credentials = zpotify.Credentials;
 const Authenticator = zpotify.Authenticator;
-const TokenSource = @import("token.zig").TokenSource;
+const FilePersistedToken = @import("token.zig").FilePersistedToken;
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -63,7 +63,7 @@ fn displayCode(alloc: std.mem.Allocator, creds: Credentials) !void {
 }
 
 pub fn runAuthFlow(alloc: std.mem.Allocator, creds: Credentials) !void {
-    var auth = Authenticator(TokenSource).init(.{
+    var auth = Authenticator(FilePersistedToken).init(.{
         .token_source = .{
             .filename = ".token.json",
             .allocator = alloc,

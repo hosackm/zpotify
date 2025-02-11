@@ -1,73 +1,48 @@
 const std = @import("std");
 const builtin = @import("builtin");
 
+const header_buffer_size = 1024 * 10;
+const max_read_size = 1024 * 1024;
+
+fn throw(req: std.http.Client.Request) !void {
+    switch (req.response.status) {
+        .ok, .created, .accepted, .no_content => {},
+        .bad_request, .unauthorized, .forbidden, .not_found, .too_many_requests => {},
+        .internal_server_error, .bad_gateway, .service_unavailable => {},
+        else => unreachable,
+    }
+}
+
 pub fn Client(comptime T: type) type {
     return struct {
         authenticator: *T,
-        max_read_size: usize = 1024 * 1024,
+        client: ?std.http.Client = null,
 
-        pub fn get(
-            self: @This(),
+        const Self = @This();
+
+        fn do(
+            self: *Self,
             alloc: std.mem.Allocator,
+            method: std.http.Method,
             uri: std.Uri,
+            body: anytype,
         ) ![]const u8 {
+
+            // This client should be cached across requests...
+            // var client = self.client orelse std.http.Client{ .allocator = alloc };
+            // self.client = client;
             var client = std.http.Client{ .allocator = alloc };
             defer client.deinit();
 
-            var buffer: [1024 * 10]u8 = undefined;
+            var buffer: [header_buffer_size]u8 = undefined;
             var req = try client.open(
-                .GET,
+                method,
                 uri,
                 .{ .server_header_buffer = &buffer },
             );
             defer req.deinit();
 
             try self.authenticator.authenticate(&req);
-            try req.send();
-            try req.wait();
-            try req.finish();
-
-            switch (req.response.status) {
-                // 200, 201, 202, 204
-                .ok, .created, .accepted, .no_content => {
-                    std.debug.print("client: ok!\n", .{});
-                },
-                // 400, 401, 403, 404, 429
-                .bad_request, .unauthorized, .forbidden, .not_found, .too_many_requests => {
-                    std.debug.print("client: user error - {s}\n", .{req.response.reason});
-                },
-                // 500, 502, 503
-                .internal_server_error, .bad_gateway, .service_unavailable => {
-                    std.debug.print("client: server error\n", .{});
-                },
-                else => {
-                    std.debug.print("unhandled - {d}\n", .{req.response.status});
-                    unreachable;
-                },
-            }
-
-            return try req.reader().readAllAlloc(
-                alloc,
-                self.max_read_size,
-            );
-        }
-
-        pub fn put(
-            self: @This(),
-            alloc: std.mem.Allocator,
-            uri: std.Uri,
-            body: anytype,
-        ) ![]const u8 {
-            var client = std.http.Client{ .allocator = alloc };
-            defer client.deinit();
-
-            var buffer: [1024 * 10]u8 = undefined;
-            var req = try client.open(
-                .PUT,
-                uri,
-                .{ .server_header_buffer = &buffer },
-            );
-            defer req.deinit();
 
             const json = try std.json.stringifyAlloc(
                 alloc,
@@ -76,154 +51,62 @@ pub fn Client(comptime T: type) type {
             );
             defer alloc.free(json);
 
-            req.transfer_encoding = .{ .content_length = json.len };
-            req.headers.content_type = .{ .override = "application/x-www-form-urlencoded" };
-            try self.authenticator.authenticate(&req);
+            switch (method) {
+                .DELETE, .PUT, .POST => {
+                    req.transfer_encoding = .{ .content_length = json.len };
+                    req.headers.content_type = .{
+                        .override = if (method == .DELETE)
+                            "application/json"
+                        else
+                            "application/x-www-form-urlencoded",
+                    };
 
-            try req.send();
-            try req.writeAll(json);
+                    try if (method == .DELETE)
+                        modifiedSend(&req)
+                    else
+                        req.send();
+
+                    try req.writeAll(json);
+                },
+                else => {
+                    try req.send();
+                },
+            }
+
             try req.finish();
             try req.wait();
 
-            switch (req.response.status) {
-                .ok, .created, .accepted, .no_content => {
-                    std.debug.print("client: ok!\n", .{});
-                },
-                .bad_request, .unauthorized, .forbidden, .not_found, .too_many_requests => {
-                    std.debug.print("client: user error - {s}\n", .{req.response.reason});
-                },
-                .internal_server_error, .bad_gateway, .service_unavailable => {
-                    std.debug.print("server error\n", .{});
-                },
-                else => unreachable,
-            }
-
+            try throw(req);
             return try req.reader().readAllAlloc(
                 alloc,
-                self.max_read_size,
+                max_read_size,
             );
         }
 
-        pub fn post(
-            self: @This(),
-            alloc: std.mem.Allocator,
-            uri: std.Uri,
-            body: anytype,
-        ) ![]const u8 {
-            var client = std.http.Client{ .allocator = alloc };
-            defer client.deinit();
-
-            var buffer: [1024 * 10]u8 = undefined;
-            var req = try client.open(
-                .POST,
-                uri,
-                .{ .server_header_buffer = &buffer },
-            );
-            defer req.deinit();
-
-            const json = try std.json.stringifyAlloc(
-                alloc,
-                body,
-                .{},
-            );
-            defer alloc.free(json);
-
-            req.transfer_encoding = .{ .content_length = json.len };
-            req.headers.content_type = .{ .override = "application/x-www-form-urlencoded" };
-            try self.authenticator.authenticate(&req);
-
-            try req.send();
-            try req.writeAll(json);
-            try req.finish();
-            try req.wait();
-
-            switch (req.response.status) {
-                .ok, .created, .accepted, .no_content => {
-                    std.debug.print("client: ok!\n", .{});
-                },
-                .bad_request, .unauthorized, .forbidden, .not_found, .too_many_requests => {
-                    std.debug.print("client: user error - {s}\n", .{req.response.reason});
-                },
-                .internal_server_error, .bad_gateway, .service_unavailable => {
-                    std.debug.print("server error\n", .{});
-                },
-                else => {
-                    std.debug.print("unhandled - {d}\n", .{req.response.status});
-                    unreachable;
-                },
-            }
-
-            return try req.reader().readAllAlloc(
-                alloc,
-                self.max_read_size,
-            );
+        pub fn get(self: Self, alloc: std.mem.Allocator, uri: std.Uri) ![]const u8 {
+            return try self.do(alloc, .GET, uri, .{});
         }
 
-        pub fn delete(
-            self: @This(),
-            alloc: std.mem.Allocator,
-            uri: std.Uri,
-            body: anytype,
-        ) ![]const u8 {
-            var client = std.http.Client{ .allocator = alloc };
-            defer client.deinit();
+        pub fn put(self: Self, alloc: std.mem.Allocator, uri: std.Uri, body: anytype) ![]const u8 {
+            return try self.do(alloc, .PUT, uri, body);
+        }
 
-            var buffer: [1024 * 10]u8 = undefined;
-            var req = try client.open(
-                .DELETE,
-                uri,
-                .{ .server_header_buffer = &buffer },
-            );
-            defer req.deinit();
+        pub fn post(self: Self, alloc: std.mem.Allocator, uri: std.Uri, body: anytype) ![]const u8 {
+            return try self.do(alloc, .POST, uri, body);
+        }
 
-            const json = try std.json.stringifyAlloc(
-                alloc,
-                body,
-                .{},
-            );
-            defer alloc.free(json);
-
-            req.headers.content_type = .{ .override = "application/json" };
-            try self.authenticator.authenticate(&req);
-
-            // can't use chunked? must set content length header explicitly
-            req.transfer_encoding = .{ .content_length = json.len };
-
-            // try req.send();
-            try mySend(&req);
-            try req.writeAll(json);
-            try req.finish();
-            try req.wait();
-
-            switch (req.response.status) {
-                // 200
-                .ok, .created, .accepted, .no_content => {
-                    std.debug.print("client: ok!\n", .{});
-                },
-                // 400, 401, 403, 404, 429
-                .bad_request, .unauthorized, .forbidden, .not_found, .too_many_requests => {
-                    std.debug.print("client: user error - {s}\n", .{req.response.reason});
-                },
-                // 500, 502, 503
-                .internal_server_error, .bad_gateway, .service_unavailable => {
-                    std.debug.print("server error\n", .{});
-                },
-                else => {
-                    std.debug.print("uncaught status code - {d}\n", .{req.response.status});
-                    @panic("hmmmm....");
-                },
-            }
-
-            return try req.reader().readAllAlloc(
-                alloc,
-                self.max_read_size,
-            );
+        pub fn delete(self: Self, alloc: std.mem.Allocator, uri: std.Uri, body: anytype) ![]const u8 {
+            return try self.do(alloc, .DELETE, uri, body);
         }
     };
 }
 
-fn mySend(req: *std.http.Client.Request) std.http.Client.Request.SendError!void {
-    // Skip this for a DELETE!
+// The std lib http client doesn't allow for transfer encoding during a DELETE
+// request. It performs a check and returns an error if this is attempted by
+// the user. So I'm copying out the send method and removing the transfer encoding
+// check at the beginning.
+fn modifiedSend(req: *std.http.Client.Request) std.http.Client.Request.SendError!void {
+    // Removing this check...
     // if (!req.method.requestHasBody() and req.transfer_encoding != .none)
     // return error.UnsupportedTransferEncoding;
 

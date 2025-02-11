@@ -1,7 +1,6 @@
 const std = @import("std");
 const zp = @import("zpotify");
 const Client = @import("client.zig");
-const TokenSource = @import("token.zig").TokenSource;
 const printJson = @import("common.zig").printJson;
 
 pub fn main() !void {
