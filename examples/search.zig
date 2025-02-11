@@ -7,7 +7,7 @@ pub fn main() !void {
     const alloc = gpa.allocator();
     defer if (gpa.deinit() == .leak) std.debug.print("LEAK!\n", .{});
 
-    const client = try Client.init(alloc);
+    var client = try Client.init(alloc);
     defer client.deinit();
     const c = &client.client;
 

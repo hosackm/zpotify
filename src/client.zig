@@ -16,9 +16,21 @@ fn throw(req: std.http.Client.Request) !void {
 pub fn Client(comptime T: type) type {
     return struct {
         authenticator: *T,
-        client: ?std.http.Client = null,
+        client: std.http.Client,
 
         const Self = @This();
+
+        pub fn init(alloc: std.mem.Allocator, auth: *T) Self {
+            return .{
+                .client = std.http.Client{ .allocator = alloc },
+                .authenticator = auth,
+            };
+        }
+
+        pub fn deinit(self: Self) void {
+            var c = self;
+            c.client.deinit();
+        }
 
         fn do(
             self: *Self,
@@ -27,15 +39,8 @@ pub fn Client(comptime T: type) type {
             uri: std.Uri,
             body: anytype,
         ) ![]const u8 {
-
-            // This client should be cached across requests...
-            // var client = self.client orelse std.http.Client{ .allocator = alloc };
-            // self.client = client;
-            var client = std.http.Client{ .allocator = alloc };
-            defer client.deinit();
-
             var buffer: [header_buffer_size]u8 = undefined;
-            var req = try client.open(
+            var req = try self.*.client.open(
                 method,
                 uri,
                 .{ .server_header_buffer = &buffer },
@@ -83,19 +88,19 @@ pub fn Client(comptime T: type) type {
             );
         }
 
-        pub fn get(self: Self, alloc: std.mem.Allocator, uri: std.Uri) ![]const u8 {
+        pub fn get(self: *Self, alloc: std.mem.Allocator, uri: std.Uri) ![]const u8 {
             return try self.do(alloc, .GET, uri, .{});
         }
 
-        pub fn put(self: Self, alloc: std.mem.Allocator, uri: std.Uri, body: anytype) ![]const u8 {
+        pub fn put(self: *Self, alloc: std.mem.Allocator, uri: std.Uri, body: anytype) ![]const u8 {
             return try self.do(alloc, .PUT, uri, body);
         }
 
-        pub fn post(self: Self, alloc: std.mem.Allocator, uri: std.Uri, body: anytype) ![]const u8 {
+        pub fn post(self: *Self, alloc: std.mem.Allocator, uri: std.Uri, body: anytype) ![]const u8 {
             return try self.do(alloc, .POST, uri, body);
         }
 
-        pub fn delete(self: Self, alloc: std.mem.Allocator, uri: std.Uri, body: anytype) ![]const u8 {
+        pub fn delete(self: *Self, alloc: std.mem.Allocator, uri: std.Uri, body: anytype) ![]const u8 {
             return try self.do(alloc, .DELETE, uri, body);
         }
     };

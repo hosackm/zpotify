@@ -30,16 +30,22 @@ pub fn init(alloc: std.mem.Allocator) !Self {
     };
 
     return .{
-        .client = .{ .authenticator = auth },
+        .client = Client.init(alloc, auth),
         .authenticator = auth,
         .allocator = alloc,
     };
+    // return .{
+    //     .client = .{ .authenticator = auth },
+    //     .authenticator = auth,
+    //     .allocator = alloc,
+    // };
 }
 
-pub fn deinit(self: Self) void {
+pub fn deinit(self: *Self) void {
     self.allocator.free(self.client.authenticator.*.credentials.redirect_uri);
     self.allocator.free(self.client.authenticator.*.credentials.client_id);
     self.allocator.free(self.client.authenticator.*.credentials.client_secret);
     self.allocator.free(self.client.authenticator.*.token_source.filename);
+    self.*.client.deinit();
     self.allocator.destroy(self.authenticator);
 }
