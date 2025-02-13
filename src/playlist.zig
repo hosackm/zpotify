@@ -382,33 +382,3 @@ pub fn getPlaylistsForUser(
     defer request.deinit();
     return JsonResponse(Paged(Self)).parse(alloc, &request);
 }
-
-test "parse playlist" {
-    const playlist = try std.json.parseFromSlice(
-        Self,
-        std.testing.allocator,
-        @import("test_data/files.zig").get_playlist,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer playlist.deinit();
-}
-
-test "parse playlist tracks" {
-    const tracks = try std.json.parseFromSlice(
-        Paged(PlaylistTrack),
-        std.testing.allocator,
-        @import("test_data/files.zig").playlist_tracks,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer tracks.deinit();
-}
-
-test "get user playlists" {
-    const playlists = try std.json.parseFromSlice(
-        Paged(Self),
-        std.testing.allocator,
-        @import("test_data/files.zig").current_users_playlists,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer playlists.deinit();
-}

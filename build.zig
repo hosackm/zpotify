@@ -61,4 +61,24 @@ pub fn build(b: *std.Build) void {
             }
         }
     }
+
+    // Add unit tests
+    const unit_tests = b.addTest(.{
+        .name = "unit_tests",
+        .root_source_file = b.path("src/root.zig"),
+    });
+    unit_tests.root_module.addImport("zpotify", zpotify);
+    const unit_run_cmd = b.addRunArtifact(unit_tests);
+    b.step("unit", "Run test executable").dependOn(&unit_run_cmd.step);
+    b.installArtifact(unit_tests);
+
+    // Add integration test app
+    const test_exe = b.addTest(.{
+        .name = "run_tests",
+        .root_source_file = b.path("test/root.zig"),
+    });
+    test_exe.root_module.addImport("zpotify", zpotify);
+    const test_run_cmd = b.addRunArtifact(test_exe);
+    b.step("test", "Run test executable").dependOn(&test_run_cmd.step);
+    b.installArtifact(test_exe);
 }

@@ -45,6 +45,48 @@ Or to build all, run:
 zig build examples -Dexample=all
 ```
 
+## Running Tests
+
+There are two groups of tests provided:
+
+1. Unit tests (`zig build unit`) which test the `zpotify` module
+2. Integration tests (`zig build test`) which test if the module can consume real-world content
+
+### Unit Tests
+
+To run the unit tests, run the following command:
+
+```bash
+zig build unit
+```
+
+This will execute the test and (if they pass) will return a code of 0.
+
+Or to install the unit test executable you can run:
+
+```bash
+zig build unit install
+# then you can run with verbose output
+./zig-out/bin/unit_tests 2>&1 | cat
+```
+
+### Integration Tests
+
+To run the unit tests, run the following command:
+
+```bash
+zig build test
+```
+This will execute the tests and (if they pass) will return a code of 0.
+
+Or to install the test executable you can run:
+
+```bash
+zig build test install
+# then you can run with verbose output
+./zig-out/bin/run_tests 2>&1 | cat
+```
+
 ## Endpoints
 
 There are 84 endpoints specified in the Spotify Web API [reference](https://developer.spotify.com/web-api/endpoint-reference/). Currently, 75 are supported with the remaining 9 soon to be implemented.

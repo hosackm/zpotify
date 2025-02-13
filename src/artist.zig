@@ -46,19 +46,6 @@ pub fn getOne(
     return JsonResponse(Self).parse(alloc, &request);
 }
 
-test "parse artist" {
-    const files = @import("./test_data/files.zig");
-    const alloc = std.testing.allocator;
-
-    const artist = try std.json.parseFromSlice(
-        Self,
-        alloc,
-        files.find_artist,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer artist.deinit();
-}
-
 pub fn getMany(
     alloc: std.mem.Allocator,
     client: anytype,
@@ -129,19 +116,4 @@ pub fn getTopTracks(
     return JsonResponse(
         M(Track.Simplified, "tracks"),
     ).parse(alloc, &request);
-}
-
-test "parse artist top tracks" {
-    const files = @import("./test_data/files.zig");
-    const alloc = std.testing.allocator;
-
-    const TopTracks = M(Track.Simplified, "tracks");
-
-    const top_tracks = try std.json.parseFromSlice(
-        TopTracks,
-        alloc,
-        files.artist_top_tracks,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer top_tracks.deinit();
 }

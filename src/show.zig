@@ -169,23 +169,3 @@ pub fn contains(
     defer request.deinit();
     return JsonResponse([]bool).parse(alloc, &request);
 }
-
-test "parse show" {
-    const show = try std.json.parseFromSlice(
-        Self,
-        std.testing.allocator,
-        @import("test_data/files.zig").get_show,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer show.deinit();
-}
-
-test "parse show episodes" {
-    const episodes = try std.json.parseFromSlice(
-        Self,
-        std.testing.allocator,
-        @import("test_data/files.zig").get_show_episodes,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer episodes.deinit();
-}

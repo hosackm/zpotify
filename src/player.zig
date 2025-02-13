@@ -21,7 +21,7 @@ device: ?Device = null,
 
 const Self = @This();
 
-const Device = struct {
+pub const Device = struct {
     id: []const u8,
     is_active: bool,
     is_private_session: ?bool = null,
@@ -51,16 +51,6 @@ pub fn get(
     return JsonResponse(?Self).parse(alloc, &request);
 }
 
-test "parse player state" {
-    const state = try std.json.parseFromSlice(
-        Self,
-        std.testing.allocator,
-        @import("test_data/files.zig").player_state,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer state.deinit();
-}
-
 pub fn getDevices(
     alloc: std.mem.Allocator,
     client: anytype,
@@ -77,16 +67,6 @@ pub fn getDevices(
     var request = try client.get(alloc, try std.Uri.parse(player_url));
     defer request.deinit();
     return JsonResponse(M(Device, "devices")).parse(alloc, &request);
-}
-
-test "parse player devices" {
-    const devices = try std.json.parseFromSlice(
-        M(Device, "devices"),
-        std.testing.allocator,
-        @import("test_data/files.zig").player_available_devices,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer devices.deinit();
 }
 
 pub fn currentlyPlaying(

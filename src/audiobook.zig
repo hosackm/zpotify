@@ -35,7 +35,7 @@ pub const Simplified = struct {
 };
 
 pub usingnamespace Simplified;
-chapters: Paged(Chapter.Simplified),
+chapters: Paged(Chapter),
 
 pub fn getOne(
     alloc: std.mem.Allocator,
@@ -55,16 +55,6 @@ pub fn getOne(
     var request = try client.get(alloc, try std.Uri.parse(audiobook_url));
     defer request.deinit();
     return JsonResponse(Self).parse(alloc, &request);
-}
-
-test "parse audiobook" {
-    const audiobook = try std.json.parseFromSlice(
-        Self,
-        std.testing.allocator,
-        @import("./test_data/files.zig").find_audiobook,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer audiobook.deinit();
 }
 
 pub fn getMany(
@@ -87,22 +77,12 @@ pub fn getMany(
     return JsonResponse(M(Self, "audiobooks")).parse(alloc, &request);
 }
 
-test "parse audiobooks" {
-    const audiobook = try std.json.parseFromSlice(
-        M(Self, "audiobooks"),
-        std.testing.allocator,
-        @import("./test_data/files.zig").find_audiobooks,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer audiobook.deinit();
-}
-
 pub fn getChapters(
     alloc: std.mem.Allocator,
     client: anytype,
     id: types.SpotifyId,
     opts: struct { market: ?[]const u8 = null, limit: ?u8 = null, offset: ?u16 = null },
-) !JsonResponse(Paged(Chapter.Simplified)) {
+) !JsonResponse(Paged(Chapter)) {
     const audiobook_url = try url.build(
         alloc,
         url.base_url,
@@ -114,17 +94,7 @@ pub fn getChapters(
 
     var request = try client.get(alloc, try std.Uri.parse(audiobook_url));
     defer request.deinit();
-    return JsonResponse(Paged(Chapter.Simplified)).parse(alloc, &request);
-}
-
-test "parse audiobook chapters" {
-    const audiobook = try std.json.parseFromSlice(
-        Paged(Chapter.Simplified),
-        std.testing.allocator,
-        @import("./test_data/files.zig").find_audiobook_chapters,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer audiobook.deinit();
+    return JsonResponse(Paged(Chapter)).parse(alloc, &request);
 }
 
 pub fn getSaved(
@@ -144,16 +114,6 @@ pub fn getSaved(
     var request = try client.get(alloc, try std.Uri.parse(audiobook_url));
     defer request.deinit();
     return JsonResponse(Paged(Simplified)).parse(alloc, &request);
-}
-
-test "parse current user's audiobooks" {
-    const audiobook = try std.json.parseFromSlice(
-        Paged(Simplified),
-        std.testing.allocator,
-        @import("./test_data/files.zig").current_users_audiobooks,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer audiobook.deinit();
 }
 
 pub fn save(

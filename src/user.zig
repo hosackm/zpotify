@@ -172,7 +172,7 @@ pub fn isFollowingPlaylist(
     return JsonResponse([]bool).parse(alloc, &request);
 }
 
-const CursoredArtists = struct { artists: types.Cursored(Artist) };
+pub const CursoredArtists = struct { artists: types.Cursored(Artist) };
 pub fn getFollowedArtists(
     alloc: std.mem.Allocator,
     client: anytype,
@@ -311,74 +311,4 @@ pub fn isFollowingUsers(
     var request = try client.get(alloc, try std.Uri.parse(user_url));
     defer request.deinit();
     return JsonResponse([]bool).parse(alloc, &request);
-}
-
-test "parse user's top artists" {
-    const artists = try std.json.parseFromSlice(
-        Paged(Artist),
-        std.testing.allocator,
-        @import("test_data/files.zig").current_users_top_artists,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer artists.deinit();
-}
-
-test "parse user's top tracks" {
-    const tracks = try std.json.parseFromSlice(
-        Paged(Track.Simplified),
-        std.testing.allocator,
-        @import("test_data/files.zig").current_users_top_tracks,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer tracks.deinit();
-}
-
-test "parse user" {
-    const data =
-        \\{
-        \\"country": "string",
-        \\"display_name": "string",
-        \\"email": "string",
-        \\"explicit_content": {
-        \\  "filter_enabled": false,
-        \\  "filter_locked": false
-        \\},
-        \\"external_urls": {
-        \\  "spotify": "string"
-        \\},
-        \\"followers": {
-        \\  "href": "string",
-        \\  "total": 0
-        \\},
-        \\"href": "string",
-        \\"id": "string",
-        \\"images": [
-        \\  {
-        \\    "url": "https://i.scdn.co/image/ab67616d00001e02ff9ca10b55ce82ae553c8228",
-        \\    "height": 300,
-        \\    "width": 300
-        \\  }
-        \\],
-        \\"product": "string",
-        \\"type": "string",
-        \\"uri": "string"
-        \\}
-    ;
-    const user = try std.json.parseFromSlice(
-        @This(),
-        std.testing.allocator,
-        data,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer user.deinit();
-}
-
-test "parse user's followed artists" {
-    const tracks = try std.json.parseFromSlice(
-        CursoredArtists,
-        std.testing.allocator,
-        @import("test_data/files.zig").current_users_followed_artists,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer tracks.deinit();
 }

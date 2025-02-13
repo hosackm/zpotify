@@ -4,7 +4,7 @@ const url = @import("url.zig");
 const P = std.json.Parsed;
 const JsonResponse = @import("types.zig").JsonResponse;
 
-const Result = union(enum) {
+pub const Result = union(enum) {
     tracks: std.json.Value,
     artists: std.json.Value,
     albums: std.json.Value,
@@ -169,31 +169,4 @@ pub fn search(
     var request = try client.get(alloc, try std.Uri.parse(search_url));
     defer request.deinit();
     return JsonResponse(Result).parse(alloc, &request);
-}
-
-test "parse search result" {
-    const artist = try std.json.parseFromSlice(
-        Result,
-        std.testing.allocator,
-        @import("test_data/files.zig").search_artist,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer artist.deinit();
-
-    const tracks = try std.json.parseFromSlice(
-        Result,
-        std.testing.allocator,
-        @import("test_data/files.zig").search_tracks,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer tracks.deinit();
-
-    // Currently don't handle multiple search types
-    // const track_playlist = try std.json.parseFromSlice(
-    //     Result,
-    //     std.testing.allocator,
-    //     @import("test_data/files.zig").search_trackplaylist,
-    //     .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    // );
-    // defer track_playlist.deinit();
 }

@@ -6,7 +6,7 @@ const Image = @import("image.zig");
 const Artist = @import("artist.zig");
 const Track = @import("track.zig");
 
-const Paged = types.Paginated;
+pub const Paged = types.Paginated;
 const M = types.Manyify;
 const P = std.json.Parsed;
 const JsonResponse = types.JsonResponse;
@@ -63,19 +63,6 @@ pub fn getOne(
     return JsonResponse(Self).parse(alloc, &request);
 }
 
-test "parse album" {
-    const alloc = std.testing.allocator;
-    const data = @import("test_data/files.zig").find_album;
-
-    const album = try std.json.parseFromSlice(
-        Self,
-        alloc,
-        data,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer album.deinit();
-}
-
 pub fn getMany(
     alloc: std.mem.Allocator,
     client: anytype,
@@ -101,19 +88,6 @@ pub fn getMany(
     ).parse(alloc, &request);
 }
 
-test "parse albums" {
-    const alloc = std.testing.allocator;
-    const data = @import("test_data/files.zig").find_albums;
-
-    const albums = try std.json.parseFromSlice(
-        M(Self, "albums"),
-        alloc,
-        data,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer albums.deinit();
-}
-
 pub fn getTracks(
     alloc: std.mem.Allocator,
     client: anytype,
@@ -137,19 +111,6 @@ pub fn getTracks(
     return JsonResponse(
         Paged(Track.Simplified),
     ).parse(alloc, &request);
-}
-
-test "find tracks for album" {
-    const alloc = std.testing.allocator;
-    const data = @import("test_data/files.zig").find_album_tracks;
-
-    const albums = try std.json.parseFromSlice(
-        Paged(Track.Simplified),
-        alloc,
-        data,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer albums.deinit();
 }
 
 pub const Saved = struct {
@@ -178,20 +139,6 @@ pub fn getSaved(
     defer request.deinit();
     return JsonResponse(Paged(Saved)).parse(alloc, &request);
 }
-
-test "parse user's albums" {
-    const alloc = std.testing.allocator;
-    const data = @import("test_data/files.zig").current_users_albums;
-
-    const albums = try std.json.parseFromSlice(
-        Paged(Saved),
-        alloc,
-        data,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer albums.deinit();
-}
-
 pub fn save(
     alloc: std.mem.Allocator,
     client: anytype,
@@ -237,7 +184,7 @@ pub fn contains(
     return JsonResponse([]bool).parse(alloc, &request);
 }
 
-const PaginatedSimpleAlbum = struct { albums: Paged(Simplified) };
+pub const PaginatedSimpleAlbum = struct { albums: Paged(Simplified) };
 pub fn newReleases(
     alloc: std.mem.Allocator,
     client: anytype,
@@ -258,17 +205,4 @@ pub fn newReleases(
     );
     defer request.deinit();
     return JsonResponse(PaginatedSimpleAlbum).parse(alloc, &request);
-}
-
-test "parse new releases" {
-    const alloc = std.testing.allocator;
-    const data = @import("test_data/files.zig").new_releases;
-
-    const new_releases = try std.json.parseFromSlice(
-        PaginatedSimpleAlbum,
-        alloc,
-        data,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer new_releases.deinit();
 }

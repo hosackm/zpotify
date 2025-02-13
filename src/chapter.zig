@@ -46,16 +46,6 @@ pub fn getOne(
     return types.JsonResponse(Self).parse(alloc, &request);
 }
 
-test "parse chapter" {
-    const artist = try std.json.parseFromSlice(
-        Self,
-        std.testing.allocator,
-        @import("test_data/files.zig").get_chapter,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer artist.deinit();
-}
-
 const Many = struct { chapters: []const Self };
 pub fn getMany(
     alloc: std.mem.Allocator,
@@ -75,14 +65,4 @@ pub fn getMany(
     var request = try client.get(alloc, try std.Uri.parse(chapter_url));
     defer request.deinit();
     return types.JsonResponse(Many).parse(alloc, &request);
-}
-
-test "parse chapters" {
-    const artist = try std.json.parseFromSlice(
-        Many,
-        std.testing.allocator,
-        @import("test_data/files.zig").get_chapters,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer artist.deinit();
 }

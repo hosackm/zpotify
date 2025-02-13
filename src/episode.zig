@@ -79,7 +79,7 @@ pub fn getMany(
     return JsonResponse(M(Self, "episodes")).parse(alloc, &request);
 }
 
-const Saved = struct { added_at: []const u8, episode: Self };
+pub const Saved = struct { added_at: []const u8, episode: Self };
 pub fn getSaved(
     alloc: std.mem.Allocator,
     client: anytype,
@@ -140,34 +140,4 @@ pub fn contains(
     var request = try client.get(alloc, try std.Uri.parse(ep_url));
     defer request.deinit();
     return JsonResponse([]bool).parse(alloc, &request);
-}
-
-test "parse episode" {
-    const episode = try std.json.parseFromSlice(
-        Self,
-        std.testing.allocator,
-        @import("test_data/files.zig").get_episode,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer episode.deinit();
-}
-
-test "parse episodes" {
-    const episodes = try std.json.parseFromSlice(
-        M(Self, "episodes"),
-        std.testing.allocator,
-        @import("test_data/files.zig").get_episodes,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer episodes.deinit();
-}
-
-test "parse saved episodes" {
-    const episodes = try std.json.parseFromSlice(
-        Paged(Saved),
-        std.testing.allocator,
-        @import("test_data/files.zig").current_users_episodes,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer episodes.deinit();
 }

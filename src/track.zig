@@ -154,33 +154,3 @@ pub fn contains(
     defer request.deinit();
     return JsonResponse([]bool).parse(alloc, &request);
 }
-
-test "parse track" {
-    const track = try std.json.parseFromSlice(
-        Self,
-        std.testing.allocator,
-        @import("test_data/files.zig").find_track,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer track.deinit();
-}
-
-test "parse tracks" {
-    const tracks = try std.json.parseFromSlice(
-        M(Simplified, "tracks"),
-        std.testing.allocator,
-        @import("test_data/files.zig").find_tracks_simple,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer tracks.deinit();
-}
-
-test "parse user's tracks" {
-    const tracks = try std.json.parseFromSlice(
-        Paged(Saved),
-        std.testing.allocator,
-        @import("test_data/files.zig").current_users_tracks,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer tracks.deinit();
-}
