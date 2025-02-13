@@ -7,6 +7,7 @@ const Track = @import("track.zig");
 const Paged = types.Paginated;
 const M = types.Manyify;
 const P = std.json.Parsed;
+const JsonResponse = types.JsonResponse;
 
 pub usingnamespace Simplified;
 
@@ -30,7 +31,7 @@ pub fn getOne(
     alloc: std.mem.Allocator,
     client: anytype,
     id: types.SpotifyId,
-) !P(Self) {
+) !JsonResponse(Self) {
     const artist_url = try url.build(
         alloc,
         url.base_url,
@@ -40,22 +41,29 @@ pub fn getOne(
     );
     defer alloc.free(artist_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(artist_url));
-    defer alloc.free(body);
+    var request = try client.get(alloc, try std.Uri.parse(artist_url));
+    defer request.deinit();
+    return JsonResponse(Self).parse(alloc, &request);
+}
 
-    return try std.json.parseFromSlice(
+test "parse artist" {
+    const files = @import("./test_data/files.zig");
+    const alloc = std.testing.allocator;
+
+    const artist = try std.json.parseFromSlice(
         Self,
         alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
+        files.find_artist,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
     );
+    defer artist.deinit();
 }
 
 pub fn getMany(
     alloc: std.mem.Allocator,
     client: anytype,
     ids: []const types.SpotifyId,
-) !P(M(Self, "artists")) {
+) !JsonResponse(M(Self, "artists")) {
     const artist_url = try url.build(
         alloc,
         url.base_url,
@@ -65,18 +73,14 @@ pub fn getMany(
     );
     defer alloc.free(artist_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(artist_url));
-    defer alloc.free(body);
+    var request = try client.get(alloc, try std.Uri.parse(artist_url));
+    defer request.deinit();
 
-    return try std.json.parseFromSlice(
+    return JsonResponse(
         M(Self, "artists"),
-        alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
-    );
+    ).parse(alloc, &request);
 }
 
-const PagedAlbum = Paged(Album.Simplified);
 const AlbumOpts = struct {
     include_groups: ?[]const []const u8 = null,
     market: ?[]const u8 = null,
@@ -88,7 +92,7 @@ pub fn getAlbums(
     client: anytype,
     comptime artist_id: types.SpotifyId,
     opts: AlbumOpts,
-) !P(PagedAlbum) {
+) !JsonResponse(Paged(Album.Simplified)) {
     const artist_url = try url.build(
         alloc,
         url.base_url,
@@ -98,15 +102,11 @@ pub fn getAlbums(
     );
     defer alloc.free(artist_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(artist_url));
-    defer alloc.free(body);
-
-    return try std.json.parseFromSlice(
-        PagedAlbum,
-        alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
-    );
+    var request = try client.get(alloc, try std.Uri.parse(artist_url));
+    defer request.deinit();
+    return JsonResponse(
+        Paged(Album.Simplified),
+    ).parse(alloc, &request);
 }
 
 pub fn getTopTracks(
@@ -114,7 +114,7 @@ pub fn getTopTracks(
     client: anytype,
     comptime artist_id: types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
-) !P(M(Track.Simplified, "tracks")) {
+) !JsonResponse(M(Track.Simplified, "tracks")) {
     const artist_url = try url.build(
         alloc,
         url.base_url,
@@ -124,18 +124,24 @@ pub fn getTopTracks(
     );
     defer alloc.free(artist_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(artist_url));
-    defer alloc.free(body);
-
-    std.debug.print("{s}\n", .{body});
-
-    return try std.json.parseFromSlice(
+    var request = try client.get(alloc, try std.Uri.parse(artist_url));
+    defer request.deinit();
+    return JsonResponse(
         M(Track.Simplified, "tracks"),
+    ).parse(alloc, &request);
+}
+
+test "parse artist top tracks" {
+    const files = @import("./test_data/files.zig");
+    const alloc = std.testing.allocator;
+
+    const TopTracks = M(Track.Simplified, "tracks");
+
+    const top_tracks = try std.json.parseFromSlice(
+        TopTracks,
         alloc,
-        body,
-        .{
-            .ignore_unknown_fields = true,
-            .allocate = .alloc_always,
-        },
+        files.artist_top_tracks,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
     );
+    defer top_tracks.deinit();
 }

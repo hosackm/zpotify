@@ -21,7 +21,7 @@ pub fn main() !void {
             .{},
         );
         defer album.deinit();
-        try printJson(album);
+        printJson(album);
     }
 
     {
@@ -32,7 +32,7 @@ pub fn main() !void {
             .{},
         );
         defer albums.deinit();
-        try printJson(albums);
+        printJson(albums);
     }
 
     {
@@ -43,7 +43,7 @@ pub fn main() !void {
             .{},
         );
         defer tracks.deinit();
-        try printJson(tracks);
+        printJson(tracks);
     }
 
     {
@@ -53,7 +53,7 @@ pub fn main() !void {
             .{},
         );
         defer saved.deinit();
-        try printJson(saved);
+        printJson(saved);
     }
 
     {
@@ -82,7 +82,7 @@ pub fn main() !void {
             &.{ "4aawyAB9vmqN3uQ7FjRGTy", "3JK7UWkTqg4uyv2OfWRvQ9" },
         );
         defer contains.deinit();
-        try printJson(contains);
+        printJson(contains);
     }
 
     {
@@ -92,6 +92,6 @@ pub fn main() !void {
             .{},
         );
         defer new.deinit();
-        try printJson(new);
+        printJson(new);
     }
 }

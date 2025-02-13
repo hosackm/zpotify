@@ -17,13 +17,13 @@ pub fn main() !void {
         // get a playlist by it's id
         const playlist = try zp.Playlist.getOne(alloc, c, playlist_id, .{});
         defer playlist.deinit();
-        try printJson(playlist);
+        printJson(playlist);
     }
     {
         // get a playlist tracks
         const tracks = try zp.Playlist.getTracks(alloc, c, playlist_id, .{});
         defer tracks.deinit();
-        try printJson(tracks);
+        printJson(tracks);
     }
 
     {
@@ -45,20 +45,13 @@ pub fn main() !void {
     }
 
     {
-        // get current user's tracks
-        const tracks = try zp.Track.getSaved(alloc, c, .{});
-        defer tracks.deinit();
-        try printJson(tracks);
-    }
-
-    {
         const playlist = try zp.Playlist.saved(alloc, c, .{});
         defer playlist.deinit();
-        try printJson(playlist);
+        printJson(playlist);
     }
     {
         const playlist = try zp.Playlist.getPlaylistsForUser(alloc, c, "hosackm", .{});
         defer playlist.deinit();
-        try printJson(playlist);
+        printJson(playlist);
     }
 }

@@ -1,6 +1,7 @@
 const std = @import("std");
 const zp = @import("zpotify");
 const Client = @import("client.zig");
+const printJson = @import("common.zig").printJson;
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -11,14 +12,24 @@ pub fn main() !void {
     defer client.deinit();
     const c = &client.client;
 
-    const result = try zp.Search.search(
-        alloc,
-        c,
-        "boards of canada",
-        .artist,
-        .{},
-    );
-    defer result.deinit();
+    const queries: []const struct { s: []const u8, type: zp.Search.Type } = &.{
+        .{ .s = "boards of canada", .type = .artist },
+        .{ .s = "ROYGBIV", .type = .track },
+        .{ .s = "Music Has the Right to Children", .type = .album },
+    };
+    for (queries) |query| {
+        const result = try zp.Search.search(
+            alloc,
+            c,
+            query.s,
+            query.type,
+            .{},
+        );
+        defer result.deinit();
 
-    std.debug.print("result: {any}\n", .{result.value});
+        switch (result.resp) {
+            .ok => printJson(result),
+            .err => {},
+        }
+    }
 }

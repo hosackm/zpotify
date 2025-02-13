@@ -16,11 +16,11 @@ pub fn main() !void {
         const id = "dinner";
         const category = try zp.Category.getOne(alloc, c, id, .{});
         defer category.deinit();
-        try printJson(category);
+        printJson(category);
     }
     {
         const categories = try zp.Category.getMany(alloc, c, .{});
         defer categories.deinit();
-        try printJson(categories);
+        printJson(categories);
     }
 }

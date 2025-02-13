@@ -6,36 +6,32 @@ const url = @import("url.zig");
 
 const Self = @This();
 
-pub const Simplified = struct {
-    available_markets: []const []const u8,
-    chapter_number: usize,
-    description: []const u8,
-    html_description: []const u8,
-    duration_ms: usize,
-    explicit: bool,
-    external_urls: std.json.Value,
-    href: []const u8,
-    id: types.SpotifyId,
-    images: []const Image,
-    languages: []const []const u8,
-    name: []const u8,
-    release_date: []const u8,
-    release_date_precision: []const u8,
-    type: []const u8,
-    uri: types.SpotifyUri,
-    resume_point: ?types.ResumePoint = null,
-    is_playable: ?bool = null,
-    restrictions: ?std.json.Value = null,
-};
-
-pub usingnamespace Simplified;
+available_markets: []const []const u8,
+chapter_number: usize,
+description: []const u8,
+html_description: []const u8,
+duration_ms: usize,
+explicit: bool,
+external_urls: std.json.Value,
+href: []const u8,
+id: types.SpotifyId,
+images: []const Image,
+languages: []const []const u8,
+name: []const u8,
+release_date: []const u8,
+release_date_precision: []const u8,
+type: []const u8,
+uri: types.SpotifyUri,
+resume_point: ?types.ResumePoint = null,
+is_playable: ?bool = null,
+restrictions: ?std.json.Value = null,
 
 pub fn getOne(
     alloc: std.mem.Allocator,
     client: anytype,
     id: types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
-) !std.json.Parsed(Simplified) {
+) !types.JsonResponse(Self) {
     const chapter_url = try url.build(
         alloc,
         url.base_url,
@@ -45,24 +41,28 @@ pub fn getOne(
     );
     defer alloc.free(chapter_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(chapter_url));
-    defer alloc.free(body);
-
-    return try std.json.parseFromSlice(
-        Simplified,
-        alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
-    );
+    var request = try client.get(alloc, try std.Uri.parse(chapter_url));
+    defer request.deinit();
+    return types.JsonResponse(Self).parse(alloc, &request);
 }
 
-const Many = struct { chapters: []const Simplified };
+test "parse chapter" {
+    const artist = try std.json.parseFromSlice(
+        Self,
+        std.testing.allocator,
+        @import("test_data/files.zig").get_chapter,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
+    );
+    defer artist.deinit();
+}
+
+const Many = struct { chapters: []const Self };
 pub fn getMany(
     alloc: std.mem.Allocator,
     client: anytype,
     ids: []const types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
-) !std.json.Parsed(Many) {
+) !types.JsonResponse(Many) {
     const chapter_url = try url.build(
         alloc,
         url.base_url,
@@ -72,13 +72,17 @@ pub fn getMany(
     );
     defer alloc.free(chapter_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(chapter_url));
-    defer alloc.free(body);
+    var request = try client.get(alloc, try std.Uri.parse(chapter_url));
+    defer request.deinit();
+    return types.JsonResponse(Many).parse(alloc, &request);
+}
 
-    return try std.json.parseFromSlice(
+test "parse chapters" {
+    const artist = try std.json.parseFromSlice(
         Many,
-        alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
+        std.testing.allocator,
+        @import("test_data/files.zig").get_chapters,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
     );
+    defer artist.deinit();
 }

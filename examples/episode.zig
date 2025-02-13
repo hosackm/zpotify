@@ -18,7 +18,7 @@ pub fn main() !void {
         // get an episode by it's id
         const ep = try zp.Episode.getOne(alloc, c, your_moms, .{});
         defer ep.deinit();
-        try printJson(ep);
+        printJson(ep);
     }
 
     {
@@ -30,14 +30,14 @@ pub fn main() !void {
             .{},
         );
         defer episodes.deinit();
-        try printJson(episodes);
+        printJson(episodes);
     }
 
     {
         // get current user's episodes
         const episodes = try zp.Episode.getSaved(alloc, c, .{});
         defer episodes.deinit();
-        try printJson(episodes);
+        printJson(episodes);
     }
 
     {
@@ -47,6 +47,6 @@ pub fn main() !void {
         const contains = try zp.Episode.contains(alloc, c, &.{ your_moms, bad_friends });
         defer contains.deinit();
 
-        try printJson(contains);
+        printJson(contains);
     }
 }

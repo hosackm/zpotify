@@ -1,3 +1,5 @@
+const std = @import("std");
+
 pub usingnamespace @import("auth.zig");
 pub usingnamespace @import("scopes.zig");
 pub usingnamespace @import("url.zig");
@@ -21,3 +23,7 @@ pub const Player = @import("player.zig");
 pub const Search = @import("search.zig");
 pub const Show = @import("show.zig");
 pub const Markets = @import("markets.zig");
+
+comptime {
+    std.testing.refAllDecls(@This());
+}

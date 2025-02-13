@@ -121,6 +121,28 @@ pub fn build(
     return try url.toOwnedSlice();
 }
 
+test "escape" {
+    const alloc = std.testing.allocator;
+
+    const inputs: []const struct { in: []const u8, out: []const u8 } = &.{
+        .{ .in = "hello world", .out = "hello%20world" },
+        .{ .in = "goodbye,space", .out = "goodbye%2Cspace" },
+        .{
+            .in = " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{`}~",
+            .out =
+            \\%20%21%22%23%24%25%26%27%28%29%2A%2B%2C%2D%2E%2F%3A%3B%3C%3D%3E%3F%40%5B%5C%5D%5E%5F%60%7B%60%7D%7E
+            ,
+        },
+    };
+
+    for (inputs) |input| {
+        const escaped = try escape(alloc, input.in);
+        defer alloc.free(escaped);
+
+        try std.testing.expectEqualStrings(escaped, input.out);
+    }
+}
+
 test "build url" {
     const alloc = std.testing.allocator;
     const P = struct {

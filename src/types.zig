@@ -92,12 +92,6 @@ pub fn optionalStringify(object: anytype, writer: anytype) !void {
     try writer.endObject();
 }
 
-// Copies a dynamic JSON object by using comptime type reflection.
-fn deepCopy(comptime T: type, v: std.json.Value) T {
-    _ = v;
-    return .{};
-}
-
 test "optional stringify" {
     const Details = struct {
         name: ?[]const u8 = null,
@@ -148,4 +142,73 @@ test "optional stringify" {
         try std.json.stringify(exp.input, .{}, list.writer());
         try std.testing.expect(std.mem.eql(u8, list.items, exp.output));
     }
+}
+
+pub const Error = struct {
+    // have to use @"error" because of Spotify's message structure
+    @"error": struct {
+        status: u9,
+        message: []const u8,
+    },
+};
+
+// Union type to represent both a JSON parsed type T or an error JSON Response
+// from the Spotify Web API.
+pub fn JsonResponse(comptime T: type) type {
+    return struct {
+        resp: union(enum) {
+            ok: std.json.Parsed(T),
+            err: std.json.Parsed(Error),
+        },
+
+        const Self = @This();
+
+        const default_opts: std.json.ParseOptions = .{
+            .ignore_unknown_fields = true,
+            .allocate = .alloc_always,
+        };
+
+        pub fn parse(alloc: std.mem.Allocator, request: *std.http.Client.Request) !Self {
+            var req = request.*;
+            const body = try req.reader().readAllAlloc(alloc, 1024 * 1024);
+            defer alloc.free(body);
+
+            if (body.len == 0) {
+                const parsed = try std.json.parseFromSlice(
+                    T,
+                    alloc,
+                    "null",
+                    default_opts,
+                );
+                return .{
+                    .resp = .{ .ok = parsed },
+                };
+            }
+            const code = @intFromEnum(req.response.status);
+            if (code >= 200 and code < 300) {
+                const parsed = try std.json.parseFromSlice(
+                    T,
+                    alloc,
+                    body,
+                    default_opts,
+                );
+                return .{ .resp = .{ .ok = parsed } };
+            }
+
+            const parsed = try std.json.parseFromSlice(
+                Error,
+                alloc,
+                body,
+                default_opts,
+            );
+            return .{ .resp = .{ .err = parsed } };
+        }
+
+        pub fn deinit(self: Self) void {
+            switch (self.resp) {
+                .err => |e| e.deinit(),
+                .ok => |o| o.deinit(),
+            }
+        }
+    };
 }

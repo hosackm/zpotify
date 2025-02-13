@@ -1,10 +1,10 @@
 //! Player from the web API reference
-
 const std = @import("std");
 const url = @import("url.zig");
 const types = @import("types.zig");
 const P = std.json.Parsed;
 const M = types.Manyify;
+const JsonResponse = types.JsonResponse;
 
 timestamp: usize,
 context: ?std.json.Value,
@@ -14,29 +14,29 @@ actions: std.json.Value,
 is_playing: bool,
 
 // not returned in json when testing
-// device: std.json.Value,
-// repeat_state: []const u8,
-// item: track or episode
-// shuffle_state: bool,
+device: ?Device = null,
+// repeat_state: ?[]const u8 = null,
+// item: ?track or episod = nulle
+// shuffle_state: ?bool = null,
 
 const Self = @This();
 
 const Device = struct {
     id: []const u8,
     is_active: bool,
-    is_private_session: bool,
-    // is_restricted: bool,
+    is_private_session: ?bool = null,
+    is_restricted: ?bool = null,
     name: []const u8,
     type: []const u8,
-    volume_percent: u8,
-    supports_volume: bool,
+    volume_percent: ?u8,
+    supports_volume: ?bool = null,
 };
 
 pub fn get(
     alloc: std.mem.Allocator,
     client: anytype,
     opts: struct { market: ?[]const u8 = null, additional_types: ?[]const u8 = null },
-) !?P(Self) {
+) !JsonResponse(?Self) {
     const player_url = try url.build(
         alloc,
         url.base_url,
@@ -46,21 +46,25 @@ pub fn get(
     );
     defer alloc.free(player_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(player_url));
-    defer alloc.free(body);
+    var request = try client.get(alloc, try std.Uri.parse(player_url));
+    defer request.deinit();
+    return JsonResponse(?Self).parse(alloc, &request);
+}
 
-    return if (body.len > 0) try std.json.parseFromSlice(
+test "parse player state" {
+    const state = try std.json.parseFromSlice(
         Self,
-        alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
-    ) else null;
+        std.testing.allocator,
+        @import("test_data/files.zig").player_state,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
+    );
+    defer state.deinit();
 }
 
 pub fn getDevices(
     alloc: std.mem.Allocator,
     client: anytype,
-) !P(M(Device, "devices")) {
+) !JsonResponse(M(Device, "devices")) {
     const player_url = try url.build(
         alloc,
         url.base_url,
@@ -70,15 +74,19 @@ pub fn getDevices(
     );
     defer alloc.free(player_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(player_url));
-    defer alloc.free(body);
+    var request = try client.get(alloc, try std.Uri.parse(player_url));
+    defer request.deinit();
+    return JsonResponse(M(Device, "devices")).parse(alloc, &request);
+}
 
-    return try std.json.parseFromSlice(
+test "parse player devices" {
+    const devices = try std.json.parseFromSlice(
         M(Device, "devices"),
-        alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
+        std.testing.allocator,
+        @import("test_data/files.zig").player_available_devices,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
     );
+    defer devices.deinit();
 }
 
 pub fn currentlyPlaying(
@@ -88,7 +96,7 @@ pub fn currentlyPlaying(
         markets: ?[]const u8 = null,
         additional_types: ?[]const u8 = null,
     },
-) !P(Self) {
+) !JsonResponse(?Self) {
     const player_url = try url.build(
         alloc,
         url.base_url,
@@ -98,15 +106,9 @@ pub fn currentlyPlaying(
     );
     defer alloc.free(player_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(player_url));
-    defer alloc.free(body);
-
-    return try std.json.parseFromSlice(
-        Self,
-        alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
-    );
+    var request = try client.get(alloc, try std.Uri.parse(player_url));
+    defer request.deinit();
+    return JsonResponse(?Self).parse(alloc, &request);
 }
 
 pub fn play(
@@ -122,9 +124,8 @@ pub fn play(
         .{ .device_id = @as(?[]const u8, device_id) },
     );
     defer alloc.free(player_url);
-
-    const body = try client.put(alloc, try std.Uri.parse(player_url), .{ .position_ms = 0 });
-    defer alloc.free(body);
+    var request = try client.put(alloc, try std.Uri.parse(player_url), .{ .position_ms = 0 });
+    defer request.deinit();
 }
 
 pub fn pause(
@@ -141,8 +142,8 @@ pub fn pause(
     );
     defer alloc.free(player_url);
 
-    const body = try client.put(alloc, try std.Uri.parse(player_url), .{});
-    defer alloc.free(body);
+    var request = try client.put(alloc, try std.Uri.parse(player_url), .{});
+    defer request.deinit();
 }
 
 pub fn next(
@@ -159,8 +160,8 @@ pub fn next(
     );
     defer alloc.free(player_url);
 
-    const body = try client.post(alloc, try std.Uri.parse(player_url), .{});
-    defer alloc.free(body);
+    var request = try client.post(alloc, try std.Uri.parse(player_url), .{});
+    defer request.deinit();
 }
 
 pub fn previous(
@@ -177,8 +178,8 @@ pub fn previous(
     );
     defer alloc.free(player_url);
 
-    const body = try client.post(alloc, try std.Uri.parse(player_url), .{});
-    defer alloc.free(body);
+    var request = try client.post(alloc, try std.Uri.parse(player_url), .{});
+    defer request.deinit();
 }
 
 // https://developer.spotify.com/documentation/web-api/reference/seek-to-position-in-currently-playing-track
@@ -201,8 +202,8 @@ pub fn seekTo(
     );
     defer alloc.free(player_url);
 
-    const body = try client.put(alloc, try std.Uri.parse(player_url), .{});
-    defer alloc.free(body);
+    var request = try client.put(alloc, try std.Uri.parse(player_url), .{});
+    defer request.deinit();
 }
 
 // https://developer.spotify.com/documentation/web-api/reference/set-repeat-mode-on-users-playback
@@ -224,8 +225,8 @@ pub fn setRepeat(
     );
     defer alloc.free(player_url);
 
-    const body = try client.put(alloc, try std.Uri.parse(player_url), .{});
-    defer alloc.free(body);
+    var request = try client.put(alloc, try std.Uri.parse(player_url), .{});
+    defer request.deinit();
 }
 
 // https://developer.spotify.com/documentation/web-api/reference/set-volume-for-users-playback
@@ -248,8 +249,8 @@ pub fn setVolume(
     );
     defer alloc.free(player_url);
 
-    const body = try client.put(alloc, try std.Uri.parse(player_url), .{});
-    defer alloc.free(body);
+    var request = try client.put(alloc, try std.Uri.parse(player_url), .{});
+    defer request.deinit();
 }
 
 // https://developer.spotify.com/documentation/web-api/reference/toggle-shuffle-for-users-playback
@@ -272,6 +273,6 @@ pub fn setShuffle(
     );
     defer alloc.free(player_url);
 
-    const body = try client.put(alloc, try std.Uri.parse(player_url), .{});
-    defer alloc.free(body);
+    var request = try client.put(alloc, try std.Uri.parse(player_url), .{});
+    defer request.deinit();
 }

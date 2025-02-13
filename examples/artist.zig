@@ -6,7 +6,10 @@ const printJson = @import("common.zig").printJson;
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const alloc = gpa.allocator();
-    defer if (gpa.deinit() == .leak) std.debug.print("LEAK!\n", .{});
+    defer if (gpa.deinit() == .leak) {
+        std.debug.print("LEAK!\n", .{});
+        _ = gpa.detectLeaks();
+    };
 
     var client = try Client.init(alloc);
     defer client.deinit();
@@ -21,7 +24,18 @@ pub fn main() !void {
             benson,
         );
         defer artist.deinit();
-        try printJson(artist);
+        printJson(artist);
+    }
+
+    // Example of a bad request and how an error is returned.
+    {
+        const artist = try zp.Artist.getOne(
+            alloc,
+            c,
+            "abcdeflkjgahsda", // bad id
+        );
+        defer artist.deinit();
+        printJson(artist);
     }
 
     {
@@ -31,7 +45,7 @@ pub fn main() !void {
             &.{ eno, "0TnOYISbd1XYRBk9myaseg" },
         );
         defer artists.deinit();
-        try printJson(artists);
+        printJson(artists);
     }
 
     {
@@ -42,7 +56,7 @@ pub fn main() !void {
             .{},
         );
         defer albums.deinit();
-        try printJson(albums);
+        printJson(albums);
     }
 
     {
@@ -53,6 +67,6 @@ pub fn main() !void {
             .{},
         );
         defer tracks.deinit();
-        try printJson(tracks);
+        printJson(tracks);
     }
 }

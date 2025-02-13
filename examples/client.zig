@@ -34,11 +34,6 @@ pub fn init(alloc: std.mem.Allocator) !Self {
         .authenticator = auth,
         .allocator = alloc,
     };
-    // return .{
-    //     .client = .{ .authenticator = auth },
-    //     .authenticator = auth,
-    //     .allocator = alloc,
-    // };
 }
 
 pub fn deinit(self: *Self) void {

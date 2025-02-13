@@ -10,6 +10,7 @@ const Track = @import("track.zig");
 const Paged = types.Paginated;
 const M = types.Manyify;
 const P = std.json.Parsed;
+const JsonResponse = types.JsonResponse;
 
 const Simplified = struct {
     display_name: []const u8,
@@ -34,19 +35,10 @@ const User = @This();
 pub fn getCurrentUser(
     alloc: std.mem.Allocator,
     client: anytype,
-) !P(User) {
-    const body = try client.get(
-        alloc,
-        try std.Uri.parse(url.base_url ++ "/me"),
-    );
-    defer alloc.free(body);
-
-    return try std.json.parseFromSlice(
-        User,
-        alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
-    );
+) !JsonResponse(User) {
+    var request = try client.get(alloc, try std.Uri.parse(url.base_url ++ "/me"));
+    defer request.deinit();
+    return JsonResponse(User).parse(alloc, &request);
 }
 
 const Top = union(enum) {
@@ -65,7 +57,7 @@ pub fn topArtists(
         limit: ?u8 = null,
         offset: ?u8 = null,
     },
-) !P(Paged(Artist)) {
+) !JsonResponse(Paged(Artist)) {
     const user_url = try url.build(
         alloc,
         url.base_url,
@@ -75,18 +67,9 @@ pub fn topArtists(
     );
     defer alloc.free(user_url);
 
-    const body = try client.get(
-        alloc,
-        try std.Uri.parse(user_url),
-    );
-    defer alloc.free(body);
-
-    return try std.json.parseFromSlice(
-        Paged(Artist),
-        alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
-    );
+    var request = try client.get(alloc, try std.Uri.parse(user_url));
+    defer request.deinit();
+    return JsonResponse(Paged(Artist)).parse(alloc, &request);
 }
 
 pub fn topTracks(
@@ -97,7 +80,7 @@ pub fn topTracks(
         limit: ?u8 = null,
         offset: ?u8 = null,
     },
-) !P(Paged(Track.Simplified)) {
+) !JsonResponse(Paged(Track.Simplified)) {
     const user_url = try url.build(
         alloc,
         url.base_url,
@@ -107,27 +90,16 @@ pub fn topTracks(
     );
     defer alloc.free(user_url);
 
-    const body = try client.get(
-        alloc,
-        try std.Uri.parse(user_url),
-    );
-    defer alloc.free(body);
-
-    std.debug.print("{s}\n", .{body});
-
-    return try std.json.parseFromSlice(
-        Paged(Track.Simplified),
-        alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
-    );
+    var request = try client.get(alloc, try std.Uri.parse(user_url));
+    defer request.deinit();
+    return JsonResponse(Paged(Track.Simplified)).parse(alloc, &request);
 }
 
 pub fn get(
     alloc: std.mem.Allocator,
     client: anytype,
     comptime user_id: types.SpotifyUserId,
-) !P(Simplified) {
+) !JsonResponse(Simplified) {
     const user_url = try url.build(
         alloc,
         url.base_url,
@@ -137,15 +109,9 @@ pub fn get(
     );
     defer alloc.free(user_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(user_url));
-    defer alloc.free(body);
-
-    return try std.json.parseFromSlice(
-        Simplified,
-        alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
-    );
+    var request = try client.get(alloc, try std.Uri.parse(user_url));
+    defer request.deinit();
+    return JsonResponse(Simplified).parse(alloc, &request);
 }
 
 pub fn followPlaylist(
@@ -164,12 +130,8 @@ pub fn followPlaylist(
     defer alloc.free(user_url);
 
     const data: struct { public: bool } = .{ .public = opts.public orelse true };
-    const body = try client.put(
-        alloc,
-        try std.Uri.parse(user_url),
-        data,
-    );
-    defer alloc.free(body);
+    var request = try client.put(alloc, try std.Uri.parse(user_url), data);
+    defer request.deinit();
 }
 
 pub fn unfollowPlaylist(
@@ -186,15 +148,15 @@ pub fn unfollowPlaylist(
     );
     defer alloc.free(user_url);
 
-    const body = try client.delete(alloc, try std.Uri.parse(user_url), .{});
-    defer alloc.free(body);
+    var request = try client.delete(alloc, try std.Uri.parse(user_url), .{});
+    defer request.deinit();
 }
 
 pub fn isFollowingPlaylist(
     alloc: std.mem.Allocator,
     client: anytype,
     comptime playlist_id: types.SpotifyId,
-) !bool {
+) !JsonResponse([]bool) {
     const user_url = try url.build(
         alloc,
         url.base_url,
@@ -204,14 +166,10 @@ pub fn isFollowingPlaylist(
     );
     defer alloc.free(user_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(user_url));
-    defer alloc.free(body);
+    var request = try client.get(alloc, try std.Uri.parse(user_url));
+    defer request.deinit();
 
-    const object = try std.json.parseFromSlice([]bool, alloc, body, .{});
-    defer object.deinit();
-
-    const following: []bool = object.value;
-    return following[0];
+    return JsonResponse([]bool).parse(alloc, &request);
 }
 
 const CursoredArtists = struct { artists: types.Cursored(Artist) };
@@ -222,7 +180,7 @@ pub fn getFollowedArtists(
         after: ?[]const u8 = null,
         limit: ?u8 = null,
     },
-) !P(CursoredArtists) {
+) !JsonResponse(CursoredArtists) {
     const user_url = try url.build(
         alloc,
         url.base_url,
@@ -231,20 +189,10 @@ pub fn getFollowedArtists(
         .{ .type = @as(?[]const u8, "artist"), .after = opts.after, .limit = opts.limit },
     );
     defer alloc.free(user_url);
-    const body = try client.get(alloc, try std.Uri.parse(user_url));
-    defer alloc.free(body);
 
-    std.debug.print("{s}\n", .{body});
-
-    return try std.json.parseFromSlice(
-        CursoredArtists,
-        alloc,
-        body,
-        .{
-            .ignore_unknown_fields = true,
-            .allocate = .alloc_always,
-        },
-    );
+    var request = try client.get(alloc, try std.Uri.parse(user_url));
+    defer request.deinit();
+    return JsonResponse(CursoredArtists).parse(alloc, &request);
 }
 
 pub fn followArtists(
@@ -261,12 +209,12 @@ pub fn followArtists(
     );
     defer alloc.free(artist_url);
 
-    const body = try client.put(
+    var request = try client.put(
         alloc,
         try std.Uri.parse(artist_url),
         struct { ids: @TypeOf(ids) }{ .ids = ids },
     );
-    defer alloc.free(body);
+    defer request.deinit();
 }
 
 pub fn unfollowArtists(
@@ -283,12 +231,8 @@ pub fn unfollowArtists(
     );
     defer alloc.free(artist_url);
 
-    const body = try client.delete(
-        alloc,
-        try std.Uri.parse(artist_url),
-        .{ .ids = ids },
-    );
-    defer alloc.free(body);
+    var request = try client.delete(alloc, try std.Uri.parse(artist_url), .{ .ids = ids });
+    defer request.deinit();
 }
 
 pub fn followUsers(
@@ -305,12 +249,8 @@ pub fn followUsers(
     );
     defer alloc.free(user_url);
 
-    const body = try client.put(
-        alloc,
-        try std.Uri.parse(user_url),
-        .{ .ids = ids },
-    );
-    defer alloc.free(body);
+    var request = try client.put(alloc, try std.Uri.parse(user_url), .{ .ids = ids });
+    defer request.deinit();
 }
 
 pub fn unfollowUsers(
@@ -327,19 +267,19 @@ pub fn unfollowUsers(
     );
     defer alloc.free(user_url);
 
-    const body = try client.delete(
+    var request = try client.delete(
         alloc,
         try std.Uri.parse(user_url),
         struct { ids: @TypeOf(ids) }{ .ids = ids },
     );
-    defer alloc.free(body);
+    defer request.deinit();
 }
 
 pub fn isFollowingArtists(
     alloc: std.mem.Allocator,
     client: anytype,
     ids: []const types.SpotifyId,
-) !P([]bool) {
+) !JsonResponse([]bool) {
     const artist_url = try url.build(
         alloc,
         url.base_url,
@@ -349,22 +289,16 @@ pub fn isFollowingArtists(
     );
     defer alloc.free(artist_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(artist_url));
-    defer alloc.free(body);
-
-    return try std.json.parseFromSlice(
-        []bool,
-        alloc,
-        body,
-        .{},
-    );
+    var request = try client.get(alloc, try std.Uri.parse(artist_url));
+    defer request.deinit();
+    return JsonResponse([]bool).parse(alloc, &request);
 }
 
 pub fn isFollowingUsers(
     alloc: std.mem.Allocator,
     client: anytype,
     ids: []const types.SpotifyId,
-) !P([]bool) {
+) !JsonResponse([]bool) {
     const user_url = try url.build(
         alloc,
         url.base_url,
@@ -374,13 +308,77 @@ pub fn isFollowingUsers(
     );
     defer alloc.free(user_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(user_url));
-    defer alloc.free(body);
+    var request = try client.get(alloc, try std.Uri.parse(user_url));
+    defer request.deinit();
+    return JsonResponse([]bool).parse(alloc, &request);
+}
 
-    return try std.json.parseFromSlice(
-        []bool,
-        alloc,
-        body,
-        .{},
+test "parse user's top artists" {
+    const artists = try std.json.parseFromSlice(
+        Paged(Artist),
+        std.testing.allocator,
+        @import("test_data/files.zig").current_users_top_artists,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
     );
+    defer artists.deinit();
+}
+
+test "parse user's top tracks" {
+    const tracks = try std.json.parseFromSlice(
+        Paged(Track.Simplified),
+        std.testing.allocator,
+        @import("test_data/files.zig").current_users_top_tracks,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
+    );
+    defer tracks.deinit();
+}
+
+test "parse user" {
+    const data =
+        \\{
+        \\"country": "string",
+        \\"display_name": "string",
+        \\"email": "string",
+        \\"explicit_content": {
+        \\  "filter_enabled": false,
+        \\  "filter_locked": false
+        \\},
+        \\"external_urls": {
+        \\  "spotify": "string"
+        \\},
+        \\"followers": {
+        \\  "href": "string",
+        \\  "total": 0
+        \\},
+        \\"href": "string",
+        \\"id": "string",
+        \\"images": [
+        \\  {
+        \\    "url": "https://i.scdn.co/image/ab67616d00001e02ff9ca10b55ce82ae553c8228",
+        \\    "height": 300,
+        \\    "width": 300
+        \\  }
+        \\],
+        \\"product": "string",
+        \\"type": "string",
+        \\"uri": "string"
+        \\}
+    ;
+    const user = try std.json.parseFromSlice(
+        @This(),
+        std.testing.allocator,
+        data,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
+    );
+    defer user.deinit();
+}
+
+test "parse user's followed artists" {
+    const tracks = try std.json.parseFromSlice(
+        CursoredArtists,
+        std.testing.allocator,
+        @import("test_data/files.zig").current_users_followed_artists,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
+    );
+    defer tracks.deinit();
 }

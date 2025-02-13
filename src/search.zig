@@ -2,6 +2,7 @@
 const std = @import("std");
 const url = @import("url.zig");
 const P = std.json.Parsed;
+const JsonResponse = @import("types.zig").JsonResponse;
 
 const Result = union(enum) {
     tracks: std.json.Value,
@@ -125,7 +126,15 @@ const Result = union(enum) {
     }
 };
 
-// this needs to be a union
+pub const Type = enum {
+    album,
+    artist,
+    playlist,
+    track,
+    show,
+    episode,
+    audiobook,
+};
 
 const Self = @This();
 
@@ -133,22 +142,14 @@ pub fn search(
     alloc: std.mem.Allocator,
     client: anytype,
     query: []const u8,
-    search_type: enum {
-        album,
-        artist,
-        playlist,
-        track,
-        show,
-        episode,
-        audiobook,
-    },
+    search_type: Type,
     opts: struct {
         market: ?[]const u8 = null,
         limit: ?usize = null,
         offset: ?usize = null,
         include_external: ?[]const u8 = null,
     },
-) !P(Result) {
+) !JsonResponse(Result) {
     const search_url = try url.build(
         alloc,
         url.base_url,
@@ -165,16 +166,34 @@ pub fn search(
     );
     defer alloc.free(search_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(search_url));
-    defer alloc.free(body);
+    var request = try client.get(alloc, try std.Uri.parse(search_url));
+    defer request.deinit();
+    return JsonResponse(Result).parse(alloc, &request);
+}
 
-    return try std.json.parseFromSlice(
+test "parse search result" {
+    const artist = try std.json.parseFromSlice(
         Result,
-        alloc,
-        body,
-        .{
-            .allocate = .alloc_always,
-            .ignore_unknown_fields = true,
-        },
+        std.testing.allocator,
+        @import("test_data/files.zig").search_artist,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
     );
+    defer artist.deinit();
+
+    const tracks = try std.json.parseFromSlice(
+        Result,
+        std.testing.allocator,
+        @import("test_data/files.zig").search_tracks,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
+    );
+    defer tracks.deinit();
+
+    // Currently don't handle multiple search types
+    // const track_playlist = try std.json.parseFromSlice(
+    //     Result,
+    //     std.testing.allocator,
+    //     @import("test_data/files.zig").search_trackplaylist,
+    //     .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
+    // );
+    // defer track_playlist.deinit();
 }

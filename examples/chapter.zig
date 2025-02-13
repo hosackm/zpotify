@@ -21,13 +21,13 @@ pub fn main() !void {
         // get a chapter by it's id
         const chapter = try zp.Chapter.getOne(alloc, c, one, .{});
         defer chapter.deinit();
-        try printJson(chapter);
+        printJson(chapter);
     }
 
     {
         // get multiple chapters by their ids
         const chapters = try zp.Chapter.getMany(alloc, c, &.{ one, another }, .{});
         defer chapters.deinit();
-        try printJson(chapters);
+        printJson(chapters);
     }
 }

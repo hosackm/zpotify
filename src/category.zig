@@ -7,6 +7,7 @@ const Image = @import("image.zig");
 const Paged = types.Paginated;
 const P = std.json.Parsed;
 const M = types.Manyify;
+const JsonResponse = types.JsonResponse;
 
 href: []const u8,
 id: types.SpotifyCategoryId,
@@ -24,7 +25,7 @@ pub fn getOne(
         limit: ?u16 = null,
         offset: ?u16 = null,
     },
-) !P(Self) {
+) !JsonResponse(Self) {
     const category_url = try url.build(
         alloc,
         url.base_url,
@@ -38,18 +39,33 @@ pub fn getOne(
     );
     defer alloc.free(category_url);
 
-    const body = try client.get(
-        alloc,
-        try std.Uri.parse(category_url),
-    );
-    defer alloc.free(body);
+    var request = try client.get(alloc, try std.Uri.parse(category_url));
+    defer request.deinit();
+    return JsonResponse(Self).parse(alloc, &request);
+}
 
-    return try std.json.parseFromSlice(
+test "parse category" {
+    const data =
+        \\{
+        \\"href": "string",
+        \\"icons": [
+        \\    {
+        \\    "url": "https://i.scdn.co/image/ab67616d00001e02ff9ca10b55ce82ae553c8228",
+        \\    "height": 300,
+        \\    "width": 300
+        \\    }
+        \\],
+        \\"id": "equal",
+        \\"name": "EQUAL"
+        \\}
+    ;
+    const categories = try std.json.parseFromSlice(
         Self,
-        alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
+        std.testing.allocator,
+        data,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
     );
+    defer categories.deinit();
 }
 
 // Yet a third way to return a grouping of objects...
@@ -62,7 +78,7 @@ pub fn getMany(
         limit: ?u16 = null,
         offset: ?u16 = null,
     },
-) !P(Categories) {
+) !JsonResponse(Categories) {
     const category_url = try url.build(
         alloc,
         url.base_url,
@@ -76,16 +92,43 @@ pub fn getMany(
     );
     defer alloc.free(category_url);
 
-    const body = try client.get(
-        alloc,
-        try std.Uri.parse(category_url),
-    );
-    defer alloc.free(body);
+    var request = try client.get(alloc, try std.Uri.parse(category_url));
+    defer request.deinit();
+    return JsonResponse(Categories).parse(alloc, &request);
+}
 
-    return try std.json.parseFromSlice(
+test "parse categories" {
+    const data =
+        \\{
+        \\    "categories": {
+        \\        "href": "https://api.spotify.com/v1/me/shows?offset=0&limit=20",
+        \\        "limit": 20,
+        \\        "next": "https://api.spotify.com/v1/me/shows?offset=1&limit=1",
+        \\        "offset": 0,
+        \\        "previous": "https://api.spotify.com/v1/me/shows?offset=1&limit=1",
+        \\        "total": 4,
+        \\        "items": [
+        \\        {
+        \\            "href": "string",
+        \\            "icons": [
+        \\            {
+        \\                "url": "https://i.scdn.co/image/ab67616d00001e02ff9ca10b55ce82ae553c8228",
+        \\                "height": 300,
+        \\                "width": 300
+        \\            }
+        \\            ],
+        \\            "id": "equal",
+        \\            "name": "EQUAL"
+        \\        }
+        \\        ]
+        \\    }
+        \\}
+    ;
+    const categories = try std.json.parseFromSlice(
         Categories,
-        alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
+        std.testing.allocator,
+        data,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
     );
+    defer categories.deinit();
 }

@@ -8,6 +8,7 @@ const url = @import("url.zig");
 const Paged = types.Paginated;
 const M = types.Manyify;
 const P = std.json.Parsed;
+const JsonResponse = types.JsonResponse;
 
 const Self = @This();
 
@@ -41,7 +42,7 @@ pub fn getOne(
     client: anytype,
     id: types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
-) !P(Self) {
+) !JsonResponse(Self) {
     const audiobook_url = try url.build(
         alloc,
         url.base_url,
@@ -51,18 +52,19 @@ pub fn getOne(
     );
     defer alloc.free(audiobook_url);
 
-    const body = try client.get(
-        alloc,
-        try std.Uri.parse(audiobook_url),
-    );
-    defer alloc.free(body);
+    var request = try client.get(alloc, try std.Uri.parse(audiobook_url));
+    defer request.deinit();
+    return JsonResponse(Self).parse(alloc, &request);
+}
 
-    return try std.json.parseFromSlice(
+test "parse audiobook" {
+    const audiobook = try std.json.parseFromSlice(
         Self,
-        alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
+        std.testing.allocator,
+        @import("./test_data/files.zig").find_audiobook,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
     );
+    defer audiobook.deinit();
 }
 
 pub fn getMany(
@@ -70,7 +72,7 @@ pub fn getMany(
     client: anytype,
     ids: []const types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
-) !P(M(Self, "audiobooks")) {
+) !JsonResponse(M(Self, "audiobooks")) {
     const audiobook_url = try url.build(
         alloc,
         url.base_url,
@@ -80,18 +82,19 @@ pub fn getMany(
     );
     defer alloc.free(audiobook_url);
 
-    const body = try client.get(
-        alloc,
-        try std.Uri.parse(audiobook_url),
-    );
-    defer alloc.free(body);
+    var request = try client.get(alloc, try std.Uri.parse(audiobook_url));
+    defer request.deinit();
+    return JsonResponse(M(Self, "audiobooks")).parse(alloc, &request);
+}
 
-    return try std.json.parseFromSlice(
+test "parse audiobooks" {
+    const audiobook = try std.json.parseFromSlice(
         M(Self, "audiobooks"),
-        alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
+        std.testing.allocator,
+        @import("./test_data/files.zig").find_audiobooks,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
     );
+    defer audiobook.deinit();
 }
 
 pub fn getChapters(
@@ -99,7 +102,7 @@ pub fn getChapters(
     client: anytype,
     id: types.SpotifyId,
     opts: struct { market: ?[]const u8 = null, limit: ?u8 = null, offset: ?u16 = null },
-) !P(Paged(Chapter.Simplified)) {
+) !JsonResponse(Paged(Chapter.Simplified)) {
     const audiobook_url = try url.build(
         alloc,
         url.base_url,
@@ -109,25 +112,26 @@ pub fn getChapters(
     );
     defer alloc.free(audiobook_url);
 
-    const body = try client.get(
-        alloc,
-        try std.Uri.parse(audiobook_url),
-    );
-    defer alloc.free(body);
+    var request = try client.get(alloc, try std.Uri.parse(audiobook_url));
+    defer request.deinit();
+    return JsonResponse(Paged(Chapter.Simplified)).parse(alloc, &request);
+}
 
-    return try std.json.parseFromSlice(
+test "parse audiobook chapters" {
+    const audiobook = try std.json.parseFromSlice(
         Paged(Chapter.Simplified),
-        alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
+        std.testing.allocator,
+        @import("./test_data/files.zig").find_audiobook_chapters,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
     );
+    defer audiobook.deinit();
 }
 
 pub fn getSaved(
     alloc: std.mem.Allocator,
     client: anytype,
     opts: struct { limit: ?u8 = null, offset: ?u16 = null },
-) !P(Paged(Simplified)) {
+) !JsonResponse(Paged(Simplified)) {
     const audiobook_url = try url.build(
         alloc,
         url.base_url,
@@ -136,15 +140,20 @@ pub fn getSaved(
         .{ .limit = opts.limit, .offset = opts.offset },
     );
     defer alloc.free(audiobook_url);
-    const body = try client.get(alloc, try std.Uri.parse(audiobook_url));
-    defer alloc.free(body);
 
-    return try std.json.parseFromSlice(
+    var request = try client.get(alloc, try std.Uri.parse(audiobook_url));
+    defer request.deinit();
+    return JsonResponse(Paged(Simplified)).parse(alloc, &request);
+}
+
+test "parse current user's audiobooks" {
+    const audiobook = try std.json.parseFromSlice(
         Paged(Simplified),
-        alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
+        std.testing.allocator,
+        @import("./test_data/files.zig").current_users_audiobooks,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
     );
+    defer audiobook.deinit();
 }
 
 pub fn save(
@@ -152,9 +161,6 @@ pub fn save(
     client: anytype,
     ids: []const types.SpotifyId,
 ) !void {
-    // const joined = try std.mem.join(alloc, "%2C", ids);
-    // defer alloc.free(joined);
-
     const audiobook_url = try url.build(
         alloc,
         url.base_url,
@@ -163,7 +169,8 @@ pub fn save(
         .{ .ids = ids },
     );
     defer alloc.free(audiobook_url);
-    _ = try client.put(alloc, try std.Uri.parse(audiobook_url), .{});
+    var req = try client.put(alloc, try std.Uri.parse(audiobook_url), .{});
+    defer req.deinit();
 }
 
 pub fn remove(
@@ -180,14 +187,15 @@ pub fn remove(
     );
     defer alloc.free(audiobook_url);
 
-    _ = try client.delete(alloc, try std.Uri.parse(audiobook_url), .{});
+    var req = try client.delete(alloc, try std.Uri.parse(audiobook_url), .{});
+    defer req.deinit();
 }
 
 pub fn areSaved(
     alloc: std.mem.Allocator,
     client: anytype,
     ids: []const types.SpotifyId,
-) !P([]bool) {
+) !JsonResponse([]bool) {
     const audiobook_url = try url.build(
         alloc,
         url.base_url,
@@ -197,13 +205,7 @@ pub fn areSaved(
     );
     defer alloc.free(audiobook_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(audiobook_url));
-    defer alloc.free(body);
-
-    return try std.json.parseFromSlice(
-        []bool,
-        alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
-    );
+    var request = try client.get(alloc, try std.Uri.parse(audiobook_url));
+    defer request.deinit();
+    return JsonResponse([]bool).parse(alloc, &request);
 }

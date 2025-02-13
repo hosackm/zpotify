@@ -24,7 +24,7 @@ pub fn main() !void {
             .{},
         );
         defer book.deinit();
-        try printJson(book);
+        printJson(book);
     }
 
     {
@@ -36,7 +36,7 @@ pub fn main() !void {
             .{},
         );
         defer books.deinit();
-        try printJson(books);
+        printJson(books);
     }
 
     {
@@ -48,14 +48,14 @@ pub fn main() !void {
             .{},
         );
         defer chapters.deinit();
-        try printJson(chapters);
+        printJson(chapters);
     }
 
     {
         // get the current user's saved books
         const saved = try zp.Audiobook.getSaved(alloc, c, .{});
         defer saved.deinit();
-        try printJson(saved);
+        printJson(saved);
     }
 
     {
@@ -76,6 +76,6 @@ pub fn main() !void {
             &.{ hitch, elton },
         );
         defer saved.deinit();
-        try printJson(saved);
+        printJson(saved);
     }
 }

@@ -18,7 +18,7 @@ pub fn main() !void {
         // get a track by it's id
         const track = try zp.Track.getOne(alloc, c, sayonara, .{});
         defer track.deinit();
-        try printJson(track);
+        printJson(track);
     }
 
     {
@@ -30,14 +30,14 @@ pub fn main() !void {
             .{},
         );
         defer tracks.deinit();
-        try printJson(tracks);
+        printJson(tracks);
     }
 
     {
         // get current user's tracks
         const tracks = try zp.Track.getSaved(alloc, c, .{});
         defer tracks.deinit();
-        try printJson(tracks);
+        printJson(tracks);
     }
 
     {
@@ -46,6 +46,6 @@ pub fn main() !void {
         const contains = try zp.Track.contains(alloc, c, &.{ sayonara, melancholy });
         defer contains.deinit();
 
-        try printJson(contains);
+        printJson(contains);
     }
 }

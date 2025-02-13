@@ -9,6 +9,7 @@ const Image = @import("image.zig");
 const P = std.json.Parsed;
 const M = types.Manyify;
 const Paged = types.Paginated;
+const JsonResponse = types.JsonResponse;
 
 const Self = @This();
 
@@ -44,7 +45,7 @@ pub fn getOne(
     client: anytype,
     id: types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
-) !P(Self) {
+) !JsonResponse(Self) {
     const ep_url = try url.build(
         alloc,
         url.base_url,
@@ -54,15 +55,9 @@ pub fn getOne(
     );
     defer alloc.free(ep_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(ep_url));
-    defer alloc.free(body);
-
-    return try std.json.parseFromSlice(
-        Self,
-        alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
-    );
+    var request = try client.get(alloc, try std.Uri.parse(ep_url));
+    defer request.deinit();
+    return JsonResponse(Self).parse(alloc, &request);
 }
 
 pub fn getMany(
@@ -70,7 +65,7 @@ pub fn getMany(
     client: anytype,
     ids: []const types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
-) !P(M(Simplified, "tracks")) {
+) !JsonResponse(M(Simplified, "tracks")) {
     const ep_url = try url.build(
         alloc,
         url.base_url,
@@ -80,15 +75,9 @@ pub fn getMany(
     );
     defer alloc.free(ep_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(ep_url));
-    defer alloc.free(body);
-
-    return try std.json.parseFromSlice(
-        M(Simplified, "tracks"),
-        alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
-    );
+    var request = try client.get(alloc, try std.Uri.parse(ep_url));
+    defer request.deinit();
+    return JsonResponse(M(Simplified, "tracks")).parse(alloc, &request);
 }
 
 pub const Saved = struct { added_at: []const u8, track: Simplified };
@@ -96,7 +85,7 @@ pub fn getSaved(
     alloc: std.mem.Allocator,
     client: anytype,
     opts: struct { market: ?[]const u8 = null, limit: ?u8 = null, offset: ?u8 = null },
-) !P(Paged(Saved)) {
+) !JsonResponse(Paged(Saved)) {
     const ep_url = try url.build(
         alloc,
         url.base_url,
@@ -106,15 +95,9 @@ pub fn getSaved(
     );
     defer alloc.free(ep_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(ep_url));
-    defer alloc.free(body);
-
-    return try std.json.parseFromSlice(
-        Paged(Saved),
-        alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
-    );
+    var request = try client.get(alloc, try std.Uri.parse(ep_url));
+    defer request.deinit();
+    return JsonResponse(Paged(Saved)).parse(alloc, &request);
 }
 
 pub fn save(
@@ -130,8 +113,9 @@ pub fn save(
         .{ .ids = ids },
     );
     defer alloc.free(show_url);
-    const body = try client.put(alloc, try std.Uri.parse(show_url), .{});
-    defer alloc.free(body);
+
+    var request = try client.put(alloc, try std.Uri.parse(show_url), .{});
+    defer request.deinit();
 }
 
 pub fn remove(
@@ -147,15 +131,16 @@ pub fn remove(
         .{ .ids = ids },
     );
     defer alloc.free(show_url);
-    const body = try client.delete(alloc, try std.Uri.parse(show_url), .{});
-    defer alloc.free(body);
+
+    var request = try client.delete(alloc, try std.Uri.parse(show_url), .{});
+    defer request.deinit();
 }
 
 pub fn contains(
     alloc: std.mem.Allocator,
     client: anytype,
     ids: []const types.SpotifyId,
-) !P([]bool) {
+) !JsonResponse([]bool) {
     const show_url = try url.build(
         alloc,
         url.base_url,
@@ -165,13 +150,37 @@ pub fn contains(
     );
     defer alloc.free(show_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(show_url));
-    defer alloc.free(body);
+    var request = try client.get(alloc, try std.Uri.parse(show_url));
+    defer request.deinit();
+    return JsonResponse([]bool).parse(alloc, &request);
+}
 
-    return try std.json.parseFromSlice(
-        []bool,
-        alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
+test "parse track" {
+    const track = try std.json.parseFromSlice(
+        Self,
+        std.testing.allocator,
+        @import("test_data/files.zig").find_track,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
     );
+    defer track.deinit();
+}
+
+test "parse tracks" {
+    const tracks = try std.json.parseFromSlice(
+        M(Simplified, "tracks"),
+        std.testing.allocator,
+        @import("test_data/files.zig").find_tracks_simple,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
+    );
+    defer tracks.deinit();
+}
+
+test "parse user's tracks" {
+    const tracks = try std.json.parseFromSlice(
+        Paged(Saved),
+        std.testing.allocator,
+        @import("test_data/files.zig").current_users_tracks,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
+    );
+    defer tracks.deinit();
 }

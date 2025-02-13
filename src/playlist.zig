@@ -8,6 +8,7 @@ const Episode = @import("episode.zig");
 const Paged = types.Paginated;
 const P = std.json.Parsed;
 const M = types.Manyify;
+const JsonResponse = types.JsonResponse;
 
 const Self = @This();
 
@@ -206,7 +207,7 @@ pub fn getOne(
         fields: ?[]const u8 = null,
         additional_types: ?[]const u8 = null,
     },
-) !P(Self) {
+) !JsonResponse(Self) {
     const playlist_url = try url.build(
         alloc,
         url.base_url,
@@ -220,15 +221,9 @@ pub fn getOne(
     );
     defer alloc.free(playlist_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(playlist_url));
-    defer alloc.free(body);
-
-    return try std.json.parseFromSlice(
-        Self,
-        alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
-    );
+    var request = try client.get(alloc, try std.Uri.parse(playlist_url));
+    defer request.deinit();
+    return JsonResponse(Self).parse(alloc, &request);
 }
 
 pub fn setDetails(
@@ -246,8 +241,8 @@ pub fn setDetails(
     );
     defer alloc.free(playlist_url);
 
-    const body = try client.put(alloc, try std.Uri.parse(playlist_url), details);
-    defer alloc.free(body);
+    var request = try client.put(alloc, try std.Uri.parse(playlist_url), details);
+    defer request.deinit();
 }
 
 pub fn getTracks(
@@ -261,7 +256,7 @@ pub fn getTracks(
         offset: ?u16 = null,
         additional_types: ?[]const u8 = null,
     },
-) !P(Paged(PlaylistTrack)) {
+) !JsonResponse(Paged(PlaylistTrack)) {
     const playlist_url = try url.build(
         alloc,
         url.base_url,
@@ -275,17 +270,9 @@ pub fn getTracks(
     );
     defer alloc.free(playlist_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(playlist_url));
-    defer alloc.free(body);
-
-    std.debug.print("body: {s}\n", .{body});
-
-    return try std.json.parseFromSlice(
-        Paged(PlaylistTrack),
-        alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
-    );
+    var request = try client.get(alloc, try std.Uri.parse(playlist_url));
+    defer request.deinit();
+    return JsonResponse(Paged(PlaylistTrack)).parse(alloc, &request);
 }
 
 // Either reorder or replace items in a playlist depending on the request's parameters.
@@ -302,7 +289,7 @@ pub fn update(
     client: anytype,
     id: types.SpotifyId,
     insert: Update,
-) !P([]const u8) {
+) !JsonResponse([]const u8) {
     const playlist_url = try url.build(
         alloc,
         url.base_url,
@@ -312,15 +299,9 @@ pub fn update(
     );
     defer alloc.free(playlist_url);
 
-    const body = try client.put(alloc, try std.Uri.parse(playlist_url), insert);
-    defer alloc.free(body);
-
-    return try std.json.parseFromSlice(
-        []const u8,
-        alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
-    );
+    var request = try client.put(alloc, try std.Uri.parse(playlist_url), insert);
+    defer request.deinit();
+    return JsonResponse([]const u8).parse(alloc, &request);
 }
 
 pub fn add(
@@ -328,7 +309,7 @@ pub fn add(
     client: anytype,
     id: types.SpotifyId,
     add_info: Add,
-) !P([]const u8) {
+) !JsonResponse([]const u8) {
     const playlist_url = try url.build(
         alloc,
         url.base_url,
@@ -338,15 +319,9 @@ pub fn add(
     );
     defer alloc.free(playlist_url);
 
-    const body = try client.post(alloc, try std.Uri.parse(playlist_url), add_info);
-    defer alloc.free(body);
-
-    return try std.json.parseFromSlice(
-        []const u8,
-        alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
-    );
+    var request = try client.post(alloc, try std.Uri.parse(playlist_url), add_info);
+    defer request.deinit();
+    return JsonResponse([]const u8).parse(alloc, &request);
 }
 
 pub fn remove(
@@ -354,7 +329,7 @@ pub fn remove(
     client: anytype,
     id: types.SpotifyId,
     rem: Remove,
-) !P([]const u8) {
+) !JsonResponse([]const u8) {
     const playlist_url = try url.build(
         alloc,
         url.base_url,
@@ -364,22 +339,16 @@ pub fn remove(
     );
     defer alloc.free(playlist_url);
 
-    const body = try client.delete(alloc, try std.Uri.parse(playlist_url), rem);
-    defer alloc.free(body);
-
-    return try std.json.parseFromSlice(
-        []const u8,
-        alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
-    );
+    var request = try client.delete(alloc, try std.Uri.parse(playlist_url), rem);
+    defer request.deinit();
+    return JsonResponse([]const u8).parse(alloc, &request);
 }
 
 pub fn saved(
     alloc: std.mem.Allocator,
     client: anytype,
     opts: struct { limit: ?u8 = null, offset: ?u8 = null },
-) !P(Paged(Self)) {
+) !JsonResponse(Paged(Self)) {
     const playlist_url = try url.build(
         alloc,
         url.base_url,
@@ -389,17 +358,9 @@ pub fn saved(
     );
     defer alloc.free(playlist_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(playlist_url));
-    defer alloc.free(body);
-
-    std.debug.print("{s}\n", .{body});
-
-    return try std.json.parseFromSlice(
-        Paged(Self),
-        alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
-    );
+    var request = try client.get(alloc, try std.Uri.parse(playlist_url));
+    defer request.deinit();
+    return JsonResponse(Paged(Self)).parse(alloc, &request);
 }
 
 pub fn getPlaylistsForUser(
@@ -407,7 +368,7 @@ pub fn getPlaylistsForUser(
     client: anytype,
     id: types.SpotifyUserId,
     opts: struct { limit: ?u8 = null, offset: ?u8 = null },
-) !P(Paged(Self)) {
+) !JsonResponse(Paged(Self)) {
     const playlist_url = try url.build(
         alloc,
         url.base_url,
@@ -417,13 +378,37 @@ pub fn getPlaylistsForUser(
     );
     defer alloc.free(playlist_url);
 
-    const body = try client.get(alloc, try std.Uri.parse(playlist_url));
-    defer alloc.free(body);
+    var request = try client.get(alloc, try std.Uri.parse(playlist_url));
+    defer request.deinit();
+    return JsonResponse(Paged(Self)).parse(alloc, &request);
+}
 
-    return try std.json.parseFromSlice(
-        Paged(Self),
-        alloc,
-        body,
-        .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
+test "parse playlist" {
+    const playlist = try std.json.parseFromSlice(
+        Self,
+        std.testing.allocator,
+        @import("test_data/files.zig").get_playlist,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
     );
+    defer playlist.deinit();
+}
+
+test "parse playlist tracks" {
+    const tracks = try std.json.parseFromSlice(
+        Paged(PlaylistTrack),
+        std.testing.allocator,
+        @import("test_data/files.zig").playlist_tracks,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
+    );
+    defer tracks.deinit();
+}
+
+test "get user playlists" {
+    const playlists = try std.json.parseFromSlice(
+        Paged(Self),
+        std.testing.allocator,
+        @import("test_data/files.zig").current_users_playlists,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
+    );
+    defer playlists.deinit();
 }

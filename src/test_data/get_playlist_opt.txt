@@ -1,0 +1,493 @@
+{
+  "href" : "https://api.spotify.com/v1/playlists/5lH9NjOeJvctAO92ZrKQNB?fields=href,name,owner(!href,external_urls),tracks.items(added_by.id,track(name,href,album(name,href)))",
+  "name" : "Top 40",
+  "owner" : {
+    "display_name" : "Nederlandse Top 40",
+    "id" : "nederlandse_top_40",
+    "type" : "user",
+    "uri" : "spotify:user:nederlandse_top_40"
+  },
+  "tracks" : {
+    "items" : [ {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/37iaWiKMa9YBbEDlw5c3Qh",
+          "name" : "Calm Down"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/6hgoYQDUcPyCz7LcTUHKxa",
+        "name" : "Calm Down"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/4Cv9qCS1q3FDyyRFHGyc1g",
+          "name" : "SNAP"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/0QPRDC97rIQB3Jh3hrVJoH",
+        "name" : "SNAP"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/66W7mt0wKGLFALilLBLfU6",
+          "name" : "Words (feat. Zara Larsson)"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/1bgKMxPQU7JIZEhNsM1vFs",
+        "name" : "Words (feat. Zara Larsson)"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/1Aq9FlSr9KanZFljnUnl2m",
+          "name" : "Multicolor"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/2ExdbieQffMXpY7ygN2YN9",
+        "name" : "Multicolor"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/7M842DMhYVALrXsw3ty7B3",
+          "name" : "I'm Good (Blue)"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/4uUG5RXrOk84mYEfFvj3cK",
+        "name" : "I'm Good (Blue)"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/04PEOM6kIEeq9lRp1asNP2",
+          "name" : "I Ain’t Worried (Music From The Motion Picture \"Top Gun: Maverick\")"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/4h9wh7iOZ0GGn8QVp4RAOB",
+        "name" : "I Ain't Worried"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/6dSmXsyGAnFtq048IFhiYd",
+          "name" : "In The Stars"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/1ei3hzQmrgealgRKFxIcWn",
+        "name" : "In The Stars"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/5F9Y7Rx1ILWqQQXVilf0KN",
+          "name" : "Through The Looking Glass"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/7j2TJXhcE1aAzB6Evmgvm0",
+        "name" : "Through The Looking Glass"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/2e0yXV8bjdl4cqWwp1KG8T",
+          "name" : "I Want You"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/4s8BpmFtxDgeCoPj2XHtVj",
+        "name" : "I Want You"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/2pqdSWeJVsXAhHFuVLzuA8",
+          "name" : "As It Was"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/4LRPiXqCikLlN15c3yImP7",
+        "name" : "As It Was"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/44aG7QLYLGotCTlu5Fc2J7",
+          "name" : "Bad Memories (feat. Elley Duhé & FAST BOY)"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/3rb0tMq42WfggucPm0HHkA",
+        "name" : "Bad Memories (feat. Elley Duhé & FAST BOY)"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/528LrHfHcB7PMAvyp8Obhp",
+          "name" : "Afraid To Feel"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/40SBS57su9xLiE1WqkXOVr",
+        "name" : "Afraid To Feel"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/7CX6KwcrRx0iwTH8iU6rDJ",
+          "name" : "Solo Para Ti"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/2uAgZ0PelSImQe3BME9CiT",
+        "name" : "Solo Para Ti"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/1ORFwaAJM7agyaN1ZLiUHs",
+          "name" : "Automatisch"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/2WeAyT93f7IzrwXm3ZJMb2",
+        "name" : "Automatisch"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/3KpxpdySrMR2S7noneu1bI",
+          "name" : "Deep Down (feat. Never Dull)"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/7MIhUdNJtaOnDmC5nBC1fb",
+        "name" : "Deep Down (feat. Never Dull)"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/1p6j020MWD6BCELPZd8XVC",
+          "name" : "Green Green Grass"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/3rk4aJ0vAj3cFUIQEeASkT",
+        "name" : "Green Green Grass"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/6R7Yy0sY9N8PNUhseegr2Q",
+          "name" : "Hot In It"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/3Z7CaxQkqbIs1rewKi6v4W",
+        "name" : "Hot In It"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/4umTGjL6WgGnfoJWgz1uHe",
+          "name" : "Van Mij Zijn"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/3oFKhY9iW9S0iA9OHO9tN6",
+        "name" : "Van Mij Zijn"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/312M1zzN7C2Vqd0VeORTMC",
+          "name" : "Come Around Again"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/55Y4oE6oE6XBT2e71vK2yA",
+        "name" : "Come Around Again"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/7xgmfo0gHFJk9DNdOfqBNn",
+          "name" : "We Could Be Together (feat. Daddy DJ)"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/3ElGRG3DqSzzkh1b2wnbzf",
+        "name" : "We Could Be Together (feat. Daddy DJ)"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/5r36AJ6VOJtp00oxSkBZ5h",
+          "name" : "Harry's House"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/1qEmFfgcLObUfQm0j1W2CK",
+        "name" : "Late Night Talking"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/4QQWpCEX4BxMXwRQmtkKY6",
+          "name" : "Hold Me Closer"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/72yP0DUlWPyH8P7IoxskwN",
+        "name" : "Hold Me Closer"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/4WLkmuc0lGCBJLtj1yxJI0",
+          "name" : "Ferrari"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/5xKJI9aPQhuTdTq8BrJ8fL",
+        "name" : "Ferrari"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/0rgJvUPcgTDdiirvy7wHs6",
+          "name" : "Electric Life"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/0iLqpm5c4dGlwth5LYq2tj",
+        "name" : "Electric Life"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/6eEQ0sXVp92CmSL5SsfvY3",
+          "name" : "Trompeta"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/5cppeoXfiK59UEsEeOvuNo",
+        "name" : "Trompeta"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/5HyQdrY2jAKPhK1OqX7yOR",
+          "name" : "Questions"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/1cgy2FSOQMbq7DHCVgMAUA",
+        "name" : "Questions"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/118PKNjhP4NWcrW5OjMwzc",
+          "name" : "21 Reasons (feat. Ella Henderson)"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/1RF02Cf80mTaeNXG2P2boR",
+        "name" : "21 Reasons (feat. Ella Henderson)"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/3HdzIBLsdVX4RTuA4zxumb",
+          "name" : "Kwijt"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/1dbNg2ougivyUv6f9hQQzU",
+        "name" : "Kwijt"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/1R7H7T15beGxVaQQ1MnH78",
+          "name" : "HISTORY"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/5IfHQilcjciOxJQBFCNCCN",
+        "name" : "HISTORY"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/3plMoBhvQ07H4itII2Qdeb",
+          "name" : "DON'T YOU WORRY"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/0gYXw7aPoybWFfB7btQ0eM",
+        "name" : "DON'T YOU WORRY"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/2wht4rGcaS39dbSxrvdfEL",
+          "name" : "Darte Un Beso"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/3ZGJTUAhwua3fBi2M9BOUQ",
+        "name" : "Darte Un Beso"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/1mAlhigBTplhT8aYBo9tFc",
+          "name" : "Terug Bij Af ft. Ronnie Flex"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/65rDc2X5XZNs9mCvnJyaR1",
+        "name" : "Terug Bij Af ft. Ronnie Flex"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/62SWIKrov7HPXU0Jpc6LY1",
+          "name" : "Stay With Me (with Justin Timberlake, Halsey, & Pharrell)"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/5lfWrciYtohtIMVDVZd0Rf",
+        "name" : "Stay With Me (with Justin Timberlake, Halsey, & Pharrell)"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/55hLMMakne8TwUe39HmDZ1",
+          "name" : "Noodgeval"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/27NXXRJAv6Oa8WdtAbhrTR",
+        "name" : "Noodgeval"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/4Aki0Qb1ior78C1RcWb5oX",
+          "name" : "Camino"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/50UWMLI07e82G1VLMZ2M11",
+        "name" : "Camino"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/0VaHnwzDug4AcDkejYDUl5",
+          "name" : "Sunroof"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/4h4QlmocP3IuwYEj2j14p8",
+        "name" : "Sunroof"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/587Ykd8NOCdzRmaW4nlT4e",
+          "name" : "Sharks"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/0TyUOnU4H4GLqOcrH0auc8",
+        "name" : "Sharks"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/2NIChqkijGw4r4Dqfmg0A3",
+          "name" : "Kernkraft 400 (A Better Day)"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/3kcKlOkQQEPVwxwljbGJ5p",
+        "name" : "Kernkraft 400 (A Better Day)"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/06mXfvDsRZNfnsGZvX2zpb",
+          "name" : "Music Of The Spheres"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/23BO6YozrAXUta1buxFZ80",
+        "name" : "Humankind"
+      }
+    }, {
+      "added_by" : {
+        "id" : "nederlandse_top_40"
+      },
+      "track" : {
+        "album" : {
+          "href" : "https://api.spotify.com/v1/albums/3R69AWht6e2vZq7Cg3XGPH",
+          "name" : "The Drop"
+        },
+        "href" : "https://api.spotify.com/v1/tracks/013PVeWEFQio3XHFH9rIC6",
+        "name" : "The Drop"
+      }
+    } ]
+  }
+}

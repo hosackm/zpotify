@@ -1,17 +1,9 @@
 const std = @import("std");
 const builtin = @import("builtin");
+const types = @import("types.zig");
 
 const header_buffer_size = 1024 * 10;
 const max_read_size = 1024 * 1024;
-
-fn throw(req: std.http.Client.Request) !void {
-    switch (req.response.status) {
-        .ok, .created, .accepted, .no_content => {},
-        .bad_request, .unauthorized, .forbidden, .not_found, .too_many_requests => {},
-        .internal_server_error, .bad_gateway, .service_unavailable => {},
-        else => unreachable,
-    }
-}
 
 pub fn Client(comptime T: type) type {
     return struct {
@@ -19,6 +11,7 @@ pub fn Client(comptime T: type) type {
         client: std.http.Client,
 
         const Self = @This();
+        const Request = std.http.Client.Request;
 
         pub fn init(alloc: std.mem.Allocator, auth: *T) Self {
             return .{
@@ -38,14 +31,13 @@ pub fn Client(comptime T: type) type {
             method: std.http.Method,
             uri: std.Uri,
             body: anytype,
-        ) ![]const u8 {
+        ) !Request {
             var buffer: [header_buffer_size]u8 = undefined;
             var req = try self.*.client.open(
                 method,
                 uri,
                 .{ .server_header_buffer = &buffer },
             );
-            defer req.deinit();
 
             try self.authenticator.authenticate(&req);
 
@@ -81,26 +73,26 @@ pub fn Client(comptime T: type) type {
             try req.finish();
             try req.wait();
 
-            try throw(req);
-            return try req.reader().readAllAlloc(
-                alloc,
-                max_read_size,
-            );
+            return req;
         }
 
-        pub fn get(self: *Self, alloc: std.mem.Allocator, uri: std.Uri) ![]const u8 {
+        // Returns a completed http GET request to the provided uri.
+        pub fn get(self: *Self, alloc: std.mem.Allocator, uri: std.Uri) !Request {
             return try self.do(alloc, .GET, uri, .{});
         }
 
-        pub fn put(self: *Self, alloc: std.mem.Allocator, uri: std.Uri, body: anytype) ![]const u8 {
+        // Returns a completed http PUT request to the provided uri.
+        pub fn put(self: *Self, alloc: std.mem.Allocator, uri: std.Uri, body: anytype) !Request {
             return try self.do(alloc, .PUT, uri, body);
         }
 
-        pub fn post(self: *Self, alloc: std.mem.Allocator, uri: std.Uri, body: anytype) ![]const u8 {
+        // Returns a completed http POST request to the provided uri.
+        pub fn post(self: *Self, alloc: std.mem.Allocator, uri: std.Uri, body: anytype) !Request {
             return try self.do(alloc, .POST, uri, body);
         }
 
-        pub fn delete(self: *Self, alloc: std.mem.Allocator, uri: std.Uri, body: anytype) ![]const u8 {
+        // Returns a completed http DELETE request to the provided uri.
+        pub fn delete(self: *Self, alloc: std.mem.Allocator, uri: std.Uri, body: anytype) !Request {
             return try self.do(alloc, .DELETE, uri, body);
         }
     };
