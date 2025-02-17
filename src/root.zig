@@ -1,6 +1,6 @@
 const std = @import("std");
 
-pub usingnamespace @import("auth.zig");
+pub usingnamespace @import("oauth.zig");
 pub usingnamespace @import("scopes.zig");
 pub usingnamespace @import("url.zig");
 

@@ -5,8 +5,11 @@ const printJson = @import("common.zig").printJson;
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const alloc = gpa.allocator();
     defer if (gpa.deinit() == .leak) std.debug.print("LEAK!\n", .{});
+
+    var arena = std.heap.ArenaAllocator.init(gpa.allocator());
+    defer arena.deinit();
+    const alloc = arena.allocator();
 
     var client = try Client.init(alloc);
     defer client.deinit();
@@ -14,25 +17,21 @@ pub fn main() !void {
 
     {
         const me = try zp.User.getCurrentUser(alloc, c);
-        defer me.deinit();
         printJson(me);
     }
 
     {
         const top_artists = try zp.User.topArtists(alloc, c, .{});
-        defer top_artists.deinit();
         printJson(top_artists);
     }
 
     {
         const top_tracks = try zp.User.topTracks(alloc, c, .{});
-        defer top_tracks.deinit();
         printJson(top_tracks);
     }
 
     {
         const friend = try zp.User.get(alloc, c, "misskristen");
-        defer friend.deinit();
         printJson(friend);
     }
 
@@ -40,9 +39,8 @@ pub fn main() !void {
         // Kris's playlist - https://open.spotify.com/playlist/3CpnfLWptPPCyW3Mg6nCjv?si=ecrGtJQPQdC1SGOy4Ytfew
         const playlist_id = "3CpnfLWptPPCyW3Mg6nCjv";
         const result = try zp.User.isFollowingPlaylist(alloc, c, playlist_id);
-        defer result.deinit();
 
-        const is_following = result.resp.ok.value;
+        const is_following = result.resp.ok;
         if (is_following[0]) {
             std.debug.print("Was following, now unfollowing!\n", .{});
             try zp.User.unfollowPlaylist(alloc, c, playlist_id);
@@ -54,7 +52,6 @@ pub fn main() !void {
 
     {
         const artists = try zp.User.getFollowedArtists(alloc, c, .{});
-        defer artists.deinit();
         printJson(artists);
     }
 
@@ -84,8 +81,7 @@ pub fn main() !void {
             c,
             &.{ nekrogoblikon, butcher_sisters },
         );
-        defer json.deinit();
-        const is_following: []bool = json.resp.ok.value;
+        const is_following: []bool = json.resp.ok;
 
         std.debug.print(
             "Following?\n  Nekrogoblikon: {any}\n  Butcher Sisters: {any}\n",

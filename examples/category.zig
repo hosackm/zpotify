@@ -5,8 +5,11 @@ const printJson = @import("common.zig").printJson;
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const alloc = gpa.allocator();
     defer if (gpa.deinit() == .leak) std.debug.print("LEAK!\n", .{});
+
+    var arena = std.heap.ArenaAllocator.init(gpa.allocator());
+    defer arena.deinit();
+    const alloc = arena.allocator();
 
     var client = try Client.init(alloc);
     defer client.deinit();
@@ -15,12 +18,10 @@ pub fn main() !void {
     {
         const id = "dinner";
         const category = try zp.Category.getOne(alloc, c, id, .{});
-        defer category.deinit();
         printJson(category);
     }
     {
         const categories = try zp.Category.getMany(alloc, c, .{});
-        defer categories.deinit();
         printJson(categories);
     }
 }

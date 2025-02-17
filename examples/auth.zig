@@ -8,10 +8,18 @@ const Credentials = zpotify.Credentials;
 const Authenticator = zpotify.Authenticator;
 const FilePersistedToken = @import("token.zig").FilePersistedToken;
 
+const tk = @import("token2.zig");
+const printJson = @import("common.zig").printJson;
+
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const alloc = gpa.allocator();
+    // const alloc = gpa.allocator();
     defer if (gpa.deinit() == .leak) std.debug.print("LEAK!\n", .{});
+
+    var arena = std.heap.ArenaAllocator.init(gpa.allocator());
+    defer arena.deinit();
+
+    const alloc = arena.allocator();
 
     var em = try std.process.getEnvMap(alloc);
     defer em.deinit();
@@ -63,15 +71,6 @@ fn displayCode(alloc: std.mem.Allocator, creds: Credentials) !void {
 }
 
 pub fn runAuthFlow(alloc: std.mem.Allocator, creds: Credentials) !void {
-    var auth = Authenticator(FilePersistedToken).init(.{
-        .token_source = .{
-            .filename = ".token.json",
-            .allocator = alloc,
-        },
-        .credentials = creds,
-        .allocator = alloc,
-    });
-
     // This must be the same value that was used to create the application
     // And the same value used in the body of the request when granting a token.
     const address = try std.net.Address.parseIp4("127.0.0.1", 8080);
@@ -95,7 +94,10 @@ pub fn runAuthFlow(alloc: std.mem.Allocator, creds: Credentials) !void {
         "/?code=",
     );
 
-    try auth.token_source.acquire(creds, code);
+    const tokenizer = tk.init(alloc, creds);
+    const token = try tokenizer.exchange(code);
 
     std.debug.print("Successfully authorized.\n", .{});
+    try std.json.stringify(token, .{}, std.io.getStdOut().writer());
+    _ = try std.io.getStdOut().writer().write("\n");
 }

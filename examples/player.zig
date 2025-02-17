@@ -5,8 +5,11 @@ const printJson = @import("common.zig").printJson;
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const alloc = gpa.allocator();
     defer if (gpa.deinit() == .leak) std.debug.print("LEAK!\n", .{});
+
+    var arena = std.heap.ArenaAllocator.init(gpa.allocator());
+    defer arena.deinit();
+    const alloc = arena.allocator();
 
     var client = try Client.init(alloc);
     defer client.deinit();
@@ -15,7 +18,6 @@ pub fn main() !void {
     {
         // get the user's player object
         const player_resp = try zp.Player.get(alloc, c, .{});
-        defer player_resp.deinit();
         switch (player_resp.resp) {
             .ok => |_| {
                 printJson(player_resp);
@@ -28,19 +30,17 @@ pub fn main() !void {
         // get the current device and toggle the playback from play/paused
         const toggle: bool = true;
         const devices = try zp.Player.getDevices(alloc, c);
-        defer devices.deinit();
 
         switch (devices.resp) {
             .ok => |ok| {
-                if (ok.value.devices.len > 0) {
-                    const device_id = ok.value.devices[0].id;
+                if (ok.devices.len > 0) {
+                    const device_id = ok.devices[0].id;
                     const player_state = try zp.Player.currentlyPlaying(alloc, c, .{});
-                    defer player_state.deinit();
 
                     if (toggle) {
                         switch (player_state.resp) {
                             .ok => |state_opt| {
-                                if (state_opt.value) |state| {
+                                if (state_opt) |state| {
                                     if (state.is_playing) {
                                         std.debug.print("pausing...\n", .{});
                                         try zp.Player.pause(alloc, c, device_id);
@@ -82,9 +82,8 @@ pub fn main() !void {
 
 fn getDevice(alloc: std.mem.Allocator, client: anytype) !?[]const u8 {
     const devices = try zp.Player.getDevices(alloc, client);
-    defer devices.deinit();
     switch (devices.resp) {
-        .ok => |ok| if (ok.value.devices.len > 0) return try alloc.dupe(u8, ok.value.devices[0].id),
+        .ok => |ok| if (ok.devices.len > 0) return try alloc.dupe(u8, ok.devices[0].id),
         else => {},
     }
     return null;

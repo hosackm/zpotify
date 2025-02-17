@@ -157,8 +157,8 @@ pub const Error = struct {
 pub fn JsonResponse(comptime T: type) type {
     return struct {
         resp: union(enum) {
-            ok: std.json.Parsed(T),
-            err: std.json.Parsed(Error),
+            ok: T,
+            err: Error,
         },
 
         const Self = @This();
@@ -174,7 +174,7 @@ pub fn JsonResponse(comptime T: type) type {
             defer alloc.free(body);
 
             if (body.len == 0) {
-                const parsed = try std.json.parseFromSlice(
+                const parsed = try std.json.parseFromSliceLeaky(
                     T,
                     alloc,
                     "null",
@@ -186,7 +186,7 @@ pub fn JsonResponse(comptime T: type) type {
             }
             const code = @intFromEnum(req.response.status);
             if (code >= 200 and code < 300) {
-                const parsed = try std.json.parseFromSlice(
+                const parsed = try std.json.parseFromSliceLeaky(
                     T,
                     alloc,
                     body,
@@ -195,20 +195,13 @@ pub fn JsonResponse(comptime T: type) type {
                 return .{ .resp = .{ .ok = parsed } };
             }
 
-            const parsed = try std.json.parseFromSlice(
+            const parsed = try std.json.parseFromSliceLeaky(
                 Error,
                 alloc,
                 body,
                 default_opts,
             );
             return .{ .resp = .{ .err = parsed } };
-        }
-
-        pub fn deinit(self: Self) void {
-            switch (self.resp) {
-                .err => |e| e.deinit(),
-                .ok => |o| o.deinit(),
-            }
         }
     };
 }

@@ -6,6 +6,15 @@ pub const Credentials = struct {
     redirect_uri: []const u8,
 };
 
+// https://developer.spotify.com/documentation/web-api/tutorials/refreshing-tokens
+pub const Token = struct {
+    access_token: []const u8,
+    token_type: []const u8,
+    scope: []const u8,
+    expires_in: u64, // seconds, (always 3600 seconds or 1 hour)
+    refresh_token: []const u8,
+};
+
 pub fn Authenticator(comptime T: type) type {
     std.debug.assert(@hasDecl(T, "get"));
     std.debug.assert(

@@ -5,8 +5,11 @@ const printJson = @import("common.zig").printJson;
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const alloc = gpa.allocator();
     defer if (gpa.deinit() == .leak) std.debug.print("LEAK!\n", .{});
+
+    var arena = std.heap.ArenaAllocator.init(gpa.allocator());
+    defer arena.deinit();
+    const alloc = arena.allocator();
 
     var client = try Client.init(alloc);
     defer client.deinit();
@@ -17,7 +20,6 @@ pub fn main() !void {
     {
         // get an episode by it's id
         const ep = try zp.Episode.getOne(alloc, c, your_moms, .{});
-        defer ep.deinit();
         printJson(ep);
     }
 
@@ -29,14 +31,12 @@ pub fn main() !void {
             &.{ your_moms, bad_friends },
             .{},
         );
-        defer episodes.deinit();
         printJson(episodes);
     }
 
     {
         // get current user's episodes
         const episodes = try zp.Episode.getSaved(alloc, c, .{});
-        defer episodes.deinit();
         printJson(episodes);
     }
 
@@ -45,7 +45,6 @@ pub fn main() !void {
         try zp.Episode.remove(alloc, c, &.{ your_moms, bad_friends });
 
         const contains = try zp.Episode.contains(alloc, c, &.{ your_moms, bad_friends });
-        defer contains.deinit();
 
         printJson(contains);
     }
