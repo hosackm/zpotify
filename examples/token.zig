@@ -1,233 +1,110 @@
-//! Shows how to create a FilePersistedToken to pass to the Authenticator
-//! as a comptime type. The authenticator doesn't care how you acquire
-//! or refresh tokens. All it needs is a method called get() on
-//! the type you pass in as a comptime type. This method will be
-//! called whenever a token is required.
 const std = @import("std");
-const zpotify = @import("zpotify");
+const zp = @import("zpotify");
 
-const Credentials = zpotify.Credentials;
+credentials: zp.Credentials,
+allocator: std.mem.Allocator,
 
-const Token = @This();
+const Self = @This();
 
-access_token: []const u8,
-refresh_token: []const u8,
-
-pub fn deinit(self: Token, alloc: std.mem.Allocator) void {
-    alloc.free(self.access_token);
-    alloc.free(self.refresh_token);
+// Because std.json.parseFromSliceLeaky is used, an ArenaAllocator should be
+// used to ensure deep recursive memory allocations are freed properly.
+pub fn init(alloc: std.mem.Allocator, credentials: zp.Credentials) Self {
+    return .{
+        .allocator = alloc,
+        .credentials = credentials,
+    };
 }
 
-// An example of a token source. Must have a method called "get" that
-// returns []const u8 containing the access token in exchange for the
-// client credentials. The authenticator will store the client credentials
-// and pass them in when calling "get" to retrieve a new token.
-pub const FilePersistedToken = struct {
-    // This example token source persists a token to disk
-    filename: []const u8,
-    allocator: std.mem.Allocator,
+// Exchanges a code for an access token.
+pub fn exchange(self: Self, code: []const u8) !zp.Token {
+    var client = std.http.Client{ .allocator = self.allocator };
+    defer client.deinit();
 
-    // You must specify the errors that can be returned.
-    pub const Error = error{Something};
+    var auth_header = std.ArrayList(u8).init(self.allocator);
+    defer auth_header.deinit();
 
-    // This method must exist, and is checked at compile-time to exist.
-    pub fn get(self: FilePersistedToken, creds: Credentials) Error![]const u8 {
-        // Read the token from the token.json file
-        var token = self.read() catch return Error.Something;
-        defer token.deinit(self.allocator);
+    const encoded = try self.encodeCredentials();
+    defer self.allocator.free(encoded);
 
-        // Refresh the token if it's expired
-        self.refresh(&token, creds) catch return Error.Something;
+    try auth_header.appendSlice("Basic ");
+    try auth_header.appendSlice(encoded);
 
-        // Persist to disk
-        self.persist(token) catch return Error.Something;
+    // build request
+    var buffer: [1024]u8 = undefined;
+    var request = try client.open(
+        .POST,
+        try std.Uri.parse("https://accounts.spotify.com/api/token"),
+        .{
+            .headers = .{
+                .content_type = .{
+                    .override = "application/x-www-form-urlencoded",
+                },
+                .authorization = .{ .override = auth_header.items },
+            },
+            .server_header_buffer = &buffer,
+        },
+    );
+    defer request.deinit();
 
-        return self.allocator.dupe(u8, token.access_token) catch return Error.Something;
-    }
+    // write body
+    const body = try self.exchangeBody(code);
+    defer self.allocator.free(body);
 
-    fn read(self: FilePersistedToken) !Token {
-        const f = try std.fs.cwd().openFile(self.filename, .{});
-        defer f.close();
+    request.transfer_encoding = .{ .content_length = body.len };
 
-        const data = try f.reader().readAllAlloc(self.allocator, 2048);
-        defer self.allocator.free(data);
+    // send
+    try request.send();
+    try request.writeAll(body[0..]);
+    try request.finish();
+    try request.wait();
 
-        const json = try std.json.parseFromSlice(
-            std.json.Value,
-            self.allocator,
-            data,
-            .{},
-        );
-        defer json.deinit();
+    // read
+    const max_token_size: usize = 1024; // this is enough in my testing. including all possible scopes.
+    const data = try request.reader().readAllAlloc(
+        self.allocator,
+        max_token_size,
+    );
+    defer self.allocator.free(data);
 
-        return .{
-            .access_token = try self.allocator.dupe(
-                u8,
-                json.value.object.get("access_token").?.string,
-            ),
-            .refresh_token = try self.allocator.dupe(
-                u8,
-                json.value.object.get("refresh_token").?.string,
-            ),
-        };
-    }
+    return try zp.Token.parse(self.allocator, data);
+}
 
-    fn refresh(self: FilePersistedToken, token: *Token, creds: Credentials) !void {
-        // Not quite working...
-        // if (!try self.isExpired()) return;
+const base64 = std.base64;
+const B64Encoder = base64.Base64Encoder;
 
-        const uri = try std.Uri.parse("https://accounts.spotify.com/api/token");
-        var client = std.http.Client{ .allocator = self.allocator };
-        defer client.deinit();
+// Base64 encodes client id and client secret
+fn encodeCredentials(self: Self) ![]const u8 {
+    const enc = B64Encoder{
+        .alphabet_chars = base64.standard_alphabet_chars,
+        .pad_char = null,
+    };
 
-        var buffer: [1024 * 1024 * 4]u8 = undefined;
-        var req = try client.open(
-            .POST,
-            uri,
-            .{ .server_header_buffer = &buffer },
-        );
-        defer req.deinit();
+    var input = std.ArrayList(u8).init(self.allocator);
+    defer input.deinit();
 
-        const body = try std.fmt.allocPrint(
-            self.allocator,
-            "grant_type=refresh_token&refresh_token={s}",
-            .{token.*.refresh_token},
-        );
-        defer self.allocator.free(body);
+    try input.appendSlice(self.credentials.client_id);
+    try input.append(':');
+    try input.appendSlice(self.credentials.client_secret);
 
-        const enc = std.base64.Base64Encoder{
-            .alphabet_chars = std.base64.standard_alphabet_chars,
-            .pad_char = null,
-        };
-        const joined_creds = try std.mem.join(
-            self.allocator,
-            ":",
-            &.{ creds.client_id, creds.client_secret },
-        );
-        defer self.allocator.free(joined_creds);
+    const buffer = try self.allocator.alloc(u8, enc.calcSize(input.items.len));
+    defer self.allocator.free(buffer);
 
-        const b64buffer = try self.allocator.alloc(u8, enc.calcSize(joined_creds.len));
-        defer self.allocator.free(b64buffer);
+    return self.allocator.dupe(u8, enc.encode(buffer, input.items));
+}
 
-        const encoded = enc.encode(b64buffer, joined_creds);
-        const basic = try std.fmt.allocPrint(self.allocator, "Basic {s}", .{encoded});
-        defer self.allocator.free(basic);
+fn exchangeBody(self: Self, code: []const u8) ![]const u8 {
+    var body = std.ArrayList(u8).init(self.allocator);
+    defer body.deinit();
 
-        req.headers.authorization = .{ .override = basic };
-        req.headers.content_type = .{ .override = "application/x-www-form-urlencoded" };
-        req.transfer_encoding = .{ .content_length = body.len };
+    try body.appendSlice("grant_type=authorization_code&code=");
+    try body.appendSlice(code);
+    try body.appendSlice("&redirect_uri=");
 
-        try req.send();
-        try req.writeAll(body[0..]);
-        try req.finish();
-        try req.wait();
-
-        const s = try req.reader().readAllAlloc(self.allocator, 8192);
-        defer self.allocator.free(s);
-
-        const parsed = try std.json.parseFromSlice(std.json.Value, self.allocator, s, .{});
-        defer parsed.deinit();
-
-        const new_token = parsed.value.object.get("access_token").?.string;
-        self.allocator.free(token.*.access_token);
-        token.*.access_token = try self.allocator.dupe(u8, new_token);
-    }
-
-    fn persist(self: FilePersistedToken, token: Token) !void {
-        const f = try std.fs.cwd().openFile(
-            self.filename,
-            .{ .mode = .write_only },
-        );
-        defer f.close();
-        try f.setEndPos(0);
-
-        var buffer: [1000]u8 = undefined;
-        try f.writer().writeAll(
-            try std.fmt.bufPrint(
-                &buffer,
-                "{{\"access_token\":\"{s}\",\"refresh_token\":\"{s}\"}}",
-                .{ token.access_token, token.refresh_token },
-            ),
-        );
-    }
-
-    fn isExpired(self: FilePersistedToken) !bool {
-        const f = try std.fs.cwd().openFile(self.filename, .{});
-        defer f.close();
-        const stat = try f.stat();
-
-        const expires_after = std.time.ns_per_hour; // spotify tokens expire in an hour
-        const padding = std.time.ns_per_min * 5; // we'll renew anything that will expire in the next 5 minutes
-
-        return (std.time.nanoTimestamp() - stat.mtime) > (expires_after - padding);
-    }
-
-    // Only use this method when you are acquiring a Token for the first
-    // time by going through the OAuth authentication flow.
-    pub fn acquire(self: FilePersistedToken, creds: Credentials, code: []const u8) !void {
-        const uri = try std.Uri.parse("https://accounts.spotify.com/api/token");
-        var client = std.http.Client{ .allocator = self.allocator };
-        defer client.deinit();
-
-        var buffer: [1024 * 1024 * 4]u8 = undefined;
-        var req = try client.open(
-            .POST,
-            uri,
-            .{ .server_header_buffer = &buffer },
-        );
-        defer req.deinit();
-
-        const escaped = try zpotify.escape(self.allocator, creds.redirect_uri);
-        defer self.allocator.free(escaped);
-
-        const body = try std.fmt.allocPrint(
-            self.allocator,
-            "grant_type=authorization_code&code={s}&redirect_uri={s}",
-            .{ code, escaped },
-        );
-        defer self.allocator.free(body);
-
-        const enc = std.base64.Base64Encoder{
-            .alphabet_chars = std.base64.standard_alphabet_chars,
-            .pad_char = null,
-        };
-        const b64input = try std.mem.join(
-            self.allocator,
-            ":",
-            &.{ creds.client_id, creds.client_secret },
-        );
-        defer self.allocator.free(b64input);
-
-        const buf = try self.allocator.alloc(u8, enc.calcSize(b64input.len));
-        defer self.allocator.free(buf);
-
-        const encoded = enc.encode(buf, b64input);
-        const basic = try std.fmt.allocPrint(self.allocator, "Basic {s}", .{encoded});
-        defer self.allocator.free(basic);
-
-        req.headers.authorization = .{ .override = basic };
-        req.headers.content_type = .{ .override = "application/x-www-form-urlencoded" };
-        req.transfer_encoding = .{ .content_length = body.len };
-
-        try req.send();
-        try req.writeAll(body[0..]);
-        try req.finish();
-        try req.wait();
-
-        const s = try req.reader().readAllAlloc(self.allocator, 8192);
-        defer self.allocator.free(s);
-
-        const parsed = try std.json.parseFromSlice(
-            std.json.Value,
-            self.allocator,
-            s,
-            .{},
-        );
-        defer parsed.deinit();
-
-        try self.persist(.{
-            .access_token = parsed.value.object.get("access_token").?.string,
-            .refresh_token = parsed.value.object.get("refresh_token").?.string,
-        });
-    }
-};
+    const escaped = try zp.escape(
+        self.allocator,
+        self.credentials.redirect_uri,
+    );
+    defer self.allocator.free(escaped);
+    try body.appendSlice(escaped);
+    return body.toOwnedSlice();
+}

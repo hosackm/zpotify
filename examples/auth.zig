@@ -5,20 +5,15 @@
 const std = @import("std");
 const zpotify = @import("zpotify");
 const Credentials = zpotify.Credentials;
-const Authenticator = zpotify.Authenticator;
-const FilePersistedToken = @import("token.zig").FilePersistedToken;
 
-const tk = @import("token2.zig");
+const tk = @import("token.zig");
 const printJson = @import("common.zig").printJson;
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    // const alloc = gpa.allocator();
     defer if (gpa.deinit() == .leak) std.debug.print("LEAK!\n", .{});
-
     var arena = std.heap.ArenaAllocator.init(gpa.allocator());
     defer arena.deinit();
-
     const alloc = arena.allocator();
 
     var em = try std.process.getEnvMap(alloc);
@@ -97,7 +92,11 @@ pub fn runAuthFlow(alloc: std.mem.Allocator, creds: Credentials) !void {
     const tokenizer = tk.init(alloc, creds);
     const token = try tokenizer.exchange(code);
 
-    std.debug.print("Successfully authorized.\n", .{});
+    std.debug.print(
+        "Successfully authorized. Save token contents to file and set environment " ++
+            "variable ZPOTIFY_TOKEN_FILE to the chosen filepath.\n\n",
+        .{},
+    );
     try std.json.stringify(token, .{}, std.io.getStdOut().writer());
     _ = try std.io.getStdOut().writer().write("\n");
 }

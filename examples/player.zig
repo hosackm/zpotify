@@ -13,7 +13,7 @@ pub fn main() !void {
 
     var client = try Client.init(alloc);
     defer client.deinit();
-    const c = &client.client;
+    const c = &client;
 
     {
         // get the user's player object

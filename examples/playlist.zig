@@ -13,7 +13,7 @@ pub fn main() !void {
 
     var client = try Client.init(alloc);
     defer client.deinit();
-    const c = &client.client;
+    const c = &client;
 
     const playlist_id = "1LyBnDxdG9CdJ8be4SrmOU";
     {

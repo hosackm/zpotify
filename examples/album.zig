@@ -1,7 +1,9 @@
 const std = @import("std");
 const zp = @import("zpotify");
 const Client = @import("client.zig");
-const printJson = @import("common.zig").printJson;
+const common = @import("common.zig");
+const printJson = common.printJson;
+const parseEnvFile = common.parseEnvFile;
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -13,7 +15,7 @@ pub fn main() !void {
 
     var client = try Client.init(alloc);
     defer client.deinit();
-    const c = &client.client;
+    const c = &client;
 
     const id = "3JK7UWkTqg4uyv2OfWRvQ9";
     {

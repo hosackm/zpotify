@@ -13,7 +13,7 @@ pub fn main() !void {
 
     var client = try Client.init(alloc);
     defer client.deinit();
-    const c = &client.client;
+    const c = &client;
 
     const hitch = "6yI0Np2UyigswnRqjSKN5V";
     const elton = "60nLqS5q761B0AJmTnPDbY";

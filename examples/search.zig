@@ -13,7 +13,7 @@ pub fn main() !void {
 
     var client = try Client.init(alloc);
     defer client.deinit();
-    const c = &client.client;
+    const c = &client;
 
     const queries: []const struct { s: []const u8, type: zp.Search.Type } = &.{
         .{ .s = "boards of canada", .type = .artist },

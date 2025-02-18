@@ -1,46 +1,40 @@
 const std = @import("std");
 const zp = @import("zpotify");
-const FilePersistedToken = @import("token.zig").FilePersistedToken;
 
-const Auth = zp.Authenticator(FilePersistedToken);
-const Client = zp.Client(Auth);
+// env_map variables should live as long as the client
+var env_map: ?std.process.EnvMap = null;
 
-client: Client,
-authenticator: *Auth,
-allocator: std.mem.Allocator,
+pub fn init(alloc: std.mem.Allocator) !zp.Client {
+    // creds from EnvMap
+    env_map = try std.process.getEnvMap(alloc);
+    const id = env_map.?.get("ZPOTIFY_ID").?;
+    const secret = env_map.?.get("ZPOTIFY_SECRET").?;
+    const redirect = env_map.?.get("ZPOTIFY_REDIRECT").?;
+    const token_file = env_map.?.get("ZPOTIFY_TOKEN_FILE").?;
 
-const Self = @This();
-
-pub fn init(alloc: std.mem.Allocator) !Self {
-    var em = try std.process.getEnvMap(alloc);
-    defer em.deinit();
-
-    const auth = try alloc.create(Auth);
-    auth.* = .{
-        .token_source = .{
-            .filename = try alloc.dupe(u8, ".token.json"),
-            .allocator = alloc,
-        },
-        .credentials = .{
-            .redirect_uri = try alloc.dupe(u8, em.get("SPOTIFY_REDIRECT").?),
-            .client_id = try alloc.dupe(u8, em.get("SPOTIFY_ID").?),
-            .client_secret = try alloc.dupe(u8, em.get("SPOTIFY_SECRET").?),
-        },
-        .allocator = alloc,
+    const creds: zp.Credentials = .{
+        .client_id = id,
+        .client_secret = secret,
+        .redirect_uri = redirect,
     };
 
-    return .{
-        .client = Client.init(alloc, auth),
-        .authenticator = auth,
-        .allocator = alloc,
-    };
+    // read Token from TOKEN_FILE
+    const f = try std.fs.cwd().openFile(
+        token_file,
+        .{ .mode = .read_only },
+    );
+    defer f.close();
+
+    const contents = try f.reader().readAllAlloc(alloc, 2048);
+    defer alloc.free(contents);
+
+    const token = try zp.Token.parse(alloc, contents);
+
+    return zp.Client.init(alloc, token, creds);
 }
 
-pub fn deinit(self: *Self) void {
-    self.allocator.free(self.client.authenticator.*.credentials.redirect_uri);
-    self.allocator.free(self.client.authenticator.*.credentials.client_id);
-    self.allocator.free(self.client.authenticator.*.credentials.client_secret);
-    self.allocator.free(self.client.authenticator.*.token_source.filename);
-    self.*.client.deinit();
-    self.allocator.destroy(self.authenticator);
+pub fn deinit() void {
+    if (env_map) |em| {
+        em.deinit();
+    }
 }

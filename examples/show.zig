@@ -13,7 +13,7 @@ pub fn main() !void {
 
     var client = try Client.init(alloc);
     defer client.deinit();
-    const c = &client.client;
+    const c = &client;
 
     const bad_friends = "3gaGfrqgnVqUBNDdtv5p3S";
     const your_moms = "7i59GubTw3CcNy9M6m7DTX";
