@@ -140,15 +140,15 @@ pub const Client = struct {
         try req.finish();
         try req.wait();
 
-        const s = try req.reader().readAllAlloc(self.allocator, 8192);
+        const s = try req.reader().readAllAlloc(
+            self.*.allocator,
+            8192,
+        );
         defer self.*.allocator.free(s);
 
-        self.*.token = try std.json.parseFromSliceLeaky(
-            Token,
-            self.*.allocator,
-            s,
-            .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-        );
+        const refresh_token = try Token.parse(self.allocator, s);
+        self.*.token.access_token = refresh_token.access_token;
+        self.*.token.expiry = std.time.timestamp() + 3600;
     }
 
     fn authenticate(self: *Self, req: *std.http.Client.Request) !void {
