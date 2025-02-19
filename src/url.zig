@@ -72,7 +72,6 @@ pub fn build(
                             try url.appendSlice(field.name);
                             try url.append('=');
 
-                            // NEW FROM HERE
                             const opt_info = @typeInfo(opt.child);
                             switch (opt_info) {
                                 .Int => {
