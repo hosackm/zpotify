@@ -1,5 +1,7 @@
 # Zpotify
 
+[![Build Status](https://github.com/hosackm/zpotify/actions/workflows/zig-ci.yml/badge.svg)](https://github.com/hosackm/zpotify/actions/workflows/zig-ci.yml)
+
 This is a zig module for interacting with the Spotify [Web API](https://developer.spotify.com/web-api/).
 
 By using this library you agree to [Spotify's Developer Terms of Use](https://developer.spotify.com/developer-terms-of-use/).
