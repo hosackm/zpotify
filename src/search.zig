@@ -2,19 +2,35 @@
 //! using the Spotify Web API.
 const std = @import("std");
 const url = @import("url.zig");
-const P = std.json.Parsed;
 const JsonResponse = @import("types.zig").JsonResponse;
+const Paginated = @import("types.zig").Paginated;
+
+const Track = @import("track.zig").Simple;
+const Artist = @import("artist.zig").Simple;
+const Album = @import("album.zig").Simple;
+const Playlist = @import("playlist.zig");
+const Show = @import("show.zig").Simple;
+const Episode = @import("episode.zig").Simple;
+const Audiobook = @import("audiobook.zig").Simple;
+
+const TracksResult = struct { tracks: Paginated(Track) };
+const ArtistsResult = struct { artists: Paginated(Artist) };
+const AlbumsResult = struct { albums: Paginated(Album) };
+const PlaylistsResult = struct { playlists: Paginated(Playlist) };
+const ShowsResult = struct { shows: Paginated(Show) };
+const EpisodesResult = struct { episodes: Paginated(Episode) };
+const AudiobooksResult = struct { audiobooks: Paginated(Audiobook) };
 
 // Structure for representing a search result that can contain
 // resource types ranging from tracks, artists, albums, etc.
 pub const Result = union(enum) {
-    tracks: std.json.Value,
-    artists: std.json.Value,
-    albums: std.json.Value,
-    playlists: std.json.Value,
-    shows: std.json.Value,
-    episodes: std.json.Value,
-    audiobooks: std.json.Value,
+    tracks: Paginated(Track),
+    artists: Paginated(Artist),
+    albums: Paginated(Album),
+    playlists: Paginated(Playlist),
+    shows: Paginated(Show),
+    episodes: Paginated(Episode),
+    audiobooks: Paginated(Audiobook),
 
     pub fn jsonParse(
         alloc: std.mem.Allocator,
@@ -30,102 +46,25 @@ pub const Result = union(enum) {
         defer parsed.deinit();
 
         // don't need to scan input
-        while (try s.next() != .end_of_document) {}
+        while (try s.next() != .end_of_document) continue;
 
-        var iter = parsed.value.object.iterator();
-        const entry = iter.next().?;
-        if (std.mem.eql(
-            u8,
-            entry.key_ptr.*,
-            "tracks",
-        )) {
-            return .{
-                .tracks = (try std.json.parseFromSlice(
-                    std.json.Value,
-                    alloc,
-                    s.input,
-                    opts,
-                )).value,
-            };
-        } else if (std.mem.eql(
-            u8,
-            entry.key_ptr.*,
-            "artists",
-        )) {
-            return .{
-                .artists = (try std.json.parseFromSlice(
-                    std.json.Value,
-                    alloc,
-                    s.input,
-                    opts,
-                )).value,
-            };
-        } else if (std.mem.eql(
-            u8,
-            entry.key_ptr.*,
-            "albums",
-        )) {
-            return .{
-                .albums = (try std.json.parseFromSlice(
-                    std.json.Value,
-                    alloc,
-                    s.input,
-                    opts,
-                )).value,
-            };
-        } else if (std.mem.eql(
-            u8,
-            entry.key_ptr.*,
-            "playlists",
-        )) {
-            return .{
-                .playlists = (try std.json.parseFromSlice(
-                    std.json.Value,
-                    alloc,
-                    s.input,
-                    opts,
-                )).value,
-            };
-        } else if (std.mem.eql(
-            u8,
-            entry.key_ptr.*,
-            "episodes",
-        )) {
-            return .{
-                .episodes = (try std.json.parseFromSlice(
-                    std.json.Value,
-                    alloc,
-                    s.input,
-                    opts,
-                )).value,
-            };
-        } else if (std.mem.eql(
-            u8,
-            entry.key_ptr.*,
-            "shows",
-        )) {
-            return .{
-                .shows = (try std.json.parseFromSlice(
-                    std.json.Value,
-                    alloc,
-                    s.input,
-                    opts,
-                )).value,
-            };
-        } else if (std.mem.eql(
-            u8,
-            entry.key_ptr.*,
-            "audiobooks",
-        )) {
-            return .{
-                .audiobooks = (try std.json.parseFromSlice(
-                    std.json.Value,
-                    alloc,
-                    s.input,
-                    opts,
-                )).value,
-            };
-        } else unreachable;
+        const key = parsed.value.object.iterator().keys[0];
+        const leaky = std.json.parseFromSliceLeaky;
+
+        return if (std.mem.eql(u8, key, "tracks"))
+            .{ .tracks = (try leaky(TracksResult, alloc, s.input, opts)).tracks }
+        else if (std.mem.eql(u8, key, "artists"))
+            .{ .artists = (try leaky(ArtistsResult, alloc, s.input, opts)).artists }
+        else if (std.mem.eql(u8, key, "albums"))
+            .{ .albums = (try leaky(AlbumsResult, alloc, s.input, opts)).albums }
+        else if (std.mem.eql(u8, key, "episodes"))
+            .{ .episodes = (try leaky(EpisodesResult, alloc, s.input, opts)).episodes }
+        else if (std.mem.eql(u8, key, "shows"))
+            .{ .shows = (try leaky(ShowsResult, alloc, s.input, opts)).shows }
+        else if (std.mem.eql(u8, key, "audiobooks"))
+            .{ .audiobooks = (try leaky(AudiobooksResult, alloc, s.input, opts)).audiobooks }
+        else
+            unreachable;
     }
 };
 

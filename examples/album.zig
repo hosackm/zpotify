@@ -3,7 +3,6 @@ const zp = @import("zpotify");
 const Client = @import("client.zig");
 const common = @import("common.zig");
 const printJson = common.printJson;
-const parseEnvFile = common.parseEnvFile;
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};

@@ -29,9 +29,20 @@ pub fn main() !void {
             .{},
         );
 
+        const print = std.debug.print;
         switch (result.resp) {
-            .ok => printJson(result),
-            .err => {},
+            .ok => |res| {
+                switch (res) {
+                    .albums => |r| print("album: {s}\n", .{r.items[0].name}),
+                    .artists => |r| print("artist: {s}\n", .{r.items[0].name}),
+                    .audiobooks => |r| print("audiobook: {s}\n", .{r.items[0].name}),
+                    .episodes => |r| print("episode: {s}\n", .{r.items[0].name}),
+                    .playlists => |r| print("playlist: {s}\n", .{r.items[0].name}),
+                    .shows => |r| print("show: {s}\n", .{r.items[0].name}),
+                    .tracks => |r| print("track: {s}\n", .{r.items[0].name}),
+                }
+            },
+            .err => @panic("bad result returned from API"),
         }
     }
 }
