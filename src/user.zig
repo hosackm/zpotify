@@ -1,4 +1,6 @@
-//! Users from the web API reference
+//! This module contains definitions and methods for interacting with
+//! User resources from the Spotify Web API.
+
 const std = @import("std");
 const types = @import("types.zig");
 const url = @import("url.zig");
@@ -7,31 +9,52 @@ const Image = @import("image.zig");
 const Artist = @import("artist.zig");
 const Track = @import("track.zig");
 
-const Paged = types.Paginated;
-const M = types.Manyify;
-const P = std.json.Parsed;
-const JsonResponse = types.JsonResponse;
-
-const Simplified = struct {
-    display_name: []const u8,
+const Simple = struct {
+    // The name displayed on the user's profile. null if not available.
+    display_name: ?[]const u8,
+    // Known external URLs for this user.
     external_urls: std.json.Value,
+    // Information about the followers of the user.
     followers: std.json.Value,
+    // A link to the Web API endpoint for this user.
     href: []const u8,
+    // The Spotify user ID for the user.
     id: types.SpotifyId,
+    // The user's profile image.
     images: []const Image,
+    // The object type: "user"
     type: []const u8,
+    // The Spotify URI for the user.
     uri: types.SpotifyUri,
 };
 
-pub usingnamespace Simplified;
+// Import the Simple namespace and extend it
+pub usingnamespace Simple;
 
+// The country of the user, as set in the user's account profile. An ISO 3166-1
+// alpha-2 country code. This field is only available when the current user has
+// granted access to the user-read-private scope.
 country: []const u8,
+// The user's email address, as entered by the user when creating their account.
+// Important! This email address is unverified; there is no proof that it actually
+// belongs to the user. This field is only available when the current user has
+//granted access to the user-read-email scope.
 email: []const u8,
+// The user's explicit content settings. This field is only available when the current
+// user has granted access to the user-read-private scope.
 explicit_content: std.json.Value,
+// The user's Spotify subscription level: "premium", "free", etc.
+// (The subscription level "open" can be considered the same as "free".) This field is
+//only available when the current user has granted access to the user-read-private scope.
 product: []const u8,
 
+const Paged = types.Paginated;
+const M = types.Manyify;
+const JsonResponse = types.JsonResponse;
 const User = @This();
 
+// Get detailed profile information about the current user (including the current user's username).
+// https://developer.spotify.com/documentation/web-api/reference/get-current-users-profile
 pub fn getCurrentUser(
     alloc: std.mem.Allocator,
     client: anytype,
@@ -41,14 +64,20 @@ pub fn getCurrentUser(
     return JsonResponse(User).parse(alloc, &request);
 }
 
+// Structure used to represent top artists or tracks
 const Top = union(enum) {
     artists: struct {},
     tracks: struct {},
 };
 
-const Which = enum { artists, tracks };
+// Enumeration of acceptable time_range values
 const TimeRange = enum { short_term, medium_term, long_term };
 
+// Get the current user's top artists based on calculated affinity.
+// https://developer.spotify.com/documentation/web-api/reference/get-users-top-artists-and-tracks
+// opts.time_range - optional time range on which to base "top" calculations.
+// opts.limit - maximum number of items to return. default: 20. minimum: 1. maximum: 50.
+// opts.offset - The index of the first item to return. Default: 0.
 pub fn topArtists(
     alloc: std.mem.Allocator,
     client: anytype,
@@ -72,6 +101,11 @@ pub fn topArtists(
     return JsonResponse(Paged(Artist)).parse(alloc, &request);
 }
 
+// Get the current user's top tracks based on calculated affinity.
+// https://developer.spotify.com/documentation/web-api/reference/get-users-top-artists-and-tracks
+// opts.time_range - optional time range on which to base "top" calculations.
+// opts.limit - maximum number of items to return. default: 20. minimum: 1. maximum: 50.
+// opts.offset - The index of the first item to return. Default: 0.
 pub fn topTracks(
     alloc: std.mem.Allocator,
     client: anytype,
@@ -80,7 +114,7 @@ pub fn topTracks(
         limit: ?u8 = null,
         offset: ?u8 = null,
     },
-) !JsonResponse(Paged(Track.Simplified)) {
+) !JsonResponse(Paged(Track.Simple)) {
     const user_url = try url.build(
         alloc,
         url.base_url,
@@ -92,14 +126,18 @@ pub fn topTracks(
 
     var request = try client.get(alloc, try std.Uri.parse(user_url));
     defer request.deinit();
-    return JsonResponse(Paged(Track.Simplified)).parse(alloc, &request);
+    return JsonResponse(Paged(Track.Simple)).parse(alloc, &request);
 }
 
+// Get public profile information about a Spotify user.
+// https://developer.spotify.com/documentation/web-api/reference/get-users-profile
+//
+// user_id - The Spotify User ID to retrieve
 pub fn get(
     alloc: std.mem.Allocator,
     client: anytype,
-    comptime user_id: types.SpotifyUserId,
-) !JsonResponse(Simplified) {
+    user_id: types.SpotifyUserId,
+) !JsonResponse(Simple) {
     const user_url = try url.build(
         alloc,
         url.base_url,
@@ -111,13 +149,19 @@ pub fn get(
 
     var request = try client.get(alloc, try std.Uri.parse(user_url));
     defer request.deinit();
-    return JsonResponse(Simplified).parse(alloc, &request);
+    return JsonResponse(Simple).parse(alloc, &request);
 }
 
+// Add the current user as a follower of a playlist.
+// https://developer.spotify.com/documentation/web-api/reference/follow-playlist
+//
+// playlist_id - the Spotify Playlist ID to follow
+// opts.public - Defaults to true. If true the playlist will be included in user's
+//               public playlists (added to profile), if false it will remain private.
 pub fn followPlaylist(
     alloc: std.mem.Allocator,
     client: anytype,
-    comptime playlist_id: types.SpotifyId,
+    playlist_id: types.SpotifyId,
     opts: struct { public: ?bool = null },
 ) !void {
     const user_url = try url.build(
@@ -134,10 +178,14 @@ pub fn followPlaylist(
     defer request.deinit();
 }
 
+// Remove the current user as a follower of a playlist.
+// https://developer.spotify.com/documentation/web-api/reference/unfollow-playlist
+//
+// playlist_id - the Spotify Playlist ID to follow
 pub fn unfollowPlaylist(
     alloc: std.mem.Allocator,
     client: anytype,
-    comptime playlist_id: types.SpotifyId,
+    playlist_id: types.SpotifyId,
 ) !void {
     const user_url = try url.build(
         alloc,
@@ -152,10 +200,15 @@ pub fn unfollowPlaylist(
     defer request.deinit();
 }
 
+// Check to see if the current user is following a specified playlist.
+// https://developer.spotify.com/documentation/web-api/reference/check-if-user-follows-playlist
+//
+// playlist_id - the Spotify Playlist ID the user may be following
+// Returns a slice of bools with one value for backwards compatability reasons.
 pub fn isFollowingPlaylist(
     alloc: std.mem.Allocator,
     client: anytype,
-    comptime playlist_id: types.SpotifyId,
+    playlist_id: types.SpotifyId,
 ) !JsonResponse([]bool) {
     const user_url = try url.build(
         alloc,
@@ -168,11 +221,16 @@ pub fn isFollowingPlaylist(
 
     var request = try client.get(alloc, try std.Uri.parse(user_url));
     defer request.deinit();
-
     return JsonResponse([]bool).parse(alloc, &request);
 }
 
 pub const CursoredArtists = struct { artists: types.Cursored(Artist) };
+
+// Get the current user's followed artists.
+// https://developer.spotify.com/documentation/web-api/reference/get-followed
+//
+// opts.after - The last artist ID retrieved from the previous request.
+// opts.limit - The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.
 pub fn getFollowedArtists(
     alloc: std.mem.Allocator,
     client: anytype,
@@ -195,6 +253,10 @@ pub fn getFollowedArtists(
     return JsonResponse(CursoredArtists).parse(alloc, &request);
 }
 
+// Add the current user as a follower of one or more artists.
+// https://developer.spotify.com/documentation/web-api/reference/follow-artists-users
+//
+// ids - Spotify Artist IDs to follow
 pub fn followArtists(
     alloc: std.mem.Allocator,
     client: anytype,
@@ -217,6 +279,10 @@ pub fn followArtists(
     defer request.deinit();
 }
 
+// Remove the current user as a follower of one or more artists.
+// https://developer.spotify.com/documentation/web-api/reference/unfollow-artists-users
+//
+// ids - Spotify Artist IDs to un follow
 pub fn unfollowArtists(
     alloc: std.mem.Allocator,
     client: anytype,
@@ -235,6 +301,10 @@ pub fn unfollowArtists(
     defer request.deinit();
 }
 
+// Add the current user as a follower of one or other users.
+// https://developer.spotify.com/documentation/web-api/reference/follow-artists-users
+//
+// ids - Spotify User IDs to follow
 pub fn followUsers(
     alloc: std.mem.Allocator,
     client: anytype,
@@ -253,6 +323,10 @@ pub fn followUsers(
     defer request.deinit();
 }
 
+// Remove the current user as a follower of one or other users.
+// https://developer.spotify.com/documentation/web-api/reference/unfollow-artists-users
+//
+// ids - Spotify User IDs to unfollow
 pub fn unfollowUsers(
     alloc: std.mem.Allocator,
     client: anytype,
@@ -275,6 +349,10 @@ pub fn unfollowUsers(
     defer request.deinit();
 }
 
+// Check to see if the current user is following one or more other Spotify Artists.
+// https://developer.spotify.com/documentation/web-api/reference/check-current-user-follows
+//
+// ids - Spotify Artist IDs to check if current user is following
 pub fn isFollowingArtists(
     alloc: std.mem.Allocator,
     client: anytype,
@@ -294,6 +372,10 @@ pub fn isFollowingArtists(
     return JsonResponse([]bool).parse(alloc, &request);
 }
 
+// Check to see if the current user is following one or more other Spotify users.
+// https://developer.spotify.com/documentation/web-api/reference/check-current-user-follows
+//
+// ids - Spotify User IDs to check if current user is following
 pub fn isFollowingUsers(
     alloc: std.mem.Allocator,
     client: anytype,

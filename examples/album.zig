@@ -68,12 +68,12 @@ pub fn main() !void {
         std.debug.print("sleeping 0.5 seconds...\n", .{});
         std.time.sleep(std.time.ns_per_ms * 500);
 
-        try zp.Album.delete(
+        try zp.Album.remove(
             alloc,
             c,
             &.{"4aawyAB9vmqN3uQ7FjRGTy"},
         );
-        std.debug.print("deleted...\n", .{});
+        std.debug.print("removed...\n", .{});
     }
 
     {

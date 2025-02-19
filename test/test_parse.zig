@@ -19,7 +19,7 @@ test "parse new releases" {
     const data = @import("./data/files.zig").new_releases;
 
     const new_releases = try std.json.parseFromSlice(
-        zp.Album.PaginatedSimpleAlbum,
+        zp.Album.PagedSimpleAlbum,
         alloc,
         data,
         .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
@@ -48,7 +48,7 @@ test "find tracks for album" {
     const data = @import("./data/files.zig").find_album_tracks;
 
     const albums = try std.json.parseFromSlice(
-        zp.Paginated(zp.Track.Simplified),
+        zp.Paginated(zp.Track.Simple),
         alloc,
         data,
         .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
@@ -89,7 +89,7 @@ test "parse artist top tracks" {
     const files = @import("./data/files.zig");
     const alloc = std.testing.allocator;
 
-    const TopTracks = zp.Manyify(zp.Track.Simplified, "tracks");
+    const TopTracks = zp.Manyify(zp.Track.Simple, "tracks");
 
     const top_tracks = try std.json.parseFromSlice(
         TopTracks,
@@ -135,12 +135,75 @@ test "parse audiobook chapters" {
 
 test "parse current user's audiobooks" {
     const audiobook = try std.json.parseFromSlice(
-        zp.Paginated(zp.Audiobook.Simplified),
+        zp.Paginated(zp.Audiobook.Simple),
         std.testing.allocator,
         @import("./data/files.zig").current_users_audiobooks,
         .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
     );
     defer audiobook.deinit();
+}
+
+// -----------
+// category.zig
+// -----------
+test "parse category" {
+    const data =
+        \\{
+        \\"href": "string",
+        \\"icons": [
+        \\    {
+        \\    "url": "https://i.scdn.co/image/ab67616d00001e02ff9ca10b55ce82ae553c8228",
+        \\    "height": 300,
+        \\    "width": 300
+        \\    }
+        \\],
+        \\"id": "equal",
+        \\"name": "EQUAL"
+        \\}
+    ;
+    const categories = try std.json.parseFromSlice(
+        zp.Category,
+        std.testing.allocator,
+        data,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
+    );
+    defer categories.deinit();
+}
+
+test "parse categories" {
+    const data =
+        \\{
+        \\    "categories": {
+        \\        "href": "https://api.spotify.com/v1/me/shows?offset=0&limit=20",
+        \\        "limit": 20,
+        \\        "next": "https://api.spotify.com/v1/me/shows?offset=1&limit=1",
+        \\        "offset": 0,
+        \\        "previous": "https://api.spotify.com/v1/me/shows?offset=1&limit=1",
+        \\        "total": 4,
+        \\        "items": [
+        \\        {
+        \\            "href": "string",
+        \\            "icons": [
+        \\            {
+        \\                "url": "https://i.scdn.co/image/ab67616d00001e02ff9ca10b55ce82ae553c8228",
+        \\                "height": 300,
+        \\                "width": 300
+        \\            }
+        \\            ],
+        \\            "id": "equal",
+        \\            "name": "EQUAL"
+        \\        }
+        \\        ]
+        \\    }
+        \\}
+    ;
+    const categories = try std.json.parseFromSlice(
+        zp.Categories,
+        std.testing.allocator,
+        data,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
+    );
+    defer categories.deinit();
 }
 
 // -----------
@@ -244,7 +307,7 @@ test "parse show" {
 
 test "parse show episodes" {
     const episodes = try std.json.parseFromSlice(
-        zp.Paginated(zp.Episode.Simplified),
+        zp.Paginated(zp.Episode.Simple),
         std.testing.allocator,
         @import("./data/files.zig").get_show_episodes,
         .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
@@ -267,7 +330,7 @@ test "parse track" {
 
 test "parse tracks" {
     const tracks = try std.json.parseFromSlice(
-        zp.Manyify(zp.Track.Simplified, "tracks"),
+        zp.Manyify(zp.Track.Simple, "tracks"),
         std.testing.allocator,
         @import("./data/files.zig").find_tracks_simple,
         .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
@@ -356,7 +419,7 @@ test "parse user's top artists" {
 
 test "parse user's top tracks" {
     const tracks = try std.json.parseFromSlice(
-        zp.Paginated(zp.Track.Simplified),
+        zp.Paginated(zp.Track.Simple),
         std.testing.allocator,
         @import("./data/files.zig").current_users_top_tracks,
         .{ .allocate = .alloc_always, .ignore_unknown_fields = true },

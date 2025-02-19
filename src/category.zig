@@ -4,18 +4,27 @@ const std = @import("std");
 const types = @import("types.zig");
 const url = @import("url.zig");
 const Image = @import("image.zig");
-const Paged = types.Paginated;
-const P = std.json.Parsed;
-const M = types.Manyify;
-const JsonResponse = types.JsonResponse;
 
+// A link to the Web API endpoint returning full details of the category.
 href: []const u8,
+// The Spotify category ID of the category.
 id: types.SpotifyCategoryId,
+// The name of the category.
 name: []const u8,
+// The category icon, in various sizes.
 icons: []const Image,
 
 const Self = @This();
+const Paged = types.Paginated;
+const M = types.Manyify;
+const JsonResponse = types.JsonResponse;
 
+// Get a single category used to tag items in Spotify (on, for example,
+// the Spotify player’s “Browse” tab).
+// id - The Spotify category ID for the category.
+// opts.locale - The desired language, consisting of an ISO 639-1 language code
+//               and an ISO 3166-1 alpha-2 country code, joined by an underscore.
+//               for example (spanish mexico): "es_MX"
 pub fn getOne(
     alloc: std.mem.Allocator,
     client: anytype,
@@ -44,32 +53,19 @@ pub fn getOne(
     return JsonResponse(Self).parse(alloc, &request);
 }
 
-test "parse category" {
-    const data =
-        \\{
-        \\"href": "string",
-        \\"icons": [
-        \\    {
-        \\    "url": "https://i.scdn.co/image/ab67616d00001e02ff9ca10b55ce82ae553c8228",
-        \\    "height": 300,
-        \\    "width": 300
-        \\    }
-        \\],
-        \\"id": "equal",
-        \\"name": "EQUAL"
-        \\}
-    ;
-    const categories = try std.json.parseFromSlice(
-        Self,
-        std.testing.allocator,
-        data,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer categories.deinit();
-}
-
 // Yet a third way to return a grouping of objects...
-const Categories = struct { categories: Paged(Self) };
+pub const Categories = struct { categories: Paged(Self) };
+
+// Get a list of categories used to tag items in Spotify
+// (on, for example, the Spotify player’s “Browse” tab).
+// https://developer.spotify.com/documentation/web-api/reference/get-categories
+//
+// opts.market - an optional ISO 3166-1 Country Code
+// opts.limit - maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.
+// opts.offset - The index of the first item to return. Default: 0.
+// opts.locale - The desired language, consisting of an ISO 639-1 language code
+//               and an ISO 3166-1 alpha-2 country code, joined by an underscore.
+//               for example (spanish mexico): "es_MX"
 pub fn getMany(
     alloc: std.mem.Allocator,
     client: anytype,
@@ -95,40 +91,4 @@ pub fn getMany(
     var request = try client.get(alloc, try std.Uri.parse(category_url));
     defer request.deinit();
     return JsonResponse(Categories).parse(alloc, &request);
-}
-
-test "parse categories" {
-    const data =
-        \\{
-        \\    "categories": {
-        \\        "href": "https://api.spotify.com/v1/me/shows?offset=0&limit=20",
-        \\        "limit": 20,
-        \\        "next": "https://api.spotify.com/v1/me/shows?offset=1&limit=1",
-        \\        "offset": 0,
-        \\        "previous": "https://api.spotify.com/v1/me/shows?offset=1&limit=1",
-        \\        "total": 4,
-        \\        "items": [
-        \\        {
-        \\            "href": "string",
-        \\            "icons": [
-        \\            {
-        \\                "url": "https://i.scdn.co/image/ab67616d00001e02ff9ca10b55ce82ae553c8228",
-        \\                "height": 300,
-        \\                "width": 300
-        \\            }
-        \\            ],
-        \\            "id": "equal",
-        \\            "name": "EQUAL"
-        \\        }
-        \\        ]
-        \\    }
-        \\}
-    ;
-    const categories = try std.json.parseFromSlice(
-        Categories,
-        std.testing.allocator,
-        data,
-        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    );
-    defer categories.deinit();
 }

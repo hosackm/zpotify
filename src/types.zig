@@ -35,6 +35,16 @@ pub fn Paginated(comptime T: type) type {
         previous: ?[]const u8,
         total: usize,
         items: []const T,
+
+        // use for paging to the next set of results if any
+        fn next() ?@This() {
+            return null;
+        }
+
+        // use for paging to the previous set of results if any
+        fn previous() ?@This() {
+            return null;
+        }
     };
 }
 
@@ -153,7 +163,8 @@ pub const Error = struct {
 };
 
 // Union type to represent both a JSON parsed type T or an error JSON Response
-// from the Spotify Web API.
+// from the Spotify Web API. If the response is valid, the value .ok will be
+// populated. If there was an error, .err will be populated.
 pub fn JsonResponse(comptime T: type) type {
     return struct {
         resp: union(enum) {

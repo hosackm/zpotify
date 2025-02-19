@@ -6,6 +6,7 @@ pub usingnamespace @import("types.zig");
 
 // Spotify API Reference Stuff
 pub const Category = @import("category.zig");
+pub const Categories = Category.Categories;
 pub const Client = @import("client.zig").Client;
 pub const Artist = @import("artist.zig");
 pub const Album = @import("album.zig");

@@ -1,31 +1,53 @@
-//! Playlists from the web API reference
+//! This module contains definitions and methods for interacting with
+//! Playlist resources from the Spotify Web API.
+
 const std = @import("std");
 const types = @import("types.zig");
 const url = @import("url.zig");
 const Image = @import("image.zig");
 const Track = @import("track.zig");
 const Episode = @import("episode.zig");
+
+// true if the owner allows other users to modify the playlist.
+collaborative: bool,
+// The playlist description. Only returned for modified, verified
+// playlists, otherwise null.
+description: ?[]const u8,
+// Known external URLs for this playlist.
+external_urls: std.json.Value,
+// A link to the Web API endpoint providing full details of the playlist.
+href: []const u8,
+// The Spotify ID for the playlist.
+id: []const u8,
+// Images for the playlist. The array may be empty or contain up t
+// three images. The images are returned by size in descending order.
+// See Working with Playlists. Note: If returned, the source URL for
+// the image (url) is temporary and will expire in less than a day.
+images: ?[]const Image = null,
+// The name of the playlist.
+name: []const u8,
+// The user who owns the playlist
+owner: std.json.Value,
+// The playlist's public/private status (if it is added to the user's profile):
+// true the playlist is public, false the playlist is private, null the
+// playlist status is not relevant. For more about public/private status
+public: bool,
+// The version identifier for the current playlist. Can be supplied in
+// other requests to target a specific playlist version
+snapshot_id: []const u8,
+// The object type: "playlist"
+type: []const u8,
+// The Spotify URI for the playlist.
+uri: types.SpotifyUri,
+// The primary color used when displaying the playlist
+primary_color: ?[]const u8 = null,
+// Information about the followers of the playlist.
+followers: ?std.json.Value = null,
+
 const Paged = types.Paginated;
-const P = std.json.Parsed;
 const M = types.Manyify;
 const JsonResponse = types.JsonResponse;
-
 const Self = @This();
-
-collaborative: bool,
-description: []const u8,
-external_urls: std.json.Value,
-href: []const u8,
-id: []const u8,
-name: []const u8,
-owner: std.json.Value,
-public: bool,
-snapshot_id: []const u8,
-type: []const u8,
-uri: types.SpotifyUri,
-primary_color: ?[]const u8 = null,
-images: ?[]const Image = null,
-followers: ?std.json.Value = null,
 
 // actually isn't completely paginated...
 // "tracks": {
@@ -35,8 +57,8 @@ followers: ?std.json.Value = null,
 // tracks: Paged(PlaylistTrack),
 
 const TrackOrEpisode = union(enum) {
-    track: Track.Simplified,
-    episode: Episode.Simplified,
+    track: Track.Simple,
+    episode: Episode.Simple,
 
     pub fn jsonParse(
         alloc: std.mem.Allocator,
@@ -52,7 +74,7 @@ const TrackOrEpisode = union(enum) {
         defer parsed.deinit();
 
         // don't need to scan input
-        while (try s.next() != .end_of_document) {}
+        while (try s.next() != .end_of_document) continue;
 
         var iter = parsed.value.object.iterator();
         while (iter.next()) |obj| {
@@ -63,13 +85,12 @@ const TrackOrEpisode = union(enum) {
 
         if (std.mem.eql(
             u8,
-            // parsed.value.object.get("type").?.string,
             parsed.value.object.get("track").?.object.get("type").?.string,
             "track",
         )) {
             return .{
                 .track = (try std.json.parseFromSlice(
-                    Track.Simplified,
+                    Track.Simple,
                     alloc,
                     s.input,
                     opts,
@@ -77,13 +98,12 @@ const TrackOrEpisode = union(enum) {
             };
         } else if (std.mem.eql(
             u8,
-            // parsed.value.object.get("type").?.string,
             parsed.value.object.get("track").?.object.get("type").?.string,
             "episode",
         )) {
             return .{
                 .episode = (try std.json.parseFromSlice(
-                    Episode.Simplified,
+                    Episode.Simple,
                     alloc,
                     s.input,
                     opts,
@@ -187,7 +207,23 @@ const Remove = struct {
 };
 
 pub const Add = struct {
+    // A JSON array of the Spotify URIs to add. For example:
+    // {"uris": ["spotify:track:4iV5W9uYEdYUVa79Axb7Rh",
+    //    "spotify:track:1301WleyT98MSxVHPZCA6M",
+    //    "spotify:episode:512ojhOuo1ktJprKbVcKyQ"]
+    // }
+    // A maximum of 100 items can be added in one request. Note: if the uris
+    // parameter is present in the query string, any URIs listed here in the
+    // body will be ignored.
     uris: ?[]const types.SpotifyUri,
+    // The position to insert the items, a zero-based index. For example, to insert the
+    // items in the first position: position=0 ; to insert the items in the
+    // third position: position=2. If omitted, the items will be appended to the playlist.
+    // Items are added in the order they appear in the uris array. For example:
+    // {
+    //   "uris": ["spotify:track:4iV5W9uYEdYUVa79Axb7Rh","spotify:track:1301WleyT98MSxVHPZCA6M"],
+    //   "position": 3
+    // }
     position: ?u16,
 
     pub fn jsonStringify(self: @This(), writer: anytype) !void {
@@ -198,6 +234,25 @@ pub const Add = struct {
     }
 };
 
+// Get a playlist owned by a Spotify user.
+// https://developer.spotify.com/documentation/web-api/reference/get-playlist
+//
+// id - Spotify Playlist ID
+// opts.market - an optional ISO 3166-1 Country Code
+// opts.additional_types - A comma-separated list of item types that your client
+//                         supports besides the default track type. Valid types
+//                         are: track and episode.
+// opts.fields - Filters for the query: a comma-separated list of the fields to
+//               return. If omitted, all fields are returned. For example,
+//               to get just the playlist''s description and URI: fields=description,uri.
+//               A dot separator can be used to specify non-reoccurring fields, while
+//               parentheses can be used to specify reoccurring fields within objects.
+//               For example, to get just the added date and user ID of the adder:
+//               fields=tracks.items(added_at,added_by.id). Use multiple parentheses to
+//               drill down into nested objects, for example:
+//               fields=tracks.items(track(name,href,album(name,href))).
+//               Fields can be excluded by prefixing them with an exclamation mark, for
+//               example: fields=tracks.items(track(name,href,album(!name,href)))
 pub fn getOne(
     alloc: std.mem.Allocator,
     client: anytype,
@@ -226,6 +281,11 @@ pub fn getOne(
     return JsonResponse(Self).parse(alloc, &request);
 }
 
+// Change a playlist's name and public/private state. (The user must, of course, own the playlist.)
+// https://developer.spotify.com/documentation/web-api/reference/change-playlist-details
+//
+// id - Spotify Playlist ID
+// details - updated details to be set on the playlist
 pub fn setDetails(
     alloc: std.mem.Allocator,
     client: anytype,
@@ -245,6 +305,27 @@ pub fn setDetails(
     defer request.deinit();
 }
 
+// Get full details of the items of a playlist owned by a Spotify user.
+// https://developer.spotify.com/documentation/web-api/reference/get-playlists-tracks
+//
+// id - Spotify Playlist ID
+// opts.market - an optional ISO 3166-1 Country Code
+// opts.additional_types - A comma-separated list of item types that your client
+//                         supports besides the default track type. Valid types
+//                         are: track and episode.
+// opts.fields - Filters for the query: a comma-separated list of the fields to
+//               return. If omitted, all fields are returned. For example,
+//               to get just the playlist''s description and URI: fields=description,uri.
+//               A dot separator can be used to specify non-reoccurring fields, while
+//               parentheses can be used to specify reoccurring fields within objects.
+//               For example, to get just the added date and user ID of the adder:
+//               fields=tracks.items(added_at,added_by.id). Use multiple parentheses to
+//               drill down into nested objects, for example:
+//               fields=tracks.items(track(name,href,album(name,href))).
+//               Fields can be excluded by prefixing them with an exclamation mark, for
+//               example: fields=tracks.items(track(name,href,album(!name,href)))
+// opts.limit - maximum number of items to return. default: 20. minimum: 1. maximum: 50.
+// opts.offset - The index of the first item to return. Default: 0.
 pub fn getTracks(
     alloc: std.mem.Allocator,
     client: anytype,
@@ -284,6 +365,7 @@ pub fn getTracks(
 //
 // Replacing items in a playlist will overwrite its existing items. This operation
 // can be used for replacing or clearing items in a playlist.
+// https://developer.spotify.com/documentation/web-api/reference/reorder-or-replace-playlists-tracks
 pub fn update(
     alloc: std.mem.Allocator,
     client: anytype,
@@ -304,6 +386,11 @@ pub fn update(
     return JsonResponse([]const u8).parse(alloc, &request);
 }
 
+// Add one or more items to a user's playlist.
+// https://developer.spotify.com/documentation/web-api/reference/add-tracks-to-playlist
+//
+// id - Spotify Playlist ID
+// add_info -
 pub fn add(
     alloc: std.mem.Allocator,
     client: anytype,
@@ -324,6 +411,11 @@ pub fn add(
     return JsonResponse([]const u8).parse(alloc, &request);
 }
 
+// Remove one or more items from a user's playlist.
+// https://developer.spotify.com/documentation/web-api/reference/remove-tracks-playlist
+//
+// id - Spotify Playlist ID
+// remove - options to define how to remove items from the playlist
 pub fn remove(
     alloc: std.mem.Allocator,
     client: anytype,
@@ -344,6 +436,11 @@ pub fn remove(
     return JsonResponse([]const u8).parse(alloc, &request);
 }
 
+// Get a list of the playlists owned or followed by the current Spotify user.
+// https://developer.spotify.com/documentation/web-api/reference/get-a-list-of-current-users-playlists
+//
+// opts.limit - maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.
+// opts.offset - The index of the first item to return. Default: 0.
 pub fn saved(
     alloc: std.mem.Allocator,
     client: anytype,
@@ -363,6 +460,12 @@ pub fn saved(
     return JsonResponse(Paged(Self)).parse(alloc, &request);
 }
 
+// Get a list of the playlists owned or followed by a Spotify user.
+// https://developer.spotify.com/documentation/web-api/reference/get-list-users-playlists
+//
+// id - the Spotify User's ID
+// opts.limit - maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.
+// opts.offset - The index of the first item to return. Default: 0.
 pub fn getPlaylistsForUser(
     alloc: std.mem.Allocator,
     client: anytype,

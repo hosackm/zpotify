@@ -1,9 +1,12 @@
-//! Search from the web API reference
+//! This module contains definitions and methods for searching
+//! using the Spotify Web API.
 const std = @import("std");
 const url = @import("url.zig");
 const P = std.json.Parsed;
 const JsonResponse = @import("types.zig").JsonResponse;
 
+// Structure for representing a search result that can contain
+// resource types ranging from tracks, artists, albums, etc.
 pub const Result = union(enum) {
     tracks: std.json.Value,
     artists: std.json.Value,
@@ -126,6 +129,7 @@ pub const Result = union(enum) {
     }
 };
 
+// Different types that can be returned from the /search endpoint
 pub const Type = enum {
     album,
     artist,
@@ -138,6 +142,21 @@ pub const Type = enum {
 
 const Self = @This();
 
+// Get Spotify catalog information about albums, artists, playlists, tracks,
+// shows, episodes or audiobooks that match a keyword string. Audiobooks are
+// only available within the US, UK, Canada, Ireland, New Zealand and Australia
+// markets.
+// https://developer.spotify.com/documentation/web-api/reference/search
+//
+// query - the search term
+// search_type - the type of search to perform (tracks, episodes, artists, etc.)
+// opts.market - an optional ISO 3166-1 Country Code
+// opts.limit - maximum number of items to return. default: 20. minimum: 1. maximum: 50.
+// opts.offset - The index of the first item to return. Default: 0.
+// opts.include_external - If include_external=audio is specified it signals that the client
+//                         can play externally hosted audio content, and marks the content
+//                         as playable in the response. By default externally hosted audio
+//                         content is marked as unplayable in the response.
 pub fn search(
     alloc: std.mem.Allocator,
     client: anytype,

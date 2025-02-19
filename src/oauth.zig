@@ -11,9 +11,12 @@ pub const Token = struct {
     access_token: []const u8,
     token_type: []const u8,
     scope: []const u8,
-    expires_in: u64, // seconds, (always 3600 seconds or 1 hour)
+    // seconds, (always 3600 seconds or 1 hour)
+    expires_in: u64,
+    // no refresh_token when refreshing, use default.
+    refresh_token: []const u8 = "",
+    // set to 0 if not present, we will overwrite this
     expiry: i64 = 0,
-    refresh_token: []const u8,
 
     // If the token will expire in one minute we should refresh it
     const expire_delta_secs: i64 = std.time.s_per_min;
@@ -26,7 +29,9 @@ pub const Token = struct {
             s,
             .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
         );
-        token.expiry = @as(i64, @intCast(token.expires_in)) + std.time.timestamp();
+
+        if (token.expiry == 0) token.expiry = std.time.timestamp() + 3600;
+
         return token;
     }
 
