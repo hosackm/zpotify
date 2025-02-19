@@ -18,6 +18,9 @@ jobs:
         with:
           version: 0.13.0
 
+      - name: Build all examples
+        run: zig build examples -Dexample=all
+
       - name: Run unit tests
         run: zig build unit
 

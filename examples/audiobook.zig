@@ -69,7 +69,7 @@ pub fn main() !void {
 
     {
         // check if the current user has saved the following books (by id)
-        const saved = try zp.Audiobook.areSaved(
+        const saved = try zp.Audiobook.contains(
             alloc,
             c,
             &.{ hitch, elton },
