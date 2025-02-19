@@ -31,6 +31,12 @@ pub fn escape(alloc: std.mem.Allocator, s: []const u8) ![]u8 {
 // Builds a URL by combining the host, path, and query sections of the URL.
 // The query argument must be a struct with any number of optional fields.
 // The fields must be: ?u8, ?u16, ?[]const u8, or ?[]const []const u8.
+//
+// alloc - allocator to use for allocations
+// host - a comptime value for the base url to use as the host
+// path - the path to append to the host
+// spotify_id - optional ID to be formated into the path string
+// params - URL query parameters to be added to the URL. Use void (ie. {}) if none.
 pub fn build(
     alloc: std.mem.Allocator,
     comptime host: []const u8,
@@ -70,14 +76,10 @@ pub fn build(
                             try url.appendSlice(field.name);
                             try url.append('=');
 
-                            switch (opt.child) {
-                                u8,
-                                u16,
-                                u32,
-                                u64,
-                                u128,
-                                usize,
-                                => {
+                            // NEW FROM HERE
+                            const opt_info = @typeInfo(opt.child);
+                            switch (opt_info) {
+                                .Int => {
                                     const s = try std.fmt.allocPrint(
                                         alloc,
                                         "{d}",
@@ -86,13 +88,15 @@ pub fn build(
                                     defer alloc.free(s);
                                     try url.appendSlice(s);
                                 },
-                                bool => try url.appendSlice(if (value) "true" else "false"),
-                                []const u8 => {
+                                .Bool => try url.appendSlice(if (value) "true" else "false"),
+                                .Pointer => {
+                                    // only process []const u8 values
+                                    if (opt.child != []const u8) break;
+
                                     const escaped = try escape(alloc, value);
                                     defer alloc.free(escaped);
                                     try url.appendSlice(escaped);
                                 },
-                                []const []const u8 => {},
                                 else => {},
                             }
                         }
