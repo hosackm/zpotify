@@ -5,10 +5,6 @@ pub const base_url = "https://api.spotify.com/v1";
 pub const auth_url = "https://accounts.spotify.com/authorize";
 pub const token_url = "https://accounts.spotify.com/api/token";
 
-pub const base_uri = std.Uri.parse(base_url[0..]) catch unreachable;
-pub const auth_uri = std.Uri.parse(auth_url[0..]) catch unreachable;
-pub const token_uri = std.Uri.parse(token_url[0..]) catch unreachable;
-
 // Escapes a string for inclusion in a URL. Unsupported characters are converted
 // to their corresponding ASCII 2 digit hex codes preceded by a %.
 pub fn escape(alloc: std.mem.Allocator, s: []const u8) ![]u8 {
@@ -90,9 +86,7 @@ pub fn build(
                                 },
                                 .Bool => try url.appendSlice(if (value) "true" else "false"),
                                 .Pointer => {
-                                    // only process []const u8 values
                                     if (opt.child != []const u8) break;
-
                                     const escaped = try escape(alloc, value);
                                     defer alloc.free(escaped);
                                     try url.appendSlice(escaped);
@@ -101,6 +95,7 @@ pub fn build(
                             }
                         }
                     },
+                    // ?[]const []const u8, is considered a .Pointer ¯\_(ツ)_/¯
                     .Pointer => {
                         try url.append(if (num_params > 0) '&' else '?');
                         try url.appendSlice(field.name);
