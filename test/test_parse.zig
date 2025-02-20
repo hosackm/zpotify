@@ -274,6 +274,9 @@ test "parse search result" {
     );
     defer artist.deinit();
 
+    const first_name = artist.value.artists.?.items[0].name;
+    try std.testing.expectEqualStrings(first_name, "Tania Bowra");
+
     const tracks = try std.json.parseFromSlice(
         zp.Search.Result,
         std.testing.allocator,
@@ -281,6 +284,9 @@ test "parse search result" {
         .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
     );
     defer tracks.deinit();
+
+    const first_track_name = tracks.value.tracks.?.items[0].name;
+    try std.testing.expectEqualStrings(first_track_name, "Uptown Funk");
 
     // Currently don't handle multiple search types
     const track_playlist = try std.json.parseFromSlice(
@@ -290,6 +296,16 @@ test "parse search result" {
         .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
     );
     defer track_playlist.deinit();
+
+    const first_playlist_name = track_playlist.value.playlists.?.items[0].name;
+    const expected = "The Ultimate Christmas Playlist: " ++
+        "The Best Holiday Music (Mariah Carey, Elvis Presley, " ++
+        "Glee Christmas, Wham, Pentatonix, " ++
+        "Xmas, Michael Bublé, Meghan Trainor)";
+    try std.testing.expectEqualStrings(first_playlist_name, expected);
+
+    const first_track_name2 = track_playlist.value.tracks.?.items[0].name;
+    try std.testing.expectEqualStrings(first_track_name2, "I Gotta Right to Sing the Blues");
 }
 
 // --------

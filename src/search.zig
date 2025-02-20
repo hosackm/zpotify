@@ -24,6 +24,16 @@ pub const Result = struct {
     episodes: ?Paginated(Episode) = null,
     audiobooks: ?Paginated(Audiobook) = null,
 
+    const Field = enum {
+        tracks,
+        artists,
+        albums,
+        playlists,
+        shows,
+        episodes,
+        audiobooks,
+    };
+
     pub fn jsonParse(
         alloc: std.mem.Allocator,
         s: anytype,
@@ -37,76 +47,92 @@ pub const Result = struct {
         );
         defer parsed.deinit();
 
-        // don't need to scan input
+        // scan to end of document to make it look like we processed it
         while (try s.next() != .end_of_document) continue;
 
         var result: Result = .{};
-
         const lk = std.json.parseFromValueLeaky;
 
         var iter = parsed.value.object.iterator();
         while (iter.next()) |entry| {
             const key = entry.key_ptr.*;
             const val = entry.value_ptr.*;
-            if (std.mem.eql(u8, key, "tracks")) {
-                result.tracks = try lk(
-                    Paginated(Track),
-                    alloc,
-                    val,
-                    opts,
-                );
-            }
-            if (std.mem.eql(u8, key, "artists")) {
-                result.artists = try lk(
-                    Paginated(Artist),
-                    alloc,
-                    val,
-                    opts,
-                );
-            }
-            if (std.mem.eql(u8, key, "albums")) {
-                result.albums = try lk(
-                    Paginated(Album),
-                    alloc,
-                    val,
-                    opts,
-                );
-            }
-            if (std.mem.eql(u8, key, "episodes")) {
-                result.episodes = try lk(
-                    Paginated(Episode),
-                    alloc,
-                    val,
-                    opts,
-                );
-            }
-            if (std.mem.eql(u8, key, "playlists")) {
-                result.playlists = try lk(
-                    Paginated(Playlist),
-                    alloc,
-                    val,
-                    opts,
-                );
-            }
-            if (std.mem.eql(u8, key, "shows")) {
-                result.shows = try lk(
-                    Paginated(Show),
-                    alloc,
-                    val,
-                    opts,
-                );
-            }
-            if (std.mem.eql(u8, key, "audiobooks")) {
-                result.audiobooks = try lk(
-                    Paginated(Audiobook),
-                    alloc,
-                    val,
-                    opts,
-                );
+
+            inline for (@typeInfo(Result).Struct.fields) |field| {
+                if (std.mem.eql(u8, key, field.name)) {
+                    // Go from optional to underlying type. (ie. ?Paginated(Artist) -> Paginated(Artist))
+                    const child_type = @typeInfo(field.type).Optional.child;
+
+                    @field(result, field.name) = try lk(
+                        child_type,
+                        alloc,
+                        val,
+                        opts,
+                    );
+                }
             }
         }
 
         return result;
+    }
+
+    // Return true if page was sucessful otherwise false.
+    pub inline fn pageForward(
+        self: *Result,
+        alloc: std.mem.Allocator,
+        client: anytype,
+        which: Field,
+    ) !bool {
+        var edited: bool = false;
+
+        if (@field(self, @tagName(which))) |field| {
+            if (field.next) |next_url| {
+                var request = try client.get(alloc, try std.Uri.parse(next_url));
+                defer request.deinit();
+                const response = try JsonResponse(
+                    Result,
+                ).parse(alloc, &request);
+
+                switch (response.resp) {
+                    .err => edited = false,
+                    .ok => |val| {
+                        @field(self, @tagName(which)) = @field(val, @tagName(which));
+                    },
+                }
+                edited = true;
+            }
+        }
+        return edited;
+    }
+
+    // Return true if page was sucessful otherwise false.
+    pub inline fn pageBackward(
+        self: *Result,
+        alloc: std.mem.Allocator,
+        client: anytype,
+        which: Field,
+    ) !bool {
+        var edited: bool = false;
+
+        if (@field(self, @tagName(which))) |field| {
+            if (field.previous) |prev_url| {
+                var request = try client.get(alloc, try std.Uri.parse(prev_url));
+                defer request.deinit();
+                const response = try JsonResponse(
+                    Result,
+                ).parse(alloc, &request);
+
+                switch (response.resp) {
+                    .err => edited = false,
+                    .ok => |val| {
+                        @field(self, @tagName(which)) = @field(val, @tagName(which));
+                    },
+                }
+                edited = true;
+            }
+        }
+
+        return edited;
     }
 };
 

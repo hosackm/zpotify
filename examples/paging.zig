@@ -27,7 +27,7 @@ pub fn main() !void {
                     "==== offset: {d}, limit: {d}, total: {d} ====\n",
                     .{ next.offset, next.limit, next.total },
                 );
-                print(next);
+                printSaved(next);
                 iter = try next.getNext(alloc, c);
             } else break;
         }
@@ -39,19 +39,44 @@ pub fn main() !void {
                     "==== offset: {d}, limit: {d}, total: {d} ====\n",
                     .{ prev.offset, prev.limit, prev.total },
                 );
-                print(prev);
+                printSaved(prev);
                 iter = try prev.getPrevious(alloc, c);
             } else break;
         }
     }
+
+    // const search_response = try zp.Search.search(
+    //     alloc,
+    //     c,
+    //     "love",
+    //     .{ .track = true },
+    //     .{},
+    // );
+    // if (search_response.resp == .err) @panic("error returned from search");
+
+    // var searched = search_response.resp.ok;
+    // printPage(searched.tracks.?);
+
+    // if (try searched.pageForward(alloc, c, .tracks)) {
+    //     // page backward, should be the same tracks as the first print
+    //     printPage(searched.tracks.?);
+    //     _ = try searched.pageBackward(alloc, c, .tracks);
+    //     printPage(searched.tracks.?);
+    // }
 }
 
-fn print(v: zp.Paginated(zp.Track.Saved)) void {
+fn printSaved(v: zp.Paginated(zp.Track.Saved)) void {
     for (v.items) |saved| {
         std.debug.print("  {s} (by {s}), [added {s}]\n", .{
             saved.track.name[0..@min(saved.track.name.len, 50)],
             saved.track.artists[0].name[0..@min(saved.track.artists[0].name.len, 50)],
             saved.added_at,
         });
+    }
+}
+
+fn printPage(v: zp.Paginated(zp.Track.Simple)) void {
+    for (v.items, v.offset + 1..) |track, i| {
+        std.debug.print("[{d}] {s}\n", .{ i, track.name });
     }
 }

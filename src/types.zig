@@ -38,8 +38,16 @@ pub fn Paginated(comptime T: type) type {
 
         const Self = @This();
 
+        const Result = @import("search.zig").Result;
+
         // use for paging to the next set of results if any
         pub fn getNext(self: Self, alloc: std.mem.Allocator, client: anytype) !?Self {
+            if (Self == Result) {
+                std.debug.print("trying to page a Result type...\n", .{});
+            } else {
+                std.debug.print("trying to page a non-Result type...\n", .{});
+            }
+
             if (self.next) |url| {
                 var request = try client.get(alloc, try std.Uri.parse(url));
                 defer request.deinit();
@@ -67,6 +75,60 @@ pub fn Paginated(comptime T: type) type {
             }
             return null;
         }
+
+        // Should paging work in-place?
+        // Return true if page was sucessful otherwise false.
+        // pub inline fn pageForward(
+        //     self: *Self,
+        //     alloc: std.mem.Allocator,
+        //     client: anytype,
+        // ) !bool {
+        //     var edited: bool = false;
+        //     if (self.*.next) |next_url| {
+        //         var request = try client.get(alloc, try std.Uri.parse(next_url));
+        //         defer request.deinit();
+        //         const response = try JsonResponse(
+        //             Self,
+        //         ).parse(alloc, &request);
+
+        //         switch (response.resp) {
+        //             .err => edited = false,
+        //             .ok => |val| {
+        //                 std.debug.print("offset parsed: {d}\n", .{val.offset});
+        //                 self.* = val;
+        //             },
+        //         }
+        //         edited = true;
+        //     }
+        //     return edited;
+        // }
+
+        // Return true if page was sucessful otherwise false.
+        // pub inline fn pageBackward(
+        //     self: *Self,
+        //     alloc: std.mem.Allocator,
+        //     client: anytype,
+        // ) !bool {
+        //     var edited: bool = false;
+
+        //     if (self.*.previous) |prev_url| {
+        //         var request = try client.get(alloc, try std.Uri.parse(prev_url));
+        //         defer request.deinit();
+        //         const response = try JsonResponse(
+        //             Self,
+        //         ).parse(alloc, &request);
+
+        //         switch (response.resp) {
+        //             .err => edited = false,
+        //             .ok => |val| {
+        //                 std.debug.print("offset parsed: {d}\n", .{val.offset});
+        //                 self.* = val;
+        //             },
+        //         }
+        //         edited = true;
+        //     }
+        //     return edited;
+        // }
     };
 }
 
