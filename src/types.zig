@@ -76,7 +76,9 @@ pub fn Paginated(comptime T: type) type {
             return null;
         }
 
-        // Should paging work in-place?
+        // -------------------------------------------------------------
+        // Should paging for Paginated work in-place like Search.Result?
+        // -------------------------------------------------------------
         // Return true if page was sucessful otherwise false.
         // pub inline fn pageForward(
         //     self: *Self,

@@ -34,6 +34,8 @@ pub const Result = struct {
         audiobooks,
     };
 
+    // Custom JSON parsing for objects returned from the search API endpoint.
+    // https://api.spotify.com/v1/search
     pub fn jsonParse(
         alloc: std.mem.Allocator,
         s: anytype,
@@ -50,8 +52,8 @@ pub const Result = struct {
         // scan to end of document to make it look like we processed it
         while (try s.next() != .end_of_document) continue;
 
+        // Build Result type one field at a time.
         var result: Result = .{};
-        const lk = std.json.parseFromValueLeaky;
 
         var iter = parsed.value.object.iterator();
         while (iter.next()) |entry| {
@@ -63,7 +65,7 @@ pub const Result = struct {
                     // Go from optional to underlying type. (ie. ?Paginated(Artist) -> Paginated(Artist))
                     const child_type = @typeInfo(field.type).Optional.child;
 
-                    @field(result, field.name) = try lk(
+                    @field(result, field.name) = try std.json.parseFromValueLeaky(
                         child_type,
                         alloc,
                         val,
@@ -76,7 +78,10 @@ pub const Result = struct {
         return result;
     }
 
-    // Return true if page was sucessful otherwise false.
+    // Moves a single field of a Result ahead by one page.
+    // Returns true if page was sucessful otherwise false.
+    // A false value can be returned if a request fails
+    // OR if there is no next page available.
     pub inline fn pageForward(
         self: *Result,
         alloc: std.mem.Allocator,
@@ -105,7 +110,10 @@ pub const Result = struct {
         return edited;
     }
 
-    // Return true if page was sucessful otherwise false.
+    // Moves a single field of a Result backward by one page.
+    // Returns true if page was sucessful otherwise false.
+    // A false value can be returned if a request fails
+    // OR if there is no previous page available.
     pub inline fn pageBackward(
         self: *Result,
         alloc: std.mem.Allocator,
@@ -139,6 +147,10 @@ pub const Result = struct {
 // Specifies which type of results to include in a search result.
 // For fields set to true, the corresponding field in the
 // Result type will be available. All other fields will be null.
+//
+// For example:
+//  .{ .album = true, .episode = true }
+// would enable albums and episode in the search results
 pub const Include = struct {
     album: bool = false,
     artist: bool = false,
