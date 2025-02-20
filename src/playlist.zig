@@ -18,7 +18,7 @@ external_urls: std.json.Value,
 // A link to the Web API endpoint providing full details of the playlist.
 href: []const u8,
 // The Spotify ID for the playlist.
-id: []const u8,
+// id: []const u8,
 // Images for the playlist. The array may be empty or contain up t
 // three images. The images are returned by size in descending order.
 // See Working with Playlists. Note: If returned, the source URL for
@@ -31,7 +31,7 @@ owner: std.json.Value,
 // The playlist's public/private status (if it is added to the user's profile):
 // true the playlist is public, false the playlist is private, null the
 // playlist status is not relevant. For more about public/private status
-public: bool,
+public: ?bool,
 // The version identifier for the current playlist. Can be supplied in
 // other requests to target a specific playlist version
 snapshot_id: []const u8,

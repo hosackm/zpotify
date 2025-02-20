@@ -15,13 +15,41 @@ pub fn main() !void {
     defer client.deinit();
     const c = &client;
 
-    const queries: []const struct { s: []const u8, type: zp.Search.Type } = &.{
-        .{ .s = "boards of canada", .type = .artist },
-        .{ .s = "ROYGBIV", .type = .track },
-        .{ .s = "Music Has the Right to Children", .type = .album },
+    // Simultaneously search for artist and tracks with "Snake" in the name.
+    const result = try zp.Search.search(
+        alloc,
+        c,
+        "Snake",
+        .{
+            .artist = true,
+            .track = true,
+        },
+        .{},
+    );
+    switch (result.resp) {
+        .ok => |res| {
+            if (res.artists) |artists| {
+                for (artists.items) |artist| {
+                    std.debug.print("[artist]: {s}\n", .{artist.name});
+                }
+            }
+            if (res.tracks) |tracks| {
+                for (tracks.items) |track| {
+                    std.debug.print("[track ]: {s}\n", .{track.name});
+                }
+            }
+        },
+        else => {},
+    }
+
+    // Perform artist, track, then album search
+    const queries: []const struct { s: []const u8, type: zp.Search.Include } = &.{
+        .{ .s = "boards of canada", .type = .{ .artist = true } },
+        .{ .s = "ROYGBIV", .type = .{ .track = true } },
+        .{ .s = "Music Has the Right to Children", .type = .{ .album = true } },
     };
     for (queries) |query| {
-        const result = try zp.Search.search(
+        const this_result = try zp.Search.search(
             alloc,
             c,
             query.s,
@@ -30,17 +58,15 @@ pub fn main() !void {
         );
 
         const print = std.debug.print;
-        switch (result.resp) {
+        switch (this_result.resp) {
             .ok => |res| {
-                switch (res) {
-                    .albums => |r| print("album: {s}\n", .{r.items[0].name}),
-                    .artists => |r| print("artist: {s}\n", .{r.items[0].name}),
-                    .audiobooks => |r| print("audiobook: {s}\n", .{r.items[0].name}),
-                    .episodes => |r| print("episode: {s}\n", .{r.items[0].name}),
-                    .playlists => |r| print("playlist: {s}\n", .{r.items[0].name}),
-                    .shows => |r| print("show: {s}\n", .{r.items[0].name}),
-                    .tracks => |r| print("track: {s}\n", .{r.items[0].name}),
-                }
+                if (res.albums) |r| print("album: {s}\n", .{r.items[0].name});
+                if (res.artists) |r| print("artist: {s}\n", .{r.items[0].name});
+                if (res.audiobooks) |r| print("audiobooks: {s}\n", .{r.items[0].name});
+                if (res.episodes) |r| print("episode: {s}\n", .{r.items[0].name});
+                if (res.playlists) |r| print("playlist: {s}\n", .{r.items[0].name});
+                if (res.shows) |r| print("show: {s}\n", .{r.items[0].name});
+                if (res.tracks) |r| print("track: {s}\n", .{r.items[0].name});
             },
             .err => @panic("bad result returned from API"),
         }

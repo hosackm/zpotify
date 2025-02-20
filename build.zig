@@ -23,6 +23,7 @@ pub fn build(b: *std.Build) void {
         category,
         chapter,
         episode,
+        paging,
         playlist,
         player,
         search,

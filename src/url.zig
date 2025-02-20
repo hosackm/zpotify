@@ -85,10 +85,21 @@ pub fn build(
                                 },
                                 .Bool => try url.appendSlice(if (value) "true" else "false"),
                                 .Pointer => {
-                                    if (opt.child != []const u8) break;
-                                    const escaped = try escape(alloc, value);
-                                    defer alloc.free(escaped);
-                                    try url.appendSlice(escaped);
+                                    // join with commas
+                                    if (opt.child == []const []const u8) {
+                                        const joined = try std.mem.join(
+                                            alloc,
+                                            ",",
+                                            value,
+                                        );
+                                        defer alloc.free(joined);
+                                        try url.appendSlice(joined);
+                                    }
+                                    if (opt.child == []const u8) {
+                                        const escaped = try escape(alloc, value);
+                                        defer alloc.free(escaped);
+                                        try url.appendSlice(escaped);
+                                    }
                                 },
                                 else => {},
                             }

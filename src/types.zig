@@ -36,13 +36,28 @@ pub fn Paginated(comptime T: type) type {
         total: usize,
         items: []const T,
 
+        const Self = @This();
+
         // use for paging to the next set of results if any
-        fn next() ?@This() {
-            return null;
+        pub fn getNext(self: Self, alloc: std.mem.Allocator, client: anytype) !?Self {
+            if (self.next) |url| {
+                var request = try client.get(alloc, try std.Uri.parse(url));
+                defer request.deinit();
+
+                const response = try JsonResponse(Self).parse(alloc, &request);
+                return switch (response.resp) {
+                    .ok => |val| val,
+                    .err => error.BadPaginatedRequest,
+                };
+                // not Search.Result.TrackResult ... because it's special parsing
+            } else return null;
         }
 
         // use for paging to the previous set of results if any
-        fn previous() ?@This() {
+        pub fn getPrevious(self: Self, alloc: std.mem.Allocator, client: anytype) !?Self {
+            _ = self;
+            _ = client;
+            _ = alloc;
             return null;
         }
     };

@@ -283,13 +283,13 @@ test "parse search result" {
     defer tracks.deinit();
 
     // Currently don't handle multiple search types
-    // const track_playlist = try std.json.parseFromSlice(
-    //     Result,
-    //     std.testing.allocator,
-    //     @import("./data/files.zig").search_trackplaylist,
-    //     .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
-    // );
-    // defer track_playlist.deinit();
+    const track_playlist = try std.json.parseFromSlice(
+        zp.Search.Result,
+        std.testing.allocator,
+        @import("./data/files.zig").search_trackplaylist,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
+    );
+    defer track_playlist.deinit();
 }
 
 // --------
