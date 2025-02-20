@@ -47,17 +47,24 @@ pub fn Paginated(comptime T: type) type {
                 const response = try JsonResponse(Self).parse(alloc, &request);
                 return switch (response.resp) {
                     .ok => |val| val,
-                    .err => error.BadPaginatedRequest,
+                    .err => error.PaginationFailed,
                 };
-                // not Search.Result.TrackResult ... because it's special parsing
-            } else return null;
+            }
+            return null;
         }
 
         // use for paging to the previous set of results if any
         pub fn getPrevious(self: Self, alloc: std.mem.Allocator, client: anytype) !?Self {
-            _ = self;
-            _ = client;
-            _ = alloc;
+            if (self.previous) |url| {
+                var request = try client.get(alloc, try std.Uri.parse(url));
+                defer request.deinit();
+
+                const response = try JsonResponse(Self).parse(alloc, &request);
+                return switch (response.resp) {
+                    .ok => |val| val,
+                    .err => error.PaginationFailed,
+                };
+            }
             return null;
         }
     };

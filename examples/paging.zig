@@ -18,12 +18,30 @@ pub fn main() !void {
     const result = try zp.Track.getSaved(alloc, c, .{});
     if (result.resp == .ok) {
         var iter: ?@TypeOf(result.resp.ok) = result.resp.ok;
-        while (iter) |next| : (iter = try next.getNext(alloc, c)) {
-            std.debug.print(
-                "==== offset: {d}, limit: {d}, total: {d} ====\n",
-                .{ next.offset, next.limit, next.total },
-            );
-            print(next);
+        var num: usize = 0;
+
+        // page forward 3 times
+        while (num < 3) : (num += 1) {
+            if (iter) |next| {
+                std.debug.print(
+                    "==== offset: {d}, limit: {d}, total: {d} ====\n",
+                    .{ next.offset, next.limit, next.total },
+                );
+                print(next);
+                iter = try next.getNext(alloc, c);
+            } else break;
+        }
+
+        // page backwards 3 times
+        while (num > 0) : (num -= 1) {
+            if (iter) |prev| {
+                std.debug.print(
+                    "==== offset: {d}, limit: {d}, total: {d} ====\n",
+                    .{ prev.offset, prev.limit, prev.total },
+                );
+                print(prev);
+                iter = try prev.getPrevious(alloc, c);
+            } else break;
         }
     }
 }
