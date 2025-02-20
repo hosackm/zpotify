@@ -15,25 +15,6 @@ pub fn main() !void {
     defer client.deinit();
     const c = &client;
 
-    // const result = try zp.Search.search(alloc, c, "love", .track, .{});
-    // if (result.resp == .ok) {
-    //     const res = result.resp.ok;
-
-    //     var paged = res.tracks;
-    //     std.debug.print(
-    //         "offset: {d}, limit: {d}, total: {d}\n",
-    //         .{ paged.offset, paged.limit, paged.total },
-    //     );
-
-    //     while (try paged.getNext(alloc, c)) |next| {
-    //         paged = next;
-    //         std.debug.print(
-    //             "offset: {d}, limit: {d}, total: {d}\n",
-    //             .{ paged.offset, paged.limit, paged.total },
-    //         );
-    //     }
-    // }
-
     const result = try zp.Track.getSaved(alloc, c, .{});
     if (result.resp == .ok) {
         var iter: ?@TypeOf(result.resp.ok) = result.resp.ok;
