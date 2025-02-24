@@ -8,118 +8,218 @@ const Image = @import("image.zig");
 const Track = @import("track.zig");
 const Episode = @import("episode.zig");
 
-// true if the owner allows other users to modify the playlist.
-collaborative: bool,
-// The playlist description. Only returned for modified, verified
-// playlists, otherwise null.
-description: ?[]const u8,
-// Known external URLs for this playlist.
-external_urls: std.json.Value,
-// A link to the Web API endpoint providing full details of the playlist.
-href: []const u8,
-// The Spotify ID for the playlist.
-// id: []const u8,
-// Images for the playlist. The array may be empty or contain up t
-// three images. The images are returned by size in descending order.
-// See Working with Playlists. Note: If returned, the source URL for
-// the image (url) is temporary and will expire in less than a day.
-images: ?[]const Image = null,
-// The name of the playlist.
-name: []const u8,
-// The user who owns the playlist
-owner: std.json.Value,
-// The playlist's public/private status (if it is added to the user's profile):
-// true the playlist is public, false the playlist is private, null the
-// playlist status is not relevant. For more about public/private status
-public: ?bool,
-// The version identifier for the current playlist. Can be supplied in
-// other requests to target a specific playlist version
-snapshot_id: []const u8,
-// The object type: "playlist"
-type: []const u8,
-// The Spotify URI for the playlist.
-uri: types.SpotifyUri,
-// The primary color used when displaying the playlist
-primary_color: ?[]const u8 = null,
-// Information about the followers of the playlist.
-followers: ?std.json.Value = null,
+pub const Simple = struct {
+    // true if the owner allows other users to modify the playlist.
+    collaborative: bool,
+    // The playlist description. Only returned for modified, verified
+    // playlists, otherwise null.
+    description: ?[]const u8,
+    // Known external URLs for this playlist.
+    external_urls: std.json.Value,
+    // A link to the Web API endpoint providing full details of the playlist.
+    href: []const u8,
+    // The Spotify ID for the playlist.
+    // id: []const u8,
+    // Images for the playlist. The array may be empty or contain up t
+    // three images. The images are returned by size in descending order.
+    // See Working with Playlists. Note: If returned, the source URL for
+    // the image (url) is temporary and will expire in less than a day.
+    images: ?[]const Image = null,
+    // The name of the playlist.
+    name: []const u8,
+    // The user who owns the playlist
+    owner: std.json.Value,
+    // The playlist's public/private status (if it is added to the user's profile):
+    // true the playlist is public, false the playlist is private, null the
+    // playlist status is not relevant. For more about public/private status
+    public: ?bool,
+    // The version identifier for the current playlist. Can be supplied in
+    // other requests to target a specific playlist version
+    snapshot_id: []const u8,
+    // The object type: "playlist"
+    type: []const u8,
+    // The Spotify URI for the playlist.
+    uri: types.SpotifyUri,
+    // The primary color used when displaying the playlist
+    primary_color: ?[]const u8 = null,
+    // Information about the followers of the playlist.
+    followers: ?std.json.Value = null,
+    // When returned in other contexts not all paged fields are available
+    tracks: ?struct { href: []const u8, total: u32 } = null,
+};
 
+// Figure out why pub usingnamespace isn't working for this one particularly
+pub const Full = struct {
+    // Import namespace and extend, NOT WORKING (perhaps it's from tracks namespace clash?)
+    // pub usingnamespace Simple;
+
+    // true if the owner allows other users to modify the playlist.
+    collaborative: bool,
+    // The playlist description. Only returned for modified, verified
+    // playlists, otherwise null.
+    description: ?[]const u8,
+    // Known external URLs for this playlist.
+    external_urls: std.json.Value,
+    // A link to the Web API endpoint providing full details of the playlist.
+    href: []const u8,
+    // The Spotify ID for the playlist.
+    // id: []const u8,
+    // Images for the playlist. The array may be empty or contain up t
+    // three images. The images are returned by size in descending order.
+    // See Working with Playlists. Note: If returned, the source URL for
+    // the image (url) is temporary and will expire in less than a day.
+    images: ?[]const Image = null,
+    // The name of the playlist.
+    name: []const u8,
+    // The user who owns the playlist
+    owner: std.json.Value,
+    // The playlist's public/private status (if it is added to the user's profile):
+    // true the playlist is public, false the playlist is private, null the
+    // playlist status is not relevant. For more about public/private status
+    public: ?bool,
+    // The version identifier for the current playlist. Can be supplied in
+    // other requests to target a specific playlist version
+    snapshot_id: []const u8,
+    // The object type: "playlist"
+    type: []const u8,
+    // The Spotify URI for the playlist.
+    uri: types.SpotifyUri,
+    // The primary color used when displaying the playlist
+    primary_color: ?[]const u8 = null,
+    // Information about the followers of the playlist.
+    followers: ?std.json.Value = null,
+    // the actual tracks
+    tracks: Paged(PlaylistTrack),
+
+    pub fn jsonParse(a: std.mem.Allocator, source: *std.json.Scanner, opts: std.json.ParseOptions) !Full {
+        const parsed = try std.json.parseFromSlice(std.json.Value, a, source.input, opts);
+        defer parsed.deinit();
+
+        while (try source.next() != .end_of_document) continue;
+
+        const obj = parsed.value.object;
+
+        return .{
+            .collaborative = obj.get("collaborative").?.bool,
+            .description = if (obj.get("description")) |d| d.string else null,
+            .external_urls = obj.get("external_urls").?,
+            .href = obj.get("href").?.string,
+            .name = obj.get("name").?.string,
+            .owner = obj.get("owner").?,
+            .public = if (obj.get("public")) |d| d.bool else null,
+            .snapshot_id = obj.get("snapshot_id").?.string,
+            .type = obj.get("type").?.string,
+            .uri = obj.get("uri").?.string,
+            .tracks = try std.json.parseFromValueLeaky(
+                Paged(PlaylistTrack),
+                a,
+                obj.get("tracks").?,
+                opts,
+            ),
+        };
+    }
+};
+
+// Tracks from the playlist
 const Paged = types.Paginated;
 const M = types.Manyify;
 const JsonResponse = types.JsonResponse;
 const Self = @This();
 
-// actually isn't completely paginated...
-// "tracks": {
-//     "href": "https://api.spotify.com/v1/playlists/0pG5NJccBHQOUj3ihujaxo/tracks",
-//     "total": 0
-// },
-// tracks: Paged(PlaylistTrack),
-
-const TrackOrEpisode = union(enum) {
+pub const TrackOrEpisode = union(enum) {
     track: Track.Simple,
     episode: Episode.Simple,
-
-    pub fn jsonParse(
-        alloc: std.mem.Allocator,
-        s: anytype,
-        opts: std.json.ParseOptions,
-    ) !TrackOrEpisode {
-        const parsed = try std.json.parseFromSlice(
-            std.json.Value,
-            alloc,
-            s.input,
-            opts,
-        );
-        defer parsed.deinit();
-
-        // don't need to scan input
-        while (try s.next() != .end_of_document) continue;
-
-        var iter = parsed.value.object.iterator();
-        while (iter.next()) |obj| {
-            std.debug.print("{s} -> {any}\n", .{ obj.key_ptr.*, obj.value_ptr.* });
-        }
-
-        std.debug.print("s.input = {s}\n", .{s.input[0..1000]});
-
-        if (std.mem.eql(
-            u8,
-            parsed.value.object.get("track").?.object.get("type").?.string,
-            "track",
-        )) {
-            return .{
-                .track = (try std.json.parseFromSlice(
-                    Track.Simple,
-                    alloc,
-                    s.input,
-                    opts,
-                )).value,
-            };
-        } else if (std.mem.eql(
-            u8,
-            parsed.value.object.get("track").?.object.get("type").?.string,
-            "episode",
-        )) {
-            return .{
-                .episode = (try std.json.parseFromSlice(
-                    Episode.Simple,
-                    alloc,
-                    s.input,
-                    opts,
-                )).value,
-            };
-        } else unreachable;
-    }
 };
 
 pub const PlaylistTrack = struct {
     added_at: []const u8,
     added_by: ?std.json.Value,
     is_local: bool,
-    // must parse this from the top down...
-    // track: TrackOrEpisode,
+    track: TrackOrEpisode,
+
+    pub fn jsonParse(
+        alloc: std.mem.Allocator,
+        source: *std.json.Scanner,
+        opts: std.json.ParseOptions,
+    ) !PlaylistTrack {
+        const parsed = try std.json.parseFromSlice(
+            std.json.Value,
+            alloc,
+            source.input,
+            opts,
+        );
+        while (try source.next() != .end_of_document) continue;
+        return jsonParseFromValue(alloc, parsed.value, opts);
+    }
+
+    pub fn jsonParseFromValue(
+        alloc: std.mem.Allocator,
+        source: std.json.Value,
+        opts: std.json.ParseOptions,
+    ) !PlaylistTrack {
+        const obj = source.object;
+        const track = obj.get("track").?;
+        const track_type = track.object.get("type").?.string;
+
+        return .{
+            .added_at = obj.get("added_at").?.string,
+            .added_by = obj.get("added_by"),
+            .is_local = obj.get("is_local").?.bool,
+            .track = if (std.mem.eql(u8, track_type, "track"))
+                @unionInit(
+                    TrackOrEpisode,
+                    "track",
+                    try std.json.parseFromValueLeaky(
+                        Track.Simple,
+                        alloc,
+                        obj.get("track").?,
+                        opts,
+                    ),
+                )
+            else
+                @unionInit(
+                    TrackOrEpisode,
+                    "episode",
+                    try std.json.parseFromValueLeaky(
+                        Episode.Simple,
+                        alloc,
+                        obj.get("track").?,
+                        opts,
+                    ),
+                ),
+        };
+    }
+    // primary color null
+    // video thumbnail { url: null }
 };
+
+pub fn jsonParse(a: std.mem.Allocator, source: *std.json.Scanner, opts: std.json.ParseOptions) !Self {
+    const parsed = try std.json.parseFromSlice(std.json.Value, a, source.input, opts);
+    defer parsed.deinit();
+
+    while (try source.next() != .end_of_document) continue;
+
+    const obj = parsed.value.object;
+
+    return .{
+        .collaborative = obj.get("collaborative").?.bool,
+        .description = if (obj.get("description")) |d| d.string else null,
+        .external_urls = obj.get("external_urls").?,
+        .href = obj.get("href").?.string,
+        .name = obj.get("name").?.string,
+        .owner = obj.get("owner").?,
+        .public = if (obj.get("public")) |d| d.bool else null,
+        .snapshot_id = obj.get("snapshot_id").?.string,
+        .type = obj.get("type").?.string,
+        .uri = obj.get("uri").?.string,
+        .tracks = try std.json.parseFromValueLeaky(
+            Paged(PlaylistTrack),
+            a,
+            obj.get("tracks").?,
+            opts,
+        ),
+    };
+}
 
 pub const Details = struct {
     // The new name for the playlist,
@@ -445,7 +545,7 @@ pub fn saved(
     alloc: std.mem.Allocator,
     client: anytype,
     opts: struct { limit: ?u8 = null, offset: ?u8 = null },
-) !JsonResponse(Paged(Self)) {
+) !JsonResponse(Paged(Simple)) {
     const playlist_url = try url.build(
         alloc,
         url.base_url,
@@ -457,7 +557,7 @@ pub fn saved(
 
     var request = try client.get(alloc, try std.Uri.parse(playlist_url));
     defer request.deinit();
-    return JsonResponse(Paged(Self)).parse(alloc, &request);
+    return JsonResponse(Paged(Simple)).parse(alloc, &request);
 }
 
 // Get a list of the playlists owned or followed by a Spotify user.
@@ -471,7 +571,7 @@ pub fn getPlaylistsForUser(
     client: anytype,
     id: types.SpotifyUserId,
     opts: struct { limit: ?u8 = null, offset: ?u8 = null },
-) !JsonResponse(Paged(Self)) {
+) !JsonResponse(Paged(Simple)) {
     const playlist_url = try url.build(
         alloc,
         url.base_url,
@@ -483,5 +583,5 @@ pub fn getPlaylistsForUser(
 
     var request = try client.get(alloc, try std.Uri.parse(playlist_url));
     defer request.deinit();
-    return JsonResponse(Paged(Self)).parse(alloc, &request);
+    return JsonResponse(Paged(Simple)).parse(alloc, &request);
 }

@@ -7,11 +7,6 @@ const Image = @import("image.zig");
 const url = @import("url.zig");
 
 pub const Simple = struct {
-    // A description of the episode. HTML tags are stripped away from this
-    // field, use html_description field in case HTML tags are needed.
-    description: []const u8,
-    // A description of the episode. This field may contain HTML tags.
-    html_description: []const u8,
     // The episode length in milliseconds.
     duration_ms: u32,
     // Whether or not the episode has explicit content
@@ -24,22 +19,20 @@ pub const Simple = struct {
     // The Spotify ID for the episode.
     id: types.SpotifyId,
     // The cover art for the episode in various sizes, widest first.
-    images: []const Image,
-    // True if the episode is hosted outside of Spotify's CDN.
-    is_externally_hosted: bool,
+    images: ?[]const Image = null,
+
     // The language used in the episode, identified by a ISO 639 code.
     // This field is deprecated and might be removed in the future. Please
     // use the languages field instead.
-    language: []const u8,
+    // language: []const u8,
+
     // A list of the languages used in the episode, identified by their ISO 639-1 code.
-    languages: []const []const u8,
+    languages: ?[]const []const u8 = null,
     // The name of the episode.
     name: []const u8,
-    // The date the episode was first released, for example "1981-12-15".
-    // Depending on the precision, it might be shown as "1981" or "1981-12".
-    release_date: []const u8,
+
     // The precision with which release_date value is known. Allowed values: "year", "month", "day"
-    release_date_precision: []const u8,
+    // release_date_precision: ?[]const u8,
     // The object type. Allowed values: "episode"
     type: []const u8,
     // The Spotify URI for the episode.
@@ -58,6 +51,23 @@ pub usingnamespace Simple;
 
 // The show on which the episode belongs.
 show: Show.Simple,
+
+// NOTE: The following fields are not returned in a Playlist Episode.Simple context.
+// However, the documentations states that they should.
+
+// A description of the episode. HTML tags are stripped away from this
+// field, use html_description field in case HTML tags are needed.
+description: []const u8,
+
+// // A description of the episode. This field may contain HTML tags.
+html_description: []const u8,
+
+// True if the episode is hosted outside of Spotify's CDN.
+is_externally_hosted: bool,
+
+// The date the episode was first released, for example "1981-12-15".
+// Depending on the precision, it might be shown as "1981" or "1981-12".
+release_date: ?[]const u8 = null,
 
 const Self = @This();
 const Paged = types.Paginated;

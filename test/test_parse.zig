@@ -390,29 +390,153 @@ test "parse player state" {
 // ------------
 // playlist.zig
 // ------------
+
+test "parse track or episode" {
+    const input =
+        \\{
+        \\    "added_at": "string",
+        \\    "added_by": {
+        \\        "external_urls": {
+        \\            "spotify": "string"
+        \\        },
+        \\        "followers": {
+        \\            "href": "string",
+        \\            "total": 0
+        \\        },
+        \\        "href": "string",
+        \\        "id": "string",
+        \\        "type": "user",
+        \\        "uri": "string"
+        \\    },
+        \\    "is_local": false,
+        \\    "track": {
+        \\        "album": {
+        \\            "album_type": "compilation",
+        \\            "total_tracks": 9,
+        \\            "available_markets": [
+        \\                "CA",
+        \\                "BR",
+        \\                "IT"
+        \\            ],
+        \\            "external_urls": {
+        \\                "spotify": "string"
+        \\            },
+        \\            "href": "string",
+        \\            "id": "2up3OPMp9Tb4dAKM2erWXQ",
+        \\            "images": [
+        \\                {
+        \\                    "url": "https://i.scdn.co/image/ab67616d00001e02ff9ca10b55ce82ae553c8228",
+        \\                    "height": 300,
+        \\                    "width": 300
+        \\                }
+        \\            ],
+        \\            "name": "string",
+        \\            "release_date": "1981-12",
+        \\            "release_date_precision": "year",
+        \\            "restrictions": {
+        \\                "reason": "market"
+        \\            },
+        \\            "type": "album",
+        \\            "uri": "spotify:album:2up3OPMp9Tb4dAKM2erWXQ",
+        \\            "artists": [
+        \\                {
+        \\                    "external_urls": {
+        \\                        "spotify": "string"
+        \\                    },
+        \\                    "href": "string",
+        \\                    "id": "string",
+        \\                    "name": "string",
+        \\                    "type": "artist",
+        \\                    "uri": "string"
+        \\                }
+        \\            ]
+        \\        },
+        \\        "artists": [
+        \\            {
+        \\                "external_urls": {
+        \\                    "spotify": "string"
+        \\                },
+        \\                "href": "string",
+        \\                "id": "string",
+        \\                "name": "string",
+        \\                "type": "artist",
+        \\                "uri": "string"
+        \\            }
+        \\        ],
+        \\        "available_markets": [
+        \\            "string"
+        \\        ],
+        \\        "disc_number": 0,
+        \\        "duration_ms": 0,
+        \\        "explicit": false,
+        \\        "external_ids": {
+        \\            "isrc": "string",
+        \\            "ean": "string",
+        \\            "upc": "string"
+        \\        },
+        \\        "external_urls": {
+        \\            "spotify": "string"
+        \\        },
+        \\        "href": "string",
+        \\        "id": "string",
+        \\        "is_playable": false,
+        \\        "linked_from": {},
+        \\        "restrictions": {
+        \\            "reason": "string"
+        \\        },
+        \\        "name": "string",
+        \\        "popularity": 0,
+        \\        "preview_url": "string",
+        \\        "track_number": 0,
+        \\        "type": "track",
+        \\        "uri": "string",
+        \\        "is_local": false
+        \\    }
+        \\}
+    ;
+    const t_or_ep = try std.json.parseFromSlice(
+        zp.Playlist.PlaylistTrack,
+        std.testing.allocator,
+        input,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
+    );
+    defer t_or_ep.deinit();
+}
+
 test "parse playlist" {
     const playlist = try std.json.parseFromSlice(
-        zp.Playlist,
+        zp.Playlist.Full,
         std.testing.allocator,
         @import("./data/files.zig").get_playlist,
         .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
     );
     defer playlist.deinit();
+
+    try std.testing.expect(playlist.value.collaborative == false);
+    try std.testing.expectEqualStrings(
+        playlist.value.description.?,
+        "A playlist for testing pourposes",
+    );
+    try std.testing.expect(playlist.value.tracks.items.len == 5);
+    try std.testing.expectEqualStrings(
+        playlist.value.uri,
+        "spotify:playlist:3cEYpjA9oz9GiPac4AsH4n",
+    );
 }
 
-test "parse playlist tracks" {
-    const tracks = try std.json.parseFromSlice(
-        zp.Paginated(zp.Playlist.PlaylistTrack),
+test "parse playlist with episodes" {
+    const playlist = try std.json.parseFromSlice(
+        zp.Playlist.Full,
         std.testing.allocator,
-        @import("./data/files.zig").playlist_tracks,
+        @import("./data/files.zig").get_playlist_episodes,
         .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
     );
-    defer tracks.deinit();
+    defer playlist.deinit();
 }
 
 test "get user playlists" {
     const playlists = try std.json.parseFromSlice(
-        zp.Paginated(zp.Playlist),
+        zp.Paginated(zp.Playlist.Simple),
         std.testing.allocator,
         @import("./data/files.zig").current_users_playlists,
         .{ .allocate = .alloc_always, .ignore_unknown_fields = true },

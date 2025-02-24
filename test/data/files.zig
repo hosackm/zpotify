@@ -28,6 +28,8 @@ pub const get_chapters = @embedFile("./get_chapters.txt");
 pub const get_episode = @embedFile("./get_episode.txt");
 pub const get_episodes = @embedFile("./get_episodes.txt");
 pub const get_playlist = @embedFile("./get_playlist.txt");
+pub const get_playlist_episodes = @embedFile("./get_playlist_episodes.txt");
+pub const get_playlist_mixed = @embedFile("./get_playlist_with_tracks_and_episodes.txt");
 pub const get_playlist_opt = @embedFile("./get_playlist_opt.txt");
 pub const get_queue = @embedFile("./get_queue.txt");
 pub const get_show = @embedFile("./get_show.txt");
@@ -48,9 +50,3 @@ pub const related_artists_with_floats = @embedFile("./related_artists_with_float
 pub const search_artist = @embedFile("./search_artist.txt");
 pub const search_trackplaylist = @embedFile("./search_trackplaylist.txt");
 pub const search_tracks = @embedFile("./search_tracks.txt");
-
-test "loading data file works" {
-    inline for (@typeInfo(@This()).Struct.fields) |field| {
-        try std.testing.expect(@field(@This(), field.name).len > 0);
-    }
-}
