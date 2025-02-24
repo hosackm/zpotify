@@ -124,7 +124,6 @@ pub const Full = struct {
 const Paged = types.Paginated;
 const M = types.Manyify;
 const JsonResponse = types.JsonResponse;
-const Self = @This();
 
 pub const TrackOrEpisode = union(enum) {
     track: Track.Simple,
@@ -193,7 +192,7 @@ pub const PlaylistTrack = struct {
     // video thumbnail { url: null }
 };
 
-pub fn jsonParse(a: std.mem.Allocator, source: *std.json.Scanner, opts: std.json.ParseOptions) !Self {
+pub fn jsonParse(a: std.mem.Allocator, source: *std.json.Scanner, opts: std.json.ParseOptions) !Full {
     const parsed = try std.json.parseFromSlice(std.json.Value, a, source.input, opts);
     defer parsed.deinit();
 
@@ -362,7 +361,7 @@ pub fn getOne(
         fields: ?[]const u8 = null,
         additional_types: ?[]const u8 = null,
     },
-) !JsonResponse(Self) {
+) !JsonResponse(Full) {
     const playlist_url = try url.build(
         alloc,
         url.base_url,
@@ -378,7 +377,7 @@ pub fn getOne(
 
     var request = try client.get(alloc, try std.Uri.parse(playlist_url));
     defer request.deinit();
-    return JsonResponse(Self).parse(alloc, &request);
+    return JsonResponse(Full).parse(alloc, &request);
 }
 
 // Change a playlist's name and public/private state. (The user must, of course, own the playlist.)
