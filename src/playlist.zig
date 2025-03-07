@@ -90,43 +90,6 @@ pub const Full = struct {
     followers: ?std.json.Value = null,
     // the actual tracks
     tracks: Paged(PlaylistTrack),
-
-    pub fn jsonParse(
-        a: std.mem.Allocator,
-        source: *std.json.Scanner,
-        opts: std.json.ParseOptions,
-    ) !Full {
-        const parsed = try std.json.parseFromSlice(
-            std.json.Value,
-            a,
-            source.input,
-            opts,
-        );
-        defer parsed.deinit();
-
-        while (try source.next() != .end_of_document) continue;
-
-        const obj = parsed.value.object;
-
-        return .{
-            .collaborative = obj.get("collaborative").?.bool,
-            .description = if (obj.get("description")) |d| d.string else null,
-            .external_urls = obj.get("external_urls").?,
-            .href = obj.get("href").?.string,
-            .name = obj.get("name").?.string,
-            .owner = obj.get("owner").?,
-            .public = if (obj.get("public")) |d| d.bool else null,
-            .snapshot_id = obj.get("snapshot_id").?.string,
-            .type = obj.get("type").?.string,
-            .uri = obj.get("uri").?.string,
-            .tracks = try std.json.parseFromValueLeaky(
-                Paged(PlaylistTrack),
-                a,
-                obj.get("tracks").?,
-                opts,
-            ),
-        };
-    }
 };
 
 // Tracks from the playlist
@@ -179,56 +142,6 @@ pub const PlaylistTrack = struct {
         }
     };
 
-    pub fn jsonParse(
-        alloc: std.mem.Allocator,
-        source: *std.json.Scanner,
-        opts: std.json.ParseOptions,
-    ) !PlaylistTrack {
-        var pt: PlaylistTrack = undefined;
-
-        if (try source.next() != .object_begin) return error.UnexpectedToken;
-
-        while (true) {
-            switch (try source.nextAlloc(alloc, .alloc_if_needed)) {
-                .string, .allocated_string => |field| {
-                    if (std.mem.eql(u8, field, "added_at")) {
-                        pt.added_at = switch (try source.nextAlloc(alloc, opts.allocate.?)) {
-                            .string, .allocated_string => |s| s,
-                            else => return error.UnexpectedToken,
-                        };
-                    } else if (std.mem.eql(u8, field, "added_by")) {
-                        pt.added_by = try std.json.parseFromTokenSourceLeaky(
-                            std.json.Value,
-                            alloc,
-                            source,
-                            opts,
-                        );
-                    } else if (std.mem.eql(u8, field, "is_local")) {
-                        pt.is_local = switch (try source.nextAlloc(alloc, opts.allocate.?)) {
-                            .true => true,
-                            .false => false,
-                            else => return error.UnexpectedToken,
-                        };
-                    } else if (std.mem.eql(u8, field, "track")) {
-                        pt.track = try std.json.parseFromTokenSourceLeaky(
-                            Content,
-                            alloc,
-                            source,
-                            opts,
-                        );
-                    } else {
-                        // skip ones we don't recognize... (ie. video_thumbnail)
-                        try source.skipValue();
-                    }
-                },
-                .object_end => break,
-                else => return error.UnexpectedToken,
-            }
-        }
-
-        return pt;
-    }
-
     pub fn jsonParseFromValue(
         alloc: std.mem.Allocator,
         value: std.json.Value,
@@ -236,36 +149,30 @@ pub const PlaylistTrack = struct {
     ) !PlaylistTrack {
         switch (value) {
             .object => |obj| {
-                // const obj = source.object;
-                const track = obj.get("track").?;
-                const track_type = track.object.get("type").?.string;
+                const track_type = obj.get("track").?.object.get("type").?.string;
 
                 return .{
                     .added_at = obj.get("added_at").?.string,
                     .added_by = obj.get("added_by"),
                     .is_local = obj.get("is_local").?.bool,
                     .track = if (std.mem.eql(u8, track_type, "track"))
-                        @unionInit(
-                            Content,
-                            "track",
-                            try std.json.parseFromValueLeaky(
+                        .{
+                            .track = try std.json.parseFromValueLeaky(
                                 Track.Simple,
                                 alloc,
                                 obj.get("track").?,
                                 opts,
                             ),
-                        )
+                        }
                     else
-                        @unionInit(
-                            Content,
-                            "episode",
-                            try std.json.parseFromValueLeaky(
+                        .{
+                            .episode = try std.json.parseFromValueLeaky(
                                 Episode.Simple,
                                 alloc,
                                 obj.get("track").?,
                                 opts,
                             ),
-                        ),
+                        },
                 };
             },
             else => unreachable,
@@ -274,34 +181,6 @@ pub const PlaylistTrack = struct {
     // primary color null
     // video thumbnail { url: null }
 };
-
-pub fn jsonParse(a: std.mem.Allocator, source: *std.json.Scanner, opts: std.json.ParseOptions) !Full {
-    const parsed = try std.json.parseFromSlice(std.json.Value, a, source.input, opts);
-    defer parsed.deinit();
-
-    while (try source.next() != .end_of_document) continue;
-
-    const obj = parsed.value.object;
-
-    return .{
-        .collaborative = obj.get("collaborative").?.bool,
-        .description = if (obj.get("description")) |d| d.string else null,
-        .external_urls = obj.get("external_urls").?,
-        .href = obj.get("href").?.string,
-        .name = obj.get("name").?.string,
-        .owner = obj.get("owner").?,
-        .public = if (obj.get("public")) |d| d.bool else null,
-        .snapshot_id = obj.get("snapshot_id").?.string,
-        .type = obj.get("type").?.string,
-        .uri = obj.get("uri").?.string,
-        .tracks = try std.json.parseFromValueLeaky(
-            Paged(PlaylistTrack),
-            a,
-            obj.get("tracks").?,
-            opts,
-        ),
-    };
-}
 
 pub const Details = struct {
     // The new name for the playlist,
