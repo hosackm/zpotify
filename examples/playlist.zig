@@ -15,14 +15,16 @@ pub fn main() !void {
     defer client.deinit();
     const c = &client;
 
-    const playlist_id = "1LyBnDxdG9CdJ8be4SrmOU";
+    // test playlist with mixture of tracks/episodes
+    const playlist_id = "1yRKZ71iI78RiATBdg1OQK";
     {
         // get a playlist by it's id
         const playlist = try zp.Playlist.getOne(alloc, c, playlist_id, .{});
         printJson(playlist);
     }
+
     {
-        // get a playlist tracks
+        // get a playlist's tracks
         const tracks = try zp.Playlist.getTracks(alloc, c, playlist_id, .{});
         printJson(tracks);
     }

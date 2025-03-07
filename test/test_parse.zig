@@ -391,7 +391,7 @@ test "parse player state" {
 // playlist.zig
 // ------------
 
-test "parse track or episode" {
+test "parse playlist track containing track OR episode" {
     const input =
         \\{
         \\    "added_at": "string",
@@ -478,7 +478,7 @@ test "parse track or episode" {
         \\            "spotify": "string"
         \\        },
         \\        "href": "string",
-        \\        "id": "string",
+        \\        "id": "2up3OPMp9Tb4dAKM2erWXQ",
         \\        "is_playable": false,
         \\        "linked_from": {},
         \\        "restrictions": {
@@ -496,6 +496,122 @@ test "parse track or episode" {
     ;
     const t_or_ep = try std.json.parseFromSlice(
         zp.Playlist.PlaylistTrack,
+        std.testing.allocator,
+        input,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
+    );
+    defer t_or_ep.deinit();
+
+    try std.testing.expectEqualStrings("2up3OPMp9Tb4dAKM2erWXQ", t_or_ep.value.track.track.id);
+}
+
+test "parse playlist tracks array containing tracks OR episodes" {
+    const input =
+        \\[
+        \\  {
+        \\      "added_at": "string",
+        \\      "added_by": {
+        \\          "external_urls": {
+        \\              "spotify": "string"
+        \\          },
+        \\          "followers": {
+        \\              "href": "string",
+        \\              "total": 0
+        \\          },
+        \\          "href": "string",
+        \\          "id": "string",
+        \\          "type": "user",
+        \\          "uri": "string"
+        \\      },
+        \\      "is_local": false,
+        \\      "track": {
+        \\          "album": {
+        \\              "album_type": "compilation",
+        \\              "total_tracks": 9,
+        \\              "available_markets": [
+        \\                  "CA",
+        \\                  "BR",
+        \\                  "IT"
+        \\              ],
+        \\              "external_urls": {
+        \\                  "spotify": "string"
+        \\              },
+        \\              "href": "string",
+        \\              "id": "2up3OPMp9Tb4dAKM2erWXQ",
+        \\              "images": [
+        \\                  {
+        \\                      "url": "https://i.scdn.co/image/ab67616d00001e02ff9ca10b55ce82ae553c8228",
+        \\                      "height": 300,
+        \\                      "width": 300
+        \\                  }
+        \\              ],
+        \\              "name": "string",
+        \\              "release_date": "1981-12",
+        \\              "release_date_precision": "year",
+        \\              "restrictions": {
+        \\                  "reason": "market"
+        \\              },
+        \\              "type": "album",
+        \\              "uri": "spotify:album:2up3OPMp9Tb4dAKM2erWXQ",
+        \\              "artists": [
+        \\                  {
+        \\                      "external_urls": {
+        \\                          "spotify": "string"
+        \\                      },
+        \\                      "href": "string",
+        \\                      "id": "string",
+        \\                      "name": "string",
+        \\                      "type": "artist",
+        \\                      "uri": "string"
+        \\                  }
+        \\              ]
+        \\          },
+        \\          "artists": [
+        \\              {
+        \\                  "external_urls": {
+        \\                      "spotify": "string"
+        \\                  },
+        \\                  "href": "string",
+        \\                  "id": "string",
+        \\                  "name": "string",
+        \\                  "type": "artist",
+        \\                  "uri": "string"
+        \\              }
+        \\          ],
+        \\          "available_markets": [
+        \\              "string"
+        \\          ],
+        \\          "disc_number": 0,
+        \\          "duration_ms": 0,
+        \\          "explicit": false,
+        \\          "external_ids": {
+        \\              "isrc": "string",
+        \\              "ean": "string",
+        \\              "upc": "string"
+        \\          },
+        \\          "external_urls": {
+        \\              "spotify": "string"
+        \\          },
+        \\          "href": "string",
+        \\          "id": "string",
+        \\          "is_playable": false,
+        \\          "linked_from": {},
+        \\          "restrictions": {
+        \\              "reason": "string"
+        \\          },
+        \\          "name": "string",
+        \\          "popularity": 0,
+        \\          "preview_url": "string",
+        \\          "track_number": 0,
+        \\          "type": "track",
+        \\          "uri": "string",
+        \\          "is_local": false
+        \\      }
+        \\  }
+        \\]
+    ;
+    const t_or_ep = try std.json.parseFromSlice(
+        []const zp.Playlist.PlaylistTrack,
         std.testing.allocator,
         input,
         .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
@@ -542,6 +658,42 @@ test "get user playlists" {
         .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
     );
     defer playlists.deinit();
+}
+
+test "get playlist's tracks only tracks" {
+    // Playlist.Tracks is not working... Custom parsing works for playlists directly
+    // however, it doesn't work when wrapped in Paginated...
+    const tracks = try std.json.parseFromSlice(
+        zp.Paginated(zp.Playlist.PlaylistTrack),
+        std.testing.allocator,
+        @import("./data/files.zig").playlist_items_tracks,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
+    );
+    defer tracks.deinit();
+}
+
+test "get playlist's tracks only episodes" {
+    // Playlist.Tracks is not working... Custom parsing works for playlists directly
+    // however, it doesn't work when wrapped in Paginated...
+    const tracks = try std.json.parseFromSlice(
+        zp.Paginated(zp.Playlist.PlaylistTrack),
+        std.testing.allocator,
+        @import("./data/files.zig").playlist_items_episodes,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
+    );
+    defer tracks.deinit();
+}
+
+test "get playlist's tracks episodes and tracks combined..." {
+    // Playlist.Tracks is not working... Custom parsing works for playlists directly
+    // however, it doesn't work when wrapped in Paginated...
+    const tracks = try std.json.parseFromSlice(
+        zp.Paginated(zp.Playlist.PlaylistTrack),
+        std.testing.allocator,
+        @import("./data/files.zig").playlist_items_episodes_and_tracks,
+        .{ .allocate = .alloc_always, .ignore_unknown_fields = true },
+    );
+    defer tracks.deinit();
 }
 
 // --------
