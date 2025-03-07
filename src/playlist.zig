@@ -142,42 +142,6 @@ pub const PlaylistTrack = struct {
         }
     };
 
-    pub fn jsonParseFromValue(
-        alloc: std.mem.Allocator,
-        value: std.json.Value,
-        opts: std.json.ParseOptions,
-    ) !PlaylistTrack {
-        switch (value) {
-            .object => |obj| {
-                const track_type = obj.get("track").?.object.get("type").?.string;
-
-                return .{
-                    .added_at = obj.get("added_at").?.string,
-                    .added_by = obj.get("added_by"),
-                    .is_local = obj.get("is_local").?.bool,
-                    .track = if (std.mem.eql(u8, track_type, "track"))
-                        .{
-                            .track = try std.json.parseFromValueLeaky(
-                                Track.Simple,
-                                alloc,
-                                obj.get("track").?,
-                                opts,
-                            ),
-                        }
-                    else
-                        .{
-                            .episode = try std.json.parseFromValueLeaky(
-                                Episode.Simple,
-                                alloc,
-                                obj.get("track").?,
-                                opts,
-                            ),
-                        },
-                };
-            },
-            else => unreachable,
-        }
-    }
     // primary color null
     // video thumbnail { url: null }
 };
