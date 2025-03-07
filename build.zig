@@ -67,6 +67,8 @@ pub fn build(b: *std.Build) void {
     const unit_tests = b.addTest(.{
         .name = "unit_tests",
         .root_source_file = b.path("src/root.zig"),
+        .target = target,
+        .optimize = optimize,
     });
     unit_tests.root_module.addImport("zpotify", zpotify);
     const unit_run_cmd = b.addRunArtifact(unit_tests);
@@ -77,6 +79,8 @@ pub fn build(b: *std.Build) void {
     const test_exe = b.addTest(.{
         .name = "run_tests",
         .root_source_file = b.path("test/root.zig"),
+        .target = target,
+        .optimize = optimize,
     });
     test_exe.root_module.addImport("zpotify", zpotify);
     const test_run_cmd = b.addRunArtifact(test_exe);
