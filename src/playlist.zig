@@ -114,19 +114,19 @@ pub const PlaylistTrack = struct {
             source: *std.json.Scanner,
             opts: std.json.ParseOptions,
         ) !Content {
-            const v = try std.json.parseFromTokenSourceLeaky(
+            const content = try std.json.innerParse(
                 std.json.Value,
                 alloc,
                 source,
                 opts,
             );
 
-            return if (std.mem.eql(u8, v.object.get("type").?.string, "track"))
+            return if (std.mem.eql(u8, content.object.get("type").?.string, "track"))
                 .{
                     .track = try std.json.parseFromValueLeaky(
                         Track.Simple,
                         alloc,
-                        v,
+                        content,
                         opts,
                     ),
                 }
@@ -135,13 +135,14 @@ pub const PlaylistTrack = struct {
                     .episode = try std.json.parseFromValueLeaky(
                         Episode.Simple,
                         alloc,
-                        v,
+                        content,
                         opts,
                     ),
                 };
         }
     };
 
+    // fields not mentioned in documentation...
     // primary color null
     // video thumbnail { url: null }
 };
