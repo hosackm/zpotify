@@ -271,14 +271,15 @@ pub fn JsonResponse(comptime T: type) type {
             defer alloc.free(body);
 
             if (body.len == 0) {
-                const parsed = try std.json.parseFromSliceLeaky(
-                    T,
-                    alloc,
-                    "null",
-                    default_opts,
-                );
                 return .{
-                    .resp = .{ .ok = parsed },
+                    .resp = .{
+                        .ok = try std.json.parseFromSliceLeaky(
+                            T,
+                            alloc,
+                            "null",
+                            default_opts,
+                        ),
+                    },
                 };
             }
             const code = @intFromEnum(req.response.status);

@@ -38,37 +38,25 @@ pub const Result = struct {
     // https://api.spotify.com/v1/search
     pub fn jsonParse(
         alloc: std.mem.Allocator,
-        s: anytype,
+        source: anytype,
         opts: std.json.ParseOptions,
     ) !Result {
-        const parsed = try std.json.parseFromSlice(
-            std.json.Value,
-            alloc,
-            s.input,
-            opts,
-        );
-        defer parsed.deinit();
-
-        // scan to end of document to make it look like we processed it
-        while (try s.next() != .end_of_document) continue;
-
         // Build Result type one field at a time.
-        var result: Result = .{};
+        var result = Result{};
 
-        var iter = parsed.value.object.iterator();
+        const value = try std.json.innerParse(std.json.Value, alloc, source, opts);
+        var iter = value.object.iterator();
+
         while (iter.next()) |entry| {
-            const key = entry.key_ptr.*;
-            const val = entry.value_ptr.*;
-
             inline for (@typeInfo(Result).Struct.fields) |field| {
-                if (std.mem.eql(u8, key, field.name)) {
+                if (std.mem.eql(u8, entry.key_ptr.*, field.name)) {
                     // Go from optional to underlying type. (ie. ?Paginated(Artist) -> Paginated(Artist))
                     const child_type = @typeInfo(field.type).Optional.child;
 
                     @field(result, field.name) = try std.json.parseFromValueLeaky(
                         child_type,
                         alloc,
-                        val,
+                        entry.value_ptr.*,
                         opts,
                     );
                 }
