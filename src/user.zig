@@ -8,6 +8,7 @@ const url = @import("url.zig");
 const Image = @import("image.zig");
 const Artist = @import("artist.zig");
 const Track = @import("track.zig");
+const Client = @import("client.zig").Client;
 
 const Simple = struct {
     // The name displayed on the user's profile. null if not available.
@@ -57,7 +58,7 @@ const User = @This();
 // https://developer.spotify.com/documentation/web-api/reference/get-current-users-profile
 pub fn getCurrentUser(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
 ) !JsonResponse(User) {
     var request = try client.get(alloc, try std.Uri.parse(url.base_url ++ "/me"));
     defer request.deinit();
@@ -80,7 +81,7 @@ const TimeRange = enum { short_term, medium_term, long_term };
 // opts.offset - The index of the first item to return. Default: 0.
 pub fn topArtists(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     opts: struct {
         time_range: ?TimeRange = null,
         limit: ?u8 = null,
@@ -108,7 +109,7 @@ pub fn topArtists(
 // opts.offset - The index of the first item to return. Default: 0.
 pub fn topTracks(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     opts: struct {
         time_range: ?TimeRange = null,
         limit: ?u8 = null,
@@ -135,7 +136,7 @@ pub fn topTracks(
 // user_id - The Spotify User ID to retrieve
 pub fn get(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     user_id: types.SpotifyUserId,
 ) !JsonResponse(Simple) {
     const user_url = try url.build(
@@ -160,7 +161,7 @@ pub fn get(
 //               public playlists (added to profile), if false it will remain private.
 pub fn followPlaylist(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     playlist_id: types.SpotifyId,
     opts: struct { public: ?bool = null },
 ) !void {
@@ -184,7 +185,7 @@ pub fn followPlaylist(
 // playlist_id - the Spotify Playlist ID to follow
 pub fn unfollowPlaylist(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     playlist_id: types.SpotifyId,
 ) !void {
     const user_url = try url.build(
@@ -207,7 +208,7 @@ pub fn unfollowPlaylist(
 // Returns a slice of bools with one value for backwards compatability reasons.
 pub fn isFollowingPlaylist(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     playlist_id: types.SpotifyId,
 ) !JsonResponse([]bool) {
     const user_url = try url.build(
@@ -233,7 +234,7 @@ pub const CursoredArtists = struct { artists: types.Cursored(Artist) };
 // opts.limit - The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.
 pub fn getFollowedArtists(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     opts: struct {
         after: ?[]const u8 = null,
         limit: ?u8 = null,
@@ -259,7 +260,7 @@ pub fn getFollowedArtists(
 // ids - Spotify Artist IDs to follow
 pub fn followArtists(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     ids: []const types.SpotifyId,
 ) !void {
     const artist_url = try url.build(
@@ -285,7 +286,7 @@ pub fn followArtists(
 // ids - Spotify Artist IDs to un follow
 pub fn unfollowArtists(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     ids: []const types.SpotifyId,
 ) !void {
     const artist_url = try url.build(
@@ -307,7 +308,7 @@ pub fn unfollowArtists(
 // ids - Spotify User IDs to follow
 pub fn followUsers(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     ids: []const types.SpotifyId,
 ) !void {
     const user_url = try url.build(
@@ -329,7 +330,7 @@ pub fn followUsers(
 // ids - Spotify User IDs to unfollow
 pub fn unfollowUsers(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     ids: []const types.SpotifyId,
 ) !void {
     const user_url = try url.build(
@@ -355,7 +356,7 @@ pub fn unfollowUsers(
 // ids - Spotify Artist IDs to check if current user is following
 pub fn isFollowingArtists(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     ids: []const types.SpotifyId,
 ) !JsonResponse([]bool) {
     const artist_url = try url.build(
@@ -378,7 +379,7 @@ pub fn isFollowingArtists(
 // ids - Spotify User IDs to check if current user is following
 pub fn isFollowingUsers(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     ids: []const types.SpotifyId,
 ) !JsonResponse([]bool) {
     const user_url = try url.build(

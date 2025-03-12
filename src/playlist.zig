@@ -7,6 +7,7 @@ const url = @import("url.zig");
 const Image = @import("image.zig");
 const Track = @import("track.zig");
 const Episode = @import("episode.zig");
+const Client = @import("client.zig").Client;
 
 pub const Simple = struct {
     // true if the owner allows other users to modify the playlist.
@@ -281,7 +282,7 @@ pub const Add = struct {
 //               example: fields=tracks.items(track(name,href,album(!name,href)))
 pub fn getOne(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     id: types.SpotifyId,
     opts: struct {
         market: ?[]const u8 = null,
@@ -314,7 +315,7 @@ pub fn getOne(
 // details - updated details to be set on the playlist
 pub fn setDetails(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     id: types.SpotifyId,
     details: Details,
 ) !void {
@@ -354,7 +355,7 @@ pub fn setDetails(
 // opts.offset - The index of the first item to return. Default: 0.
 pub fn getTracks(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     id: types.SpotifyId,
     opts: struct {
         market: ?[]const u8 = null,
@@ -394,7 +395,7 @@ pub fn getTracks(
 // https://developer.spotify.com/documentation/web-api/reference/reorder-or-replace-playlists-tracks
 pub fn update(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     id: types.SpotifyId,
     insert: Update,
 ) !JsonResponse([]const u8) {
@@ -419,7 +420,7 @@ pub fn update(
 // add_info -
 pub fn add(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     id: types.SpotifyId,
     add_info: Add,
 ) !JsonResponse([]const u8) {
@@ -444,7 +445,7 @@ pub fn add(
 // remove - options to define how to remove items from the playlist
 pub fn remove(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     id: types.SpotifyId,
     rem: Remove,
 ) !JsonResponse([]const u8) {
@@ -469,7 +470,7 @@ pub fn remove(
 // opts.offset - The index of the first item to return. Default: 0.
 pub fn saved(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     opts: struct { limit: ?u8 = null, offset: ?u8 = null },
 ) !JsonResponse(Paged(Simple)) {
     const playlist_url = try url.build(
@@ -494,7 +495,7 @@ pub fn saved(
 // opts.offset - The index of the first item to return. Default: 0.
 pub fn getPlaylistsForUser(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     id: types.SpotifyUserId,
     opts: struct { limit: ?u8 = null, offset: ?u8 = null },
 ) !JsonResponse(Paged(Simple)) {

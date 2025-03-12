@@ -5,6 +5,7 @@ const types = @import("types.zig");
 const Show = @import("show.zig");
 const Image = @import("image.zig");
 const url = @import("url.zig");
+const Client = @import("client.zig").Client;
 
 pub const Simple = struct {
     // The episode length in milliseconds.
@@ -81,7 +82,7 @@ const JsonResponse = types.JsonResponse;
 // opts.market - an optional ISO 3166-1 Country Code
 pub fn getOne(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     id: types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
 ) !JsonResponse(Self) {
@@ -106,7 +107,7 @@ pub fn getOne(
 // opts.market - an optional ISO 3166-1 Country Code
 pub fn getMany(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     ids: []const types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
 ) !JsonResponse(M(Self, "episodes")) {
@@ -136,7 +137,7 @@ pub const Saved = struct { added_at: []const u8, episode: Self };
 // opts.offset - The index of the first item to return. Default: 0.
 pub fn getSaved(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     opts: struct { market: ?[]const u8 = null, limit: ?u8 = null, offset: ?u8 = null },
 ) !JsonResponse(Paged(Saved)) {
     const ep_url = try url.build(
@@ -163,7 +164,7 @@ pub fn getSaved(
 // ids - Spotify Episode IDs to save
 pub fn save(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     ids: []const types.SpotifyId,
 ) !void {
     const data: struct { ids: []const types.SpotifyId } = .{ .ids = ids };
@@ -177,7 +178,7 @@ pub fn save(
 // ids - Spotify Episode IDs to remove
 pub fn remove(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     ids: []const types.SpotifyId,
 ) !void {
     const data: struct { ids: []const types.SpotifyId } = .{ .ids = ids };
@@ -193,7 +194,7 @@ pub fn remove(
 // ids - Spotify Episode IDs to check
 pub fn contains(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     ids: []const types.SpotifyId,
 ) !JsonResponse([]bool) {
     const ep_url = try url.build(

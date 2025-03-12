@@ -80,7 +80,7 @@ pub fn main() !void {
     }
 }
 
-fn getDevice(alloc: std.mem.Allocator, client: anytype) !?[]const u8 {
+fn getDevice(alloc: std.mem.Allocator, client: *zp.Client) !?[]const u8 {
     const devices = try zp.Player.getDevices(alloc, client);
     switch (devices.resp) {
         .ok => |ok| if (ok.devices.len > 0) return try alloc.dupe(u8, ok.devices[0].id),

@@ -12,6 +12,7 @@ const Playlist = @import("playlist.zig").Simple;
 const Show = @import("show.zig").Simple;
 const Episode = @import("episode.zig").Simple;
 const Audiobook = @import("audiobook.zig").Simple;
+const Client = @import("client.zig").Client;
 
 // Structure for representing a search result that can contain
 // resource types ranging from tracks, artists, albums, etc.
@@ -73,7 +74,7 @@ pub const Result = struct {
     pub inline fn pageForward(
         self: *Result,
         alloc: std.mem.Allocator,
-        client: anytype,
+        client: *Client,
         which: Field,
     ) !bool {
         var edited: bool = false;
@@ -105,7 +106,7 @@ pub const Result = struct {
     pub inline fn pageBackward(
         self: *Result,
         alloc: std.mem.Allocator,
-        client: anytype,
+        client: *Client,
         which: Field,
     ) !bool {
         var edited: bool = false;
@@ -166,7 +167,7 @@ pub const Include = struct {
 //                         content is marked as unplayable in the response.
 pub fn search(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     query: []const u8,
     included_types: Include,
     opts: struct {

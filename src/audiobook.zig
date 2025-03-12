@@ -8,6 +8,7 @@ const types = @import("types.zig");
 const Image = @import("image.zig");
 const Chapter = @import("chapter.zig");
 const url = @import("url.zig");
+const Client = @import("client.zig").Client;
 
 // Simplified album representation used when included in
 // another data type returned by the web api.
@@ -75,7 +76,7 @@ const JsonResponse = types.JsonResponse;
 // opts.market - an optional ISO 3166-1 Country Code
 pub fn getOne(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     id: types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
 ) !JsonResponse(Self) {
@@ -101,7 +102,7 @@ pub fn getOne(
 // opts.market - an optional ISO 3166-1 Country Code
 pub fn getMany(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     ids: []const types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
 ) !JsonResponse(M(Self, "audiobooks")) {
@@ -128,7 +129,7 @@ pub fn getMany(
 // opts.offset - The index of the first item to return. Default: 0.
 pub fn getChapters(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     id: types.SpotifyId,
     opts: struct { market: ?[]const u8 = null, limit: ?u8 = null, offset: ?u16 = null },
 ) !JsonResponse(Paged(Chapter)) {
@@ -155,7 +156,7 @@ pub fn getChapters(
 // opts.offset - The index of the first item to return. Default: 0.
 pub fn getSaved(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     opts: struct { limit: ?u8 = null, offset: ?u16 = null },
 ) !JsonResponse(Paged(Simple)) {
     const audiobook_url = try url.build(
@@ -179,7 +180,7 @@ pub fn getSaved(
 // ids - Spotify Audiobook IDs to save, ie: &.{"18yVqkdbdRvS24c0Ilj2ci", "1HGw3J3NxZO1TP1BTtVhpZ"}
 pub fn save(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     ids: []const types.SpotifyId,
 ) !void {
     const audiobook_url = try url.build(
@@ -200,7 +201,7 @@ pub fn save(
 // ids - Spotify IDs of audiboooks to save
 pub fn remove(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     ids: []const types.SpotifyId,
 ) !void {
     const audiobook_url = try url.build(
@@ -224,7 +225,7 @@ pub fn remove(
 // ids - Spotify IDs of possibly saved audiobooks
 pub fn contains(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     ids: []const types.SpotifyId,
 ) !JsonResponse([]bool) {
     const audiobook_url = try url.build(

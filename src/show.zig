@@ -6,6 +6,7 @@ const types = @import("types.zig");
 const url = @import("url.zig");
 const Image = @import("image.zig");
 const Episode = @import("episode.zig");
+const Client = @import("client.zig").Client;
 
 const Paged = types.Paginated;
 const M = types.Manyify;
@@ -68,7 +69,7 @@ episodes: Paged(?Episode.Simple),
 // opts.market - an optional ISO 3166-1 Country Code
 pub fn getOne(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     id: types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
 ) !JsonResponse(Self) {
@@ -93,7 +94,7 @@ pub fn getOne(
 // opts.market - an optional ISO 3166-1 Country Code
 pub fn getMany(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     ids: []const types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
 ) !JsonResponse(M(Simple, "shows")) {
@@ -121,7 +122,7 @@ pub fn getMany(
 // opts.offset - The index of the first item to return. Default: 0.
 pub fn getEpisodes(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     id: types.SpotifyId,
     opts: struct { market: ?[]const u8 = null, limit: ?u8 = null, offset: ?u8 = null },
 ) !JsonResponse(Paged(?Episode.Simple)) {
@@ -148,7 +149,7 @@ pub const Saved = struct { added_at: []const u8, show: Simple };
 // opts.offset - The index of the first item to return. Default: 0.
 pub fn getSaved(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     opts: struct { limit: ?u8 = null, offset: ?u8 = null },
 ) !JsonResponse(Paged(Saved)) {
     const ep_url = try url.build(
@@ -171,7 +172,7 @@ pub fn getSaved(
 // ids - Spotify Show IDs to save
 pub fn save(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     ids: []const types.SpotifyId,
 ) !void {
     const show_url = try url.build(
@@ -192,7 +193,7 @@ pub fn save(
 // ids - Spotify Show IDs to remove from saved episodes
 pub fn remove(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     ids: []const types.SpotifyId,
 ) !void {
     const show_url = try url.build(
@@ -213,7 +214,7 @@ pub fn remove(
 // ids - Spotify Show IDs to check if user has saved
 pub fn contains(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     ids: []const types.SpotifyId,
 ) !JsonResponse([]bool) {
     const show_url = try url.build(

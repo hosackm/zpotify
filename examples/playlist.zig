@@ -25,7 +25,12 @@ pub fn main() !void {
 
     {
         // get a playlist's tracks
-        const tracks = try zp.Playlist.getTracks(alloc, c, playlist_id, .{});
+        const tracks = try zp.Playlist.getTracks(
+            alloc,
+            c,
+            playlist_id,
+            .{},
+        );
         printJson(tracks);
     }
 

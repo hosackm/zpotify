@@ -3,6 +3,7 @@
 const std = @import("std");
 const url = @import("url.zig");
 const types = @import("types.zig");
+const Client = @import("client.zig").Client;
 
 // Unix Millisecond Timestamp when playback state was last changed
 // (play, pause, skip, scrub, new song, etc.).
@@ -66,7 +67,7 @@ const JsonResponse = types.JsonResponse;
 //                         the default track type. Valid types are: track and episode.
 pub fn get(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     opts: struct { market: ?[]const u8 = null, additional_types: ?[]const u8 = null },
 ) !JsonResponse(?Self) {
     const player_url = try url.build(
@@ -89,7 +90,7 @@ pub fn get(
 //
 pub fn getDevices(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
 ) !JsonResponse(M(Device, "devices")) {
     const player_url = try url.build(
         alloc,
@@ -113,7 +114,7 @@ pub fn getDevices(
 //                         the default track type. Valid types are: track and episode.
 pub fn currentlyPlaying(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     opts: struct {
         markets: ?[]const u8 = null,
         additional_types: ?[]const u8 = null,
@@ -139,7 +140,7 @@ pub fn currentlyPlaying(
 // https://developer.spotify.com/documentation/web-api/reference/start-a-users-playback
 pub fn play(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     device_id: []const u8,
 ) !void {
     const player_url = try url.build(
@@ -160,7 +161,7 @@ pub fn play(
 // https://developer.spotify.com/documentation/web-api/reference/pause-a-users-playback
 pub fn pause(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     device_id: []const u8,
 ) !void {
     const player_url = try url.build(
@@ -182,7 +183,7 @@ pub fn pause(
 // https://developer.spotify.com/documentation/web-api/reference/skip-users-playback-to-next-track
 pub fn next(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     device_id: []const u8,
 ) !void {
     const player_url = try url.build(
@@ -204,7 +205,7 @@ pub fn next(
 // https://developer.spotify.com/documentation/web-api/reference/skip-users-playback-to-previous-track
 pub fn previous(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     device_id: []const u8,
 ) !void {
     const player_url = try url.build(
@@ -226,7 +227,7 @@ pub fn previous(
 // https://developer.spotify.com/documentation/web-api/reference/seek-to-position-in-currently-playing-track
 pub fn seekTo(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     device_id: []const u8,
     position_ms: usize,
 ) !void {
@@ -252,7 +253,7 @@ pub fn seekTo(
 // https://developer.spotify.com/documentation/web-api/reference/set-repeat-mode-on-users-playback
 pub fn setRepeat(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     device_id: []const u8,
     state: enum { track, context, off },
 ) !void {
@@ -278,7 +279,7 @@ pub fn setRepeat(
 // https://developer.spotify.com/documentation/web-api/reference/set-volume-for-users-playback
 pub fn setVolume(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     device_id: []const u8,
     volume_percent: u8,
 ) !void {
@@ -304,7 +305,7 @@ pub fn setVolume(
 // https://developer.spotify.com/documentation/web-api/reference/toggle-shuffle-for-users-playback
 pub fn setShuffle(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     device_id: []const u8,
     shuffle: bool,
 ) !void {

@@ -4,6 +4,7 @@ const std = @import("std");
 const types = @import("types.zig");
 const url = @import("url.zig");
 const Image = @import("image.zig");
+const Client = @import("client.zig").Client;
 
 // A link to the Web API endpoint returning full details of the category.
 href: []const u8,
@@ -27,7 +28,7 @@ const JsonResponse = types.JsonResponse;
 //               for example (spanish mexico): "es_MX"
 pub fn getOne(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     id: types.SpotifyId,
     opts: struct {
         locale: ?[]const u8 = null,
@@ -68,7 +69,7 @@ pub const Categories = struct { categories: Paged(Self) };
 //               for example (spanish mexico): "es_MX"
 pub fn getMany(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     opts: struct {
         locale: ?[]const u8 = null,
         limit: ?u16 = null,

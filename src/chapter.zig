@@ -7,6 +7,7 @@ const std = @import("std");
 const types = @import("types.zig");
 const Image = @import("image.zig");
 const url = @import("url.zig");
+const Client = @import("client.zig").Client;
 
 // A list of the countries in which the chapter can be played, identified
 // by their ISO 3166-1 alpha-2 code
@@ -60,7 +61,7 @@ restrictions: ?std.json.Value = null,
 // opts.market - an optional ISO 3166-1 Country Code
 pub fn getOne(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     id: types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
 ) !types.JsonResponse(@This()) {
@@ -88,7 +89,7 @@ const Many = struct { chapters: []const @This() };
 // opts.market - an optional ISO 3166-1 Country Code
 pub fn getMany(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     ids: []const types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
 ) !types.JsonResponse(Many) {

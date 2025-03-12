@@ -7,6 +7,7 @@ const url = @import("url.zig");
 const Image = @import("image.zig");
 const Artist = @import("artist.zig");
 const Track = @import("track.zig");
+const Client = @import("client.zig").Client;
 
 // Simplified album representation used when included in
 // another data type returned by the web api.
@@ -73,7 +74,7 @@ const M = types.Manyify;
 // opts.market - an optional ISO 3166-1 Country Code
 pub fn getOne(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     id: types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
 ) !JsonResponse(Self) {
@@ -101,7 +102,7 @@ pub fn getOne(
 // opts - an optional ISO 3166-1 Country Code
 pub fn getMany(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     ids: []const types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
 ) !JsonResponse(M(Self, "albums")) {
@@ -132,7 +133,7 @@ pub fn getMany(
 // opts.offset - The index of the first item to return. Default: 0.
 pub fn getTracks(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     id: types.SpotifyId,
     opts: struct { market: ?[]const u8 = null, limit: ?u8 = null, offset: ?u8 = null },
 ) !JsonResponse(Paged(Track.Simple)) {
@@ -170,7 +171,7 @@ pub const Saved = struct {
 // opts.offset - The index of the first item to return. Default: 0.
 pub fn getSaved(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     opts: struct { market: ?[]const u8 = null, limit: ?u8 = null, offset: ?u8 = null },
 ) !JsonResponse(Paged(Saved)) {
     const album_url = try url.build(
@@ -197,7 +198,7 @@ pub fn getSaved(
 // ids - Spotify Album IDs to save, ie: &.{"4iV5W9uYEdYUVa79Axb7Rh", "1301WleyT98MSxVHPZCA6M"}
 pub fn save(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     ids: []const types.SpotifyId,
 ) !void {
     var req = try client.put(
@@ -215,7 +216,7 @@ pub fn save(
 // ids - Spotify Album IDs to remove, ie: &.{"4iV5W9uYEdYUVa79Axb7Rh", "1301WleyT98MSxVHPZCA6M"}
 pub fn remove(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     ids: []const types.SpotifyId,
 ) !void {
     var req = try client.delete(
@@ -234,7 +235,7 @@ pub fn remove(
 // ids - Spotify Album IDs to remove, ie: &.{"4iV5W9uYEdYUVa79Axb7Rh", "1301WleyT98MSxVHPZCA6M"}
 pub fn contains(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     ids: []const types.SpotifyId,
 ) !JsonResponse([]bool) {
     const album_url = try url.build(
@@ -262,7 +263,7 @@ pub const PagedSimpleAlbum = struct { albums: Paged(Simple) };
 // opts.offset - The index of the first item to return. Default: 0.
 pub fn newReleases(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     opts: struct { limit: ?u8 = null, offset: ?u8 = null },
 ) !JsonResponse(PagedSimpleAlbum) {
     const album_url = try url.build(

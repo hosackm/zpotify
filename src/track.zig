@@ -6,6 +6,7 @@ const types = @import("types.zig");
 const url = @import("url.zig");
 const Album = @import("album.zig");
 const Artist = @import("artist.zig");
+const Client = @import("client.zig").Client;
 
 pub const Simple = struct {
     // The artists who performed the track. Each artist object includes a link in
@@ -81,7 +82,7 @@ const Self = @This();
 // opts.market - an optional ISO 3166-1 Country Code
 pub fn getOne(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     id: types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
 ) !JsonResponse(Self) {
@@ -106,7 +107,7 @@ pub fn getOne(
 // opts.market - an optional ISO 3166-1 Country Code
 pub fn getMany(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     ids: []const types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
 ) !JsonResponse(M(Simple, "tracks")) {
@@ -134,7 +135,7 @@ pub const Saved = struct { added_at: []const u8, track: Simple };
 // opts.offset - The index of the first item to return. Default: 0.
 pub fn getSaved(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     opts: struct { market: ?[]const u8 = null, limit: ?u8 = null, offset: ?u8 = null },
 ) !JsonResponse(Paged(Saved)) {
     const ep_url = try url.build(
@@ -157,7 +158,7 @@ pub fn getSaved(
 // ids - Spotify Track IDs to save
 pub fn save(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     ids: []const types.SpotifyId,
 ) !void {
     const show_url = try url.build(
@@ -179,7 +180,7 @@ pub fn save(
 // ids - Spotify Track IDs to remove
 pub fn remove(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     ids: []const types.SpotifyId,
 ) !void {
     const show_url = try url.build(
@@ -201,7 +202,7 @@ pub fn remove(
 // ids - Spotify Track IDs to check if user has saved
 pub fn contains(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     ids: []const types.SpotifyId,
 ) !JsonResponse([]bool) {
     const show_url = try url.build(

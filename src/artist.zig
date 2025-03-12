@@ -6,6 +6,7 @@ const types = @import("types.zig");
 const url = @import("url.zig");
 const Album = @import("album.zig");
 const Track = @import("track.zig");
+const Client = @import("client.zig").Client;
 
 // Simplified artist representation used when included in
 // another data type returned by the web api.
@@ -51,7 +52,7 @@ const JsonResponse = types.JsonResponse;
 // id - the Spotify Artist ID
 pub fn getOne(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     id: types.SpotifyId,
 ) !JsonResponse(Self) {
     const artist_url = try url.build(
@@ -74,7 +75,7 @@ pub fn getOne(
 // ids - A list of the Spotify IDs for the artists. Maximum: 50 IDs.
 pub fn getMany(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     ids: []const types.SpotifyId,
 ) !JsonResponse(M(Self, "artists")) {
     const artist_url = try url.build(
@@ -110,7 +111,7 @@ pub fn getMany(
 // opts.offset - The index of the first item to return. Default: 0.
 pub fn getAlbums(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     artist_id: types.SpotifyId,
     opts: struct {
         include_groups: ?[]const []const u8 = null,
@@ -141,7 +142,7 @@ pub fn getAlbums(
 // opts.market - an optional ISO 3166-1 Country Code
 pub fn getTopTracks(
     alloc: std.mem.Allocator,
-    client: anytype,
+    client: *Client,
     artist_id: types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
 ) !JsonResponse(M(Track.Simple, "tracks")) {

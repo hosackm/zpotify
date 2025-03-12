@@ -1,4 +1,5 @@
 const std = @import("std");
+const Client = @import("client.zig").Client;
 
 // https://developer.spotify.com/documentation/web-api/concepts/spotify-uris-ids
 // example: 6rqhFgbbKwnb9MLmUQDhG6
@@ -41,7 +42,7 @@ pub fn Paginated(comptime T: type) type {
         const Result = @import("search.zig").Result;
 
         // use for paging to the next set of results if any
-        pub fn getNext(self: Self, alloc: std.mem.Allocator, client: anytype) !?Self {
+        pub fn getNext(self: Self, alloc: std.mem.Allocator, client: *Client) !?Self {
             if (Self == Result) {
                 std.debug.print("trying to page a Result type...\n", .{});
             } else {
@@ -62,7 +63,7 @@ pub fn Paginated(comptime T: type) type {
         }
 
         // use for paging to the previous set of results if any
-        pub fn getPrevious(self: Self, alloc: std.mem.Allocator, client: anytype) !?Self {
+        pub fn getPrevious(self: Self, alloc: std.mem.Allocator, client: *Client) !?Self {
             if (self.previous) |url| {
                 var request = try client.get(alloc, try std.Uri.parse(url));
                 defer request.deinit();
@@ -83,7 +84,7 @@ pub fn Paginated(comptime T: type) type {
         // pub inline fn pageForward(
         //     self: *Self,
         //     alloc: std.mem.Allocator,
-        //     client: anytype,
+        //     client: *Client,
         // ) !bool {
         //     var edited: bool = false;
         //     if (self.*.next) |next_url| {
@@ -109,7 +110,7 @@ pub fn Paginated(comptime T: type) type {
         // pub inline fn pageBackward(
         //     self: *Self,
         //     alloc: std.mem.Allocator,
-        //     client: anytype,
+        //     client: *Client,
         // ) !bool {
         //     var edited: bool = false;
 
@@ -303,3 +304,66 @@ pub fn JsonResponse(comptime T: type) type {
         }
     };
 }
+
+// test "json response parses correctly" {
+//     const proto = @import("std").http.protocol;
+//     const Name = struct { name: []const u8 };
+//     const ok_input =
+//         \\{"name": "matt"}
+//     ;
+
+//     var buffer: [1024 * 1024]u8 = undefined;
+//     var req: std.http.Client.Request = .{
+//         .uri = undefined,
+//         .client = undefined,
+//         .connection = undefined,
+//         .keep_alive = undefined,
+//         .method = undefined,
+//         .transfer_encoding = undefined,
+//         .redirect_behavior = undefined,
+//         .handle_continue = undefined,
+//         .headers = undefined,
+//         .extra_headers = undefined,
+//         .privileged_headers = undefined,
+//         .response = .{
+//             .status = .ok,
+//             .version = undefined,
+//             .reason = undefined,
+//             .keep_alive = undefined,
+//             .parser = proto.HeadersParser.init(ok_input),
+//         },
+//     };
+//     defer req.deinit();
+
+//     // req.transfer_encoding = .{ .content_length = ok_input.len };
+//     // req.headers.content_type = .{ .override = "application/json" };
+
+//     // var req: std.http.Client.Request = .{
+//     //     .uri = valid_uri,
+//     //     .client = client,
+//     //     .connection = conn,
+//     //     .keep_alive = options.keep_alive,
+//     //     .method = method,
+//     //     .version = options.version,
+//     //     .transfer_encoding = .none,
+//     //     .redirect_behavior = options.redirect_behavior,
+//     //     .handle_continue = options.handle_continue,
+//     //     .response = .{
+//     //         .version = undefined,
+//     //         .status = undefined,
+//     //         .reason = undefined,
+//     //         .keep_alive = undefined,
+//     //         .parser = .init(server_header.buffer[server_header.end_index..]),
+//     //     },
+//     //     .headers = options.headers,
+//     //     .extra_headers = options.extra_headers,
+//     //     .privileged_headers = options.privileged_headers,
+//     // };
+//     try req.response.parse(ok_input);
+
+//     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+//     defer arena.deinit();
+
+//     const resp = try JsonResponse(Name).parse(arena.allocator(), &req);
+//     _ = resp;
+// }
