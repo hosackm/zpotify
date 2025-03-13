@@ -254,6 +254,14 @@ pub fn getFollowedArtists(
     return JsonResponse(CursoredArtists).parseRequest(alloc, &request);
 }
 
+// Add the current user as a follower of an artist.
+// https://developer.spotify.com/documentation/web-api/reference/follow-artists-users
+//
+// id - Spotify Artist ID to follow
+pub fn followArtist(alloc: std.mem.Allocator, client: *Client, id: types.SpotifyId) !void {
+    try followArtists(alloc, client, &.{id});
+}
+
 // Add the current user as a follower of one or more artists.
 // https://developer.spotify.com/documentation/web-api/reference/follow-artists-users
 //
@@ -280,6 +288,18 @@ pub fn followArtists(
     defer request.deinit();
 }
 
+// Remove the current user as a follower of an artist.
+// https://developer.spotify.com/documentation/web-api/reference/unfollow-artists-users
+//
+// id - Spotify Artist ID to unfollow
+pub fn unfollowArtist(
+    alloc: std.mem.Allocator,
+    client: *Client,
+    id: types.SpotifyId,
+) !void {
+    try unfollowArtists(alloc, client, &.{id});
+}
+
 // Remove the current user as a follower of one or more artists.
 // https://developer.spotify.com/documentation/web-api/reference/unfollow-artists-users
 //
@@ -302,6 +322,18 @@ pub fn unfollowArtists(
     defer request.deinit();
 }
 
+// Add the current user as a follower a user.
+// https://developer.spotify.com/documentation/web-api/reference/follow-artists-users
+//
+// id - Spotify User ID to follow
+pub fn followUser(
+    alloc: std.mem.Allocator,
+    client: *Client,
+    id: types.SpotifyId,
+) !void {
+    try followUsers(alloc, client, &.{id});
+}
+
 // Add the current user as a follower of one or other users.
 // https://developer.spotify.com/documentation/web-api/reference/follow-artists-users
 //
@@ -322,6 +354,18 @@ pub fn followUsers(
 
     var request = try client.put(alloc, try std.Uri.parse(user_url), .{ .ids = ids });
     defer request.deinit();
+}
+
+// Remove the current user as a follower of a user.
+// https://developer.spotify.com/documentation/web-api/reference/unfollow-artists-users
+//
+// id - Spotify User ID to unfollow
+pub fn unfollowUser(
+    alloc: std.mem.Allocator,
+    client: *Client,
+    id: types.SpotifyId,
+) !void {
+    try unfollowUsers(alloc, client, &.{id});
 }
 
 // Remove the current user as a follower of one or other users.

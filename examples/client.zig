@@ -5,7 +5,6 @@ const zp = @import("zpotify");
 var env_map: ?std.process.EnvMap = null;
 
 pub fn init(alloc: std.mem.Allocator) !zp.Client {
-    // creds from EnvMap
     env_map = try std.process.getEnvMap(alloc);
     const id = env_map.?.get("ZPOTIFY_ID").?;
     const secret = env_map.?.get("ZPOTIFY_SECRET").?;
@@ -34,7 +33,5 @@ pub fn init(alloc: std.mem.Allocator) !zp.Client {
 }
 
 pub fn deinit() void {
-    if (env_map) |em| {
-        em.deinit();
-    }
+    if (env_map) |em| em.deinit();
 }
