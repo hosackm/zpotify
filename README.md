@@ -21,24 +21,14 @@ const zpotifty = b.dependency("zpotify", .{});
 exe.root_module.addImport("zpotify", zpotify);
 ```
 
-## How to Authenticate
-
-The example [auth.zig](/examples/auth.zig) shows the authorization process laid out in Spotify's [Documentation](https://developer.spotify.com/documentation/web-api/concepts/authorization). This assumes that you've already created an application through the Spotify [Developer Dashboard](https://developer.spotify.com/dashboard).
-
-> TODO
-
-## Creating a Client
-
-> TODO
-
-## API Examples
+## Examples
 
 Examples of the API can be found in the [examples](/examples) directory. The list of available examples can be found in [build.zig](build.zig).
 
 To build one run:
 
 ```bash
-zig build examples -Dexample=auth
+zig build examples -Dexample=playlist
 ```
 
 Or to build all, run:
@@ -47,7 +37,34 @@ Or to build all, run:
 zig build examples -Dexample=all
 ```
 
-## Running Tests
+### Authentication
+
+The example [auth.zig](/examples/auth.zig) shows the authorization process laid out in Spotify's [Documentation](https://developer.spotify.com/documentation/web-api/concepts/authorization). The example assumes that you've already created an application through the Spotify [Developer Dashboard](https://developer.spotify.com/dashboard).
+
+
+You can run it using:
+```bash
+zig build examples -Dexample=auth
+```
+
+After following the URL and logging in, a token will be provided and printed as output. This token should be stored for use in your application.
+
+### Credentials
+
+The examples require your Spotify credentials to be stored as environment variables, but again, you can store these however suits your needs in your application. The following variables must be set to run the examples:
+
+|                      |                                            |
+|----------------------|--------------------------------------------|
+| `ZPOTIFY_ID`         | Your application's `client_id`             |
+| `ZPOTIFY_SECRET`     | Your application's `secret_key`            |
+| `ZPOTIFY_REDIRECT`   | Your application's `redirect_uri`          |
+| `ZPOTIFY_TOKEN_FILE` | Path to a file containing the token acquired when successfully logging in with auth.zig |
+
+### Creating a Client
+
+The example module [client.zig](/examples/client.zig) shows how to exchange the Spotify credentials for a token that can be used to initialize a client. This client can authenticate requests and refresh the provided token when it expires.
+
+## Tests
 
 There are two groups of tests provided:
 
@@ -68,6 +85,7 @@ Or to install the unit test executable you can run:
 
 ```bash
 zig build unit install
+
 # then you can run with verbose output
 ./zig-out/bin/unit_tests 2>&1 | cat
 ```
@@ -85,13 +103,14 @@ Or to install the test executable you can run:
 
 ```bash
 zig build test install
+
 # then you can run with verbose output
 ./zig-out/bin/run_tests 2>&1 | cat
 ```
 
-## Endpoints
+## Todo
 
-There are 84 endpoints specified in the Spotify Web API [reference](https://developer.spotify.com/web-api/endpoint-reference/). Currently, 75 are supported with the remaining 9 soon to be implemented.
+Currently, 75 of the 84 [endpoints](https://developer.spotify.com/web-api/endpoint-reference/) are supported.
 
 ### Player
 - [ ] Transfer Playback
