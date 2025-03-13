@@ -7,9 +7,7 @@ pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer if (gpa.deinit() == .leak) std.debug.print("LEAK!\n", .{});
 
-    var arena = std.heap.ArenaAllocator.init(gpa.allocator());
-    defer arena.deinit();
-    const alloc = arena.allocator();
+    const alloc = gpa.allocator();
 
     var client = try Client.init(alloc);
     defer client.deinit();
@@ -20,6 +18,7 @@ pub fn main() !void {
     {
         // get a playlist by it's id
         const playlist = try zp.Playlist.getOne(alloc, c, playlist_id, .{});
+        defer playlist.deinit();
         printJson(playlist);
     }
 
@@ -31,6 +30,7 @@ pub fn main() !void {
             playlist_id,
             .{},
         );
+        defer tracks.deinit();
         printJson(tracks);
     }
 
@@ -54,10 +54,12 @@ pub fn main() !void {
 
     {
         const playlist = try zp.Playlist.saved(alloc, c, .{});
+        defer playlist.deinit();
         printJson(playlist);
     }
     {
         const playlist = try zp.Playlist.getPlaylistsForUser(alloc, c, "hosackm", .{});
+        defer playlist.deinit();
         printJson(playlist);
     }
 }

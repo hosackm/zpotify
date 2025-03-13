@@ -12,9 +12,7 @@ const printJson = @import("common.zig").printJson;
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer if (gpa.deinit() == .leak) std.debug.print("LEAK!\n", .{});
-    var arena = std.heap.ArenaAllocator.init(gpa.allocator());
-    defer arena.deinit();
-    const alloc = arena.allocator();
+    const alloc = gpa.allocator();
 
     var em = try std.process.getEnvMap(alloc);
     defer em.deinit();

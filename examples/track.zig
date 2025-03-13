@@ -7,9 +7,7 @@ pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer if (gpa.deinit() == .leak) std.debug.print("LEAK!\n", .{});
 
-    var arena = std.heap.ArenaAllocator.init(gpa.allocator());
-    defer arena.deinit();
-    const alloc = arena.allocator();
+    const alloc = gpa.allocator();
 
     var client = try Client.init(alloc);
     defer client.deinit();

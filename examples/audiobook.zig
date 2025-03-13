@@ -7,9 +7,7 @@ pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer if (gpa.deinit() == .leak) std.debug.print("LEAK!\n", .{});
 
-    var arena = std.heap.ArenaAllocator.init(gpa.allocator());
-    defer arena.deinit();
-    const alloc = arena.allocator();
+    const alloc = gpa.allocator();
 
     var client = try Client.init(alloc);
     defer client.deinit();
@@ -26,6 +24,7 @@ pub fn main() !void {
             hitch,
             .{},
         );
+        defer book.deinit();
         printJson(book);
     }
 
@@ -37,6 +36,7 @@ pub fn main() !void {
             &.{ hitch, elton },
             .{},
         );
+        defer books.deinit();
         printJson(books);
     }
 
@@ -48,12 +48,14 @@ pub fn main() !void {
             hitch,
             .{},
         );
+        defer chapters.deinit();
         printJson(chapters);
     }
 
     {
         // get the current user's saved books
         const saved = try zp.Audiobook.getSaved(alloc, c, .{});
+        defer saved.deinit();
         printJson(saved);
     }
 
@@ -74,6 +76,7 @@ pub fn main() !void {
             c,
             &.{ hitch, elton },
         );
+        defer saved.deinit();
         printJson(saved);
     }
 }

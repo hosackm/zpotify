@@ -7,9 +7,7 @@ pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer if (gpa.deinit() == .leak) std.debug.print("LEAK!\n", .{});
 
-    var arena = std.heap.ArenaAllocator.init(gpa.allocator());
-    defer arena.deinit();
-    const alloc = arena.allocator();
+    const alloc = gpa.allocator();
 
     var client = try Client.init(alloc);
     defer client.deinit();
@@ -20,6 +18,7 @@ pub fn main() !void {
     {
         // get a show by it's id
         const show = try zp.Show.getOne(alloc, c, bad_friends, .{});
+        defer show.deinit();
         printJson(show);
     }
 
@@ -31,6 +30,7 @@ pub fn main() !void {
             &.{ your_moms, bad_friends },
             .{},
         );
+        defer shows.deinit();
         printJson(shows);
     }
 
@@ -42,12 +42,14 @@ pub fn main() !void {
             bad_friends,
             .{},
         );
+        defer episodes.deinit();
         printJson(episodes);
     }
 
     {
         // get current user's shows
         const shows = try zp.Show.getSaved(alloc, c, .{});
+        defer shows.deinit();
         printJson(shows);
     }
 
@@ -56,13 +58,14 @@ pub fn main() !void {
         try zp.Show.remove(alloc, c, &.{ your_moms, bad_friends });
 
         const contains = try zp.Show.contains(alloc, c, &.{ your_moms, bad_friends });
-
+        defer contains.deinit();
         printJson(contains);
     }
 
     // list markets...
     {
         const markets = try zp.Markets.list(alloc, c);
+        defer markets.deinit();
         printJson(markets);
     }
 }

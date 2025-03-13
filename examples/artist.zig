@@ -7,9 +7,7 @@ pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer if (gpa.deinit() == .leak) std.debug.print("LEAK!\n", .{});
 
-    var arena = std.heap.ArenaAllocator.init(gpa.allocator());
-    defer arena.deinit();
-    const alloc = arena.allocator();
+    const alloc = gpa.allocator();
 
     var client = try Client.init(alloc);
     defer client.deinit();
@@ -23,6 +21,7 @@ pub fn main() !void {
             c,
             benson,
         );
+        defer artist.deinit();
         printJson(artist);
     }
 
@@ -33,6 +32,7 @@ pub fn main() !void {
             c,
             "abcdeflkjgahsda", // bad id
         );
+        defer artist.deinit();
         printJson(artist);
     }
 
@@ -42,6 +42,7 @@ pub fn main() !void {
             c,
             &.{ eno, "0TnOYISbd1XYRBk9myaseg" },
         );
+        defer artists.deinit();
         printJson(artists);
     }
 
@@ -52,6 +53,7 @@ pub fn main() !void {
             eno,
             .{},
         );
+        defer albums.deinit();
         printJson(albums);
     }
 
@@ -62,6 +64,7 @@ pub fn main() !void {
             eno,
             .{},
         );
+        defer tracks.deinit();
         printJson(tracks);
     }
 }

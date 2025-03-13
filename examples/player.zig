@@ -7,9 +7,7 @@ pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer if (gpa.deinit() == .leak) std.debug.print("LEAK!\n", .{});
 
-    var arena = std.heap.ArenaAllocator.init(gpa.allocator());
-    defer arena.deinit();
-    const alloc = arena.allocator();
+    const alloc = gpa.allocator();
 
     var client = try Client.init(alloc);
     defer client.deinit();
@@ -18,6 +16,7 @@ pub fn main() !void {
     {
         // get the user's player object
         const player_resp = try zp.Player.get(alloc, c, .{});
+        defer player_resp.deinit();
         switch (player_resp.resp) {
             .ok => printJson(player_resp),
             .err => {},
@@ -28,12 +27,14 @@ pub fn main() !void {
         // get the current device and toggle the playback from play/paused
         const toggle: bool = true;
         const devices = try zp.Player.getDevices(alloc, c);
+        defer devices.deinit();
 
         switch (devices.resp) {
             .ok => |ok| {
                 if (ok.devices.len > 0) {
                     const device_id = ok.devices[0].id;
                     const player_state = try zp.Player.currentlyPlaying(alloc, c, .{});
+                    defer player_state.deinit();
 
                     if (toggle) {
                         switch (player_state.resp) {
@@ -78,6 +79,7 @@ pub fn main() !void {
 
 fn getDevice(alloc: std.mem.Allocator, client: *zp.Client) !?[]const u8 {
     const devices = try zp.Player.getDevices(alloc, client);
+    defer devices.deinit();
     switch (devices.resp) {
         .ok => |ok| if (ok.devices.len > 0) return try alloc.dupe(u8, ok.devices[0].id),
         else => {},
