@@ -9,5 +9,5 @@ const Markets = struct { markets: []const []const u8 };
 pub fn list(alloc: std.mem.Allocator, client: *Client) !types.JsonResponse(Markets) {
     var request = try client.get(alloc, try std.Uri.parse(base_url ++ "/markets"));
     defer request.deinit();
-    return types.JsonResponse(Markets).parse(alloc, &request);
+    return types.JsonResponse(Markets).parseRequest(alloc, &request);
 }

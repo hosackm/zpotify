@@ -62,7 +62,7 @@ pub fn getCurrentUser(
 ) !JsonResponse(User) {
     var request = try client.get(alloc, try std.Uri.parse(url.base_url ++ "/me"));
     defer request.deinit();
-    return JsonResponse(User).parse(alloc, &request);
+    return JsonResponse(User).parseRequest(alloc, &request);
 }
 
 // Structure used to represent top artists or tracks
@@ -99,7 +99,7 @@ pub fn topArtists(
 
     var request = try client.get(alloc, try std.Uri.parse(user_url));
     defer request.deinit();
-    return JsonResponse(Paged(Artist)).parse(alloc, &request);
+    return JsonResponse(Paged(Artist)).parseRequest(alloc, &request);
 }
 
 // Get the current user's top tracks based on calculated affinity.
@@ -127,7 +127,7 @@ pub fn topTracks(
 
     var request = try client.get(alloc, try std.Uri.parse(user_url));
     defer request.deinit();
-    return JsonResponse(Paged(Track.Simple)).parse(alloc, &request);
+    return JsonResponse(Paged(Track.Simple)).parseRequest(alloc, &request);
 }
 
 // Get public profile information about a Spotify user.
@@ -150,7 +150,7 @@ pub fn get(
 
     var request = try client.get(alloc, try std.Uri.parse(user_url));
     defer request.deinit();
-    return JsonResponse(Simple).parse(alloc, &request);
+    return JsonResponse(Simple).parseRequest(alloc, &request);
 }
 
 // Add the current user as a follower of a playlist.
@@ -222,7 +222,7 @@ pub fn isFollowingPlaylist(
 
     var request = try client.get(alloc, try std.Uri.parse(user_url));
     defer request.deinit();
-    return JsonResponse([]bool).parse(alloc, &request);
+    return JsonResponse([]bool).parseRequest(alloc, &request);
 }
 
 pub const CursoredArtists = struct { artists: types.Cursored(Artist) };
@@ -251,7 +251,7 @@ pub fn getFollowedArtists(
 
     var request = try client.get(alloc, try std.Uri.parse(user_url));
     defer request.deinit();
-    return JsonResponse(CursoredArtists).parse(alloc, &request);
+    return JsonResponse(CursoredArtists).parseRequest(alloc, &request);
 }
 
 // Add the current user as a follower of one or more artists.
@@ -370,7 +370,7 @@ pub fn isFollowingArtists(
 
     var request = try client.get(alloc, try std.Uri.parse(artist_url));
     defer request.deinit();
-    return JsonResponse([]bool).parse(alloc, &request);
+    return JsonResponse([]bool).parseRequest(alloc, &request);
 }
 
 // Check to see if the current user is following one or more other Spotify users.
@@ -393,5 +393,5 @@ pub fn isFollowingUsers(
 
     var request = try client.get(alloc, try std.Uri.parse(user_url));
     defer request.deinit();
-    return JsonResponse([]bool).parse(alloc, &request);
+    return JsonResponse([]bool).parseRequest(alloc, &request);
 }

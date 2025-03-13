@@ -305,7 +305,7 @@ pub fn getOne(
 
     var request = try client.get(alloc, try std.Uri.parse(playlist_url));
     defer request.deinit();
-    return JsonResponse(Full).parse(alloc, &request);
+    return JsonResponse(Full).parseRequest(alloc, &request);
 }
 
 // Change a playlist's name and public/private state. (The user must, of course, own the playlist.)
@@ -380,7 +380,7 @@ pub fn getTracks(
 
     var request = try client.get(alloc, try std.Uri.parse(playlist_url));
     defer request.deinit();
-    return JsonResponse(Paged(PlaylistTrack)).parse(alloc, &request);
+    return JsonResponse(Paged(PlaylistTrack)).parseRequest(alloc, &request);
 }
 
 // Either reorder or replace items in a playlist depending on the request's parameters.
@@ -410,7 +410,7 @@ pub fn update(
 
     var request = try client.put(alloc, try std.Uri.parse(playlist_url), insert);
     defer request.deinit();
-    return JsonResponse([]const u8).parse(alloc, &request);
+    return JsonResponse([]const u8).parseRequest(alloc, &request);
 }
 
 // Add one or more items to a user's playlist.
@@ -435,7 +435,7 @@ pub fn add(
 
     var request = try client.post(alloc, try std.Uri.parse(playlist_url), add_info);
     defer request.deinit();
-    return JsonResponse([]const u8).parse(alloc, &request);
+    return JsonResponse([]const u8).parseRequest(alloc, &request);
 }
 
 // Remove one or more items from a user's playlist.
@@ -460,7 +460,7 @@ pub fn remove(
 
     var request = try client.delete(alloc, try std.Uri.parse(playlist_url), rem);
     defer request.deinit();
-    return JsonResponse([]const u8).parse(alloc, &request);
+    return JsonResponse([]const u8).parseRequest(alloc, &request);
 }
 
 // Get a list of the playlists owned or followed by the current Spotify user.
@@ -484,7 +484,7 @@ pub fn saved(
 
     var request = try client.get(alloc, try std.Uri.parse(playlist_url));
     defer request.deinit();
-    return JsonResponse(Paged(Simple)).parse(alloc, &request);
+    return JsonResponse(Paged(Simple)).parseRequest(alloc, &request);
 }
 
 // Get a list of the playlists owned or followed by a Spotify user.
@@ -510,5 +510,5 @@ pub fn getPlaylistsForUser(
 
     var request = try client.get(alloc, try std.Uri.parse(playlist_url));
     defer request.deinit();
-    return JsonResponse(Paged(Simple)).parse(alloc, &request);
+    return JsonResponse(Paged(Simple)).parseRequest(alloc, &request);
 }

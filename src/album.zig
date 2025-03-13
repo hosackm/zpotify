@@ -92,7 +92,7 @@ pub fn getOne(
         try std.Uri.parse(album_url),
     );
     defer request.deinit();
-    return JsonResponse(Self).parse(alloc, &request);
+    return JsonResponse(Self).parseRequest(alloc, &request);
 }
 
 // Get Spotify catalog information for multiple albums identified by their Spotify IDs.
@@ -120,7 +120,7 @@ pub fn getMany(
         try std.Uri.parse(album_url),
     );
     defer request.deinit();
-    return JsonResponse(M(Self, "albums")).parse(alloc, &request);
+    return JsonResponse(M(Self, "albums")).parseRequest(alloc, &request);
 }
 
 // Get Spotify catalog information about an album’s tracks. Optional parameters can
@@ -151,7 +151,7 @@ pub fn getTracks(
         try std.Uri.parse(album_url),
     );
     defer request.deinit();
-    return JsonResponse(Paged(Track.Simple)).parse(alloc, &request);
+    return JsonResponse(Paged(Track.Simple)).parseRequest(alloc, &request);
 }
 
 // User's saved album representation.
@@ -188,7 +188,7 @@ pub fn getSaved(
         try std.Uri.parse(album_url),
     );
     defer request.deinit();
-    return JsonResponse(Paged(Saved)).parse(alloc, &request);
+    return JsonResponse(Paged(Saved)).parseRequest(alloc, &request);
 }
 
 // Save one or more albums to the current user's 'Your Music' library.
@@ -249,7 +249,7 @@ pub fn contains(
 
     var request = try client.get(alloc, try std.Uri.parse(album_url));
     defer request.deinit();
-    return JsonResponse([]bool).parse(alloc, &request);
+    return JsonResponse([]bool).parseRequest(alloc, &request);
 }
 
 pub const PagedSimpleAlbum = struct { albums: Paged(Simple) };
@@ -277,5 +277,5 @@ pub fn newReleases(
 
     var request = try client.get(alloc, try std.Uri.parse(album_url));
     defer request.deinit();
-    return JsonResponse(PagedSimpleAlbum).parse(alloc, &request);
+    return JsonResponse(PagedSimpleAlbum).parseRequest(alloc, &request);
 }

@@ -91,7 +91,7 @@ pub fn getOne(
 
     var request = try client.get(alloc, try std.Uri.parse(audiobook_url));
     defer request.deinit();
-    return JsonResponse(Self).parse(alloc, &request);
+    return JsonResponse(Self).parseRequest(alloc, &request);
 }
 
 // Get Spotify catalog information for several audiobooks identified by their
@@ -117,7 +117,7 @@ pub fn getMany(
 
     var request = try client.get(alloc, try std.Uri.parse(audiobook_url));
     defer request.deinit();
-    return JsonResponse(M(Self, "audiobooks")).parse(alloc, &request);
+    return JsonResponse(M(Self, "audiobooks")).parseRequest(alloc, &request);
 }
 
 // Get Spotify catalog information about an audiobook's chapters.
@@ -144,7 +144,7 @@ pub fn getChapters(
 
     var request = try client.get(alloc, try std.Uri.parse(audiobook_url));
     defer request.deinit();
-    return JsonResponse(Paged(Chapter)).parse(alloc, &request);
+    return JsonResponse(Paged(Chapter)).parseRequest(alloc, &request);
 }
 
 // Get a list of the audiobooks saved in the current Spotify user's 'Your Music' library.
@@ -170,7 +170,7 @@ pub fn getSaved(
 
     var request = try client.get(alloc, try std.Uri.parse(audiobook_url));
     defer request.deinit();
-    return JsonResponse(Paged(Simple)).parse(alloc, &request);
+    return JsonResponse(Paged(Simple)).parseRequest(alloc, &request);
 }
 
 // Save one or more audibooks to the current user's 'Your Music' library.
@@ -239,5 +239,5 @@ pub fn contains(
 
     var request = try client.get(alloc, try std.Uri.parse(audiobook_url));
     defer request.deinit();
-    return JsonResponse([]bool).parse(alloc, &request);
+    return JsonResponse([]bool).parseRequest(alloc, &request);
 }

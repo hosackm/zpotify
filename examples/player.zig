@@ -19,9 +19,7 @@ pub fn main() !void {
         // get the user's player object
         const player_resp = try zp.Player.get(alloc, c, .{});
         switch (player_resp.resp) {
-            .ok => |_| {
-                printJson(player_resp);
-            },
+            .ok => printJson(player_resp),
             .err => {},
         }
     }
@@ -53,9 +51,7 @@ pub fn main() !void {
                             else => {},
                         }
                     }
-                } else {
-                    std.debug.print("no device found. start one to test.\n", .{});
-                }
+                } else std.debug.print("no device found. start one to test.\n", .{});
             },
             .err => std.debug.print("error while getting devices\n", .{}),
         }

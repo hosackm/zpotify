@@ -97,7 +97,7 @@ pub fn getOne(
 
     var request = try client.get(alloc, try std.Uri.parse(ep_url));
     defer request.deinit();
-    return JsonResponse(Self).parse(alloc, &request);
+    return JsonResponse(Self).parseRequest(alloc, &request);
 }
 
 // Get Spotify catalog information for multiple tracks based on their Spotify IDs.
@@ -122,7 +122,7 @@ pub fn getMany(
 
     var request = try client.get(alloc, try std.Uri.parse(ep_url));
     defer request.deinit();
-    return JsonResponse(M(Simple, "tracks")).parse(alloc, &request);
+    return JsonResponse(M(Simple, "tracks")).parseRequest(alloc, &request);
 }
 
 pub const Saved = struct { added_at: []const u8, track: Simple };
@@ -149,7 +149,7 @@ pub fn getSaved(
 
     var request = try client.get(alloc, try std.Uri.parse(ep_url));
     defer request.deinit();
-    return JsonResponse(Paged(Saved)).parse(alloc, &request);
+    return JsonResponse(Paged(Saved)).parseRequest(alloc, &request);
 }
 
 // Save one or more tracks to the current user's 'Your Music' library.
@@ -216,5 +216,5 @@ pub fn contains(
 
     var request = try client.get(alloc, try std.Uri.parse(show_url));
     defer request.deinit();
-    return JsonResponse([]bool).parse(alloc, &request);
+    return JsonResponse([]bool).parseRequest(alloc, &request);
 }

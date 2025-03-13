@@ -85,7 +85,7 @@ pub const Result = struct {
                 defer request.deinit();
                 const response = try JsonResponse(
                     Result,
-                ).parse(alloc, &request);
+                ).parseRequest(alloc, &request);
 
                 switch (response.resp) {
                     .err => edited = false,
@@ -117,7 +117,7 @@ pub const Result = struct {
                 defer request.deinit();
                 const response = try JsonResponse(
                     Result,
-                ).parse(alloc, &request);
+                ).parseRequest(alloc, &request);
 
                 switch (response.resp) {
                     .err => edited = false,
@@ -203,5 +203,5 @@ pub fn search(
 
     var request = try client.get(alloc, try std.Uri.parse(search_url));
     defer request.deinit();
-    return JsonResponse(Result).parse(alloc, &request);
+    return JsonResponse(Result).parseRequest(alloc, &request);
 }

@@ -81,7 +81,7 @@ pub fn get(
 
     var request = try client.get(alloc, try std.Uri.parse(player_url));
     defer request.deinit();
-    return JsonResponse(?Self).parse(alloc, &request);
+    return JsonResponse(?Self).parseRequest(alloc, &request);
 }
 
 // Get information about a user’s available Spotify Connect devices. Some device models
@@ -103,7 +103,7 @@ pub fn getDevices(
 
     var request = try client.get(alloc, try std.Uri.parse(player_url));
     defer request.deinit();
-    return JsonResponse(M(Device, "devices")).parse(alloc, &request);
+    return JsonResponse(M(Device, "devices")).parseRequest(alloc, &request);
 }
 
 // Get the object currently being played on the user's Spotify account.
@@ -131,7 +131,7 @@ pub fn currentlyPlaying(
 
     var request = try client.get(alloc, try std.Uri.parse(player_url));
     defer request.deinit();
-    return JsonResponse(?Self).parse(alloc, &request);
+    return JsonResponse(?Self).parseRequest(alloc, &request);
 }
 
 // Start a new context or resume current playback on the user's active device. This API only

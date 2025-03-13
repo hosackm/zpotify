@@ -66,7 +66,7 @@ pub fn getOne(
 
     var request = try client.get(alloc, try std.Uri.parse(artist_url));
     defer request.deinit();
-    return JsonResponse(Self).parse(alloc, &request);
+    return JsonResponse(Self).parseRequest(alloc, &request);
 }
 
 // Get Spotify catalog information for several artists based on their Spotify IDs.
@@ -90,7 +90,7 @@ pub fn getMany(
     var request = try client.get(alloc, try std.Uri.parse(artist_url));
     defer request.deinit();
 
-    return JsonResponse(M(Self, "artists")).parse(alloc, &request);
+    return JsonResponse(M(Self, "artists")).parseRequest(alloc, &request);
 }
 
 // Get Spotify catalog information about an artist's albums.
@@ -131,7 +131,7 @@ pub fn getAlbums(
 
     var request = try client.get(alloc, try std.Uri.parse(artist_url));
     defer request.deinit();
-    return JsonResponse(Paged(Album.Simple)).parse(alloc, &request);
+    return JsonResponse(Paged(Album.Simple)).parseRequest(alloc, &request);
 }
 
 // Get Spotify catalog information about an artist's top tracks by country. Returns
@@ -157,5 +157,5 @@ pub fn getTopTracks(
 
     var request = try client.get(alloc, try std.Uri.parse(artist_url));
     defer request.deinit();
-    return JsonResponse(M(Track.Simple, "tracks")).parse(alloc, &request);
+    return JsonResponse(M(Track.Simple, "tracks")).parseRequest(alloc, &request);
 }

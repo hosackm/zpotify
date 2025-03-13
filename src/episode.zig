@@ -97,7 +97,7 @@ pub fn getOne(
 
     var request = try client.get(alloc, try std.Uri.parse(ep_url));
     defer request.deinit();
-    return JsonResponse(Self).parse(alloc, &request);
+    return JsonResponse(Self).parseRequest(alloc, &request);
 }
 
 // Get Spotify catalog information for several episodes based on their Spotify IDs.
@@ -122,7 +122,7 @@ pub fn getMany(
 
     var request = try client.get(alloc, try std.Uri.parse(ep_url));
     defer request.deinit();
-    return JsonResponse(M(Self, "episodes")).parse(alloc, &request);
+    return JsonResponse(M(Self, "episodes")).parseRequest(alloc, &request);
 }
 
 // Saved representation of an Episode
@@ -155,7 +155,7 @@ pub fn getSaved(
 
     var request = try client.get(alloc, try std.Uri.parse(ep_url));
     defer request.deinit();
-    return JsonResponse(Paged(Saved)).parse(alloc, &request);
+    return JsonResponse(Paged(Saved)).parseRequest(alloc, &request);
 }
 
 // Save one or more episodes to the current user's library.
@@ -208,5 +208,5 @@ pub fn contains(
 
     var request = try client.get(alloc, try std.Uri.parse(ep_url));
     defer request.deinit();
-    return JsonResponse([]bool).parse(alloc, &request);
+    return JsonResponse([]bool).parseRequest(alloc, &request);
 }

@@ -53,7 +53,7 @@ pub fn Paginated(comptime T: type) type {
                 var request = try client.get(alloc, try std.Uri.parse(url));
                 defer request.deinit();
 
-                const response = try JsonResponse(Self).parse(alloc, &request);
+                const response = try JsonResponse(Self).parseRequest(alloc, &request);
                 return switch (response.resp) {
                     .ok => |val| val,
                     .err => error.PaginationFailed,
@@ -68,7 +68,7 @@ pub fn Paginated(comptime T: type) type {
                 var request = try client.get(alloc, try std.Uri.parse(url));
                 defer request.deinit();
 
-                const response = try JsonResponse(Self).parse(alloc, &request);
+                const response = try JsonResponse(Self).parseRequest(alloc, &request);
                 return switch (response.resp) {
                     .ok => |val| val,
                     .err => error.PaginationFailed,
@@ -92,7 +92,7 @@ pub fn Paginated(comptime T: type) type {
         //         defer request.deinit();
         //         const response = try JsonResponse(
         //             Self,
-        //         ).parse(alloc, &request);
+        //         ).parseRequest(alloc, &request);
 
         //         switch (response.resp) {
         //             .err => edited = false,
@@ -119,7 +119,7 @@ pub fn Paginated(comptime T: type) type {
         //         defer request.deinit();
         //         const response = try JsonResponse(
         //             Self,
-        //         ).parse(alloc, &request);
+        //         ).parseRequest(alloc, &request);
 
         //         switch (response.resp) {
         //             .err => edited = false,
@@ -254,6 +254,7 @@ pub const Error = struct {
 // populated. If there was an error, .err will be populated.
 pub fn JsonResponse(comptime T: type) type {
     return struct {
+        arena: *std.heap.ArenaAllocator,
         resp: union(enum) {
             ok: T,
             err: Error,
@@ -266,104 +267,110 @@ pub fn JsonResponse(comptime T: type) type {
             .allocate = .alloc_always,
         };
 
-        pub fn parse(alloc: std.mem.Allocator, request: *std.http.Client.Request) !Self {
-            var req = request.*;
-            const body = try req.reader().readAllAlloc(alloc, 1024 * 1024);
+        pub fn parseRequest(alloc: std.mem.Allocator, request: *std.http.Client.Request) !Self {
+            const status = request.*.response.status;
+            const reader = request.*.reader();
+            return parse(alloc, reader, status);
+        }
+
+        fn parse(alloc: std.mem.Allocator, reader: anytype, status: std.http.Status) !Self {
+            const body = try reader.readAllAlloc(alloc, 1024 * 1024);
             defer alloc.free(body);
+
+            const arena = try alloc.create(std.heap.ArenaAllocator);
+            errdefer alloc.destroy(arena);
+            arena.* = std.heap.ArenaAllocator.init(alloc);
 
             if (body.len == 0) {
                 return .{
                     .resp = .{
                         .ok = try std.json.parseFromSliceLeaky(
                             T,
-                            alloc,
+                            arena.allocator(),
                             "null",
                             default_opts,
                         ),
                     },
+                    .arena = arena,
                 };
             }
-            const code = @intFromEnum(req.response.status);
+
+            const code = @intFromEnum(status);
             if (code >= 200 and code < 300) {
                 const parsed = try std.json.parseFromSliceLeaky(
                     T,
-                    alloc,
+                    arena.allocator(),
                     body,
                     default_opts,
                 );
-                return .{ .resp = .{ .ok = parsed } };
+                return .{
+                    .resp = .{ .ok = parsed },
+                    .arena = arena,
+                };
             }
 
             const parsed = try std.json.parseFromSliceLeaky(
                 Error,
-                alloc,
+                arena.allocator(),
                 body,
                 default_opts,
             );
-            return .{ .resp = .{ .err = parsed } };
+            return .{
+                .resp = .{ .err = parsed },
+                .arena = arena,
+            };
+        }
+
+        pub fn deinit(self: Self) void {
+            const alloc = self.arena.child_allocator;
+            self.arena.deinit();
+            alloc.destroy(self.arena);
         }
     };
 }
 
-// test "json response parses correctly" {
-//     const proto = @import("std").http.protocol;
-//     const Name = struct { name: []const u8 };
-//     const ok_input =
-//         \\{"name": "matt"}
-//     ;
+test "json response parses errors and valid responses" {
+    const Name = struct { name: []const u8 };
+    const ok_input =
+        \\{"name": "matt"}
+    ;
 
-//     var buffer: [1024 * 1024]u8 = undefined;
-//     var req: std.http.Client.Request = .{
-//         .uri = undefined,
-//         .client = undefined,
-//         .connection = undefined,
-//         .keep_alive = undefined,
-//         .method = undefined,
-//         .transfer_encoding = undefined,
-//         .redirect_behavior = undefined,
-//         .handle_continue = undefined,
-//         .headers = undefined,
-//         .extra_headers = undefined,
-//         .privileged_headers = undefined,
-//         .response = .{
-//             .status = .ok,
-//             .version = undefined,
-//             .reason = undefined,
-//             .keep_alive = undefined,
-//             .parser = proto.HeadersParser.init(ok_input),
-//         },
-//     };
-//     defer req.deinit();
+    var stream = std.io.fixedBufferStream(ok_input);
+    var resp = try JsonResponse(Name).parse(
+        // arena.allocator(),
+        std.testing.allocator,
+        stream.reader(),
+        .ok,
+    );
 
-//     // req.transfer_encoding = .{ .content_length = ok_input.len };
-//     // req.headers.content_type = .{ .override = "application/json" };
+    try std.testing.expect(resp.resp == .ok);
+    try std.testing.expectEqualStrings(resp.resp.ok.name, "matt");
 
-//     // var req: std.http.Client.Request = .{
-//     //     .uri = valid_uri,
-//     //     .client = client,
-//     //     .connection = conn,
-//     //     .keep_alive = options.keep_alive,
-//     //     .method = method,
-//     //     .version = options.version,
-//     //     .transfer_encoding = .none,
-//     //     .redirect_behavior = options.redirect_behavior,
-//     //     .handle_continue = options.handle_continue,
-//     //     .response = .{
-//     //         .version = undefined,
-//     //         .status = undefined,
-//     //         .reason = undefined,
-//     //         .keep_alive = undefined,
-//     //         .parser = .init(server_header.buffer[server_header.end_index..]),
-//     //     },
-//     //     .headers = options.headers,
-//     //     .extra_headers = options.extra_headers,
-//     //     .privileged_headers = options.privileged_headers,
-//     // };
-//     try req.response.parse(ok_input);
+    const err_input =
+        \\{
+        \\  "error": {
+        \\    "status": 404,
+        \\    "message": "the resource wasn't found"
+        \\  }
+        \\}
+    ;
+    stream = std.io.fixedBufferStream(err_input);
 
-//     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
-//     defer arena.deinit();
+    // don't leak
+    resp.deinit();
 
-//     const resp = try JsonResponse(Name).parse(arena.allocator(), &req);
-//     _ = resp;
-// }
+    resp = try JsonResponse(Name).parse(
+        // arena.allocator(),
+        std.testing.allocator,
+        stream.reader(),
+        .not_found,
+    );
+    defer resp.deinit();
+
+    try std.testing.expect(resp.resp == .err);
+    try std.testing.expect(resp.resp.err.@"error".status == 404);
+    try std.testing.expectEqualStrings(
+        resp.resp.err.@"error".message,
+        "the resource wasn't found",
+    );
+}

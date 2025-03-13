@@ -51,7 +51,7 @@ pub fn getOne(
 
     var request = try client.get(alloc, try std.Uri.parse(category_url));
     defer request.deinit();
-    return JsonResponse(Self).parse(alloc, &request);
+    return JsonResponse(Self).parseRequest(alloc, &request);
 }
 
 // Yet a third way to return a grouping of objects...
@@ -91,5 +91,5 @@ pub fn getMany(
 
     var request = try client.get(alloc, try std.Uri.parse(category_url));
     defer request.deinit();
-    return JsonResponse(Categories).parse(alloc, &request);
+    return JsonResponse(Categories).parseRequest(alloc, &request);
 }

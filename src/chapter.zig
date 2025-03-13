@@ -76,7 +76,7 @@ pub fn getOne(
 
     var request = try client.get(alloc, try std.Uri.parse(chapter_url));
     defer request.deinit();
-    return types.JsonResponse(@This()).parse(alloc, &request);
+    return types.JsonResponse(@This()).parseRequest(alloc, &request);
 }
 
 const Many = struct { chapters: []const @This() };
@@ -104,5 +104,5 @@ pub fn getMany(
 
     var request = try client.get(alloc, try std.Uri.parse(chapter_url));
     defer request.deinit();
-    return types.JsonResponse(Many).parse(alloc, &request);
+    return types.JsonResponse(Many).parseRequest(alloc, &request);
 }
