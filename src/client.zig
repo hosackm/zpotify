@@ -7,6 +7,13 @@ const Credentials = @import("oauth.zig").Credentials;
 const header_buffer_size = 1024 * 10;
 const max_read_size = 1024 * 1024;
 
+pub const Config = struct {
+    client: []const u8,
+    secret: []const u8,
+    redirect: []const u8,
+    token: Token,
+};
+
 pub const Client = struct {
     token: Token,
     credentials: Credentials,
@@ -18,18 +25,35 @@ pub const Client = struct {
     const Self = @This();
     const Request = std.http.Client.Request;
 
-    pub fn init(alloc: std.mem.Allocator, token: Token, credentials: Credentials) Self {
+    pub fn init(alloc: std.mem.Allocator, cfg: Config) Self {
         return .{
+            .credentials = .{
+                .client_id = alloc.dupe(u8, cfg.client) catch @panic("oom"),
+                .client_secret = alloc.dupe(u8, cfg.secret) catch @panic("oom"),
+                .redirect_uri = alloc.dupe(u8, cfg.redirect) catch @panic("oom"),
+            },
+            .token = .{
+                .access_token = alloc.dupe(u8, cfg.token.access_token) catch @panic("oom"),
+                .token_type = alloc.dupe(u8, cfg.token.token_type) catch @panic("oom"),
+                .scope = alloc.dupe(u8, cfg.token.scope) catch @panic("oom"),
+                .refresh_token = alloc.dupe(u8, cfg.token.refresh_token) catch @panic("oom"),
+                .expires_in = cfg.token.expires_in,
+                .expiry = cfg.token.expiry,
+            },
             .allocator = alloc,
             .client = std.http.Client{ .allocator = alloc },
-            .token = token,
-            .credentials = credentials,
         };
     }
 
-    pub fn deinit(self: Self) void {
-        var c = self;
-        c.client.deinit();
+    pub fn deinit(self: *Self) void {
+        self.*.allocator.free(self.credentials.client_id);
+        self.*.allocator.free(self.credentials.client_secret);
+        self.*.allocator.free(self.credentials.redirect_uri);
+        self.*.allocator.free(self.token.access_token);
+        self.*.allocator.free(self.token.token_type);
+        self.*.allocator.free(self.token.scope);
+        self.*.allocator.free(self.token.refresh_token);
+        self.*.client.deinit();
     }
 
     fn do(
@@ -146,9 +170,13 @@ pub const Client = struct {
         );
         defer self.*.allocator.free(s);
 
-        const refresh_token = try Token.parse(self.allocator, s);
-        self.*.token.access_token = refresh_token.access_token;
+        const new_token = try Token.parse(self.allocator, s);
+        defer new_token.deinit();
+
         self.*.token.expiry = std.time.timestamp() + 3600;
+
+        self.allocator.free(self.*.token.access_token);
+        self.*.token.access_token = try self.allocator.dupe(u8, new_token.value.access_token);
     }
 
     fn authenticate(self: *Self, req: *std.http.Client.Request) !void {

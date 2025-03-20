@@ -16,7 +16,7 @@ pub fn init(alloc: std.mem.Allocator, credentials: zp.Credentials) Self {
 }
 
 // Exchanges a code for an access token.
-pub fn exchange(self: Self, code: []const u8) !zp.Token {
+pub fn exchange(self: Self, code: []const u8) !std.json.Parsed(zp.Token) {
     var client = std.http.Client{ .allocator = self.allocator };
     defer client.deinit();
 

@@ -1,6 +1,6 @@
 const std = @import("std");
 const zp = @import("zpotify");
-const Client = @import("client.zig");
+const buildClient = @import("client.zig").buildClient;
 const common = @import("common.zig");
 const printJson = common.printJson;
 
@@ -10,7 +10,7 @@ pub fn main() !void {
 
     const alloc = gpa.allocator();
 
-    var client = try Client.init(alloc);
+    var client = try buildClient(alloc);
     defer client.deinit();
     const c = &client;
 

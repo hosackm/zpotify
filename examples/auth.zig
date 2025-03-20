@@ -89,12 +89,13 @@ pub fn runAuthFlow(alloc: std.mem.Allocator, creds: Credentials) !void {
 
     const tokenizer = tk.init(alloc, creds);
     const token = try tokenizer.exchange(code);
+    defer token.deinit();
 
     std.debug.print(
         "Successfully authorized. Save token contents to file and set environment " ++
             "variable ZPOTIFY_TOKEN_FILE to the chosen filepath.\n\n",
         .{},
     );
-    try std.json.stringify(token, .{}, std.io.getStdOut().writer());
+    try std.json.stringify(token.value, .{}, std.io.getStdOut().writer());
     _ = try std.io.getStdOut().writer().write("\n");
 }

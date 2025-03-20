@@ -277,6 +277,8 @@ pub fn JsonResponse(comptime T: type) type {
             const body = try reader.readAllAlloc(alloc, 1024 * 1024);
             defer alloc.free(body);
 
+            std.debug.print("{s}\n", .{body});
+
             const arena = try alloc.create(std.heap.ArenaAllocator);
             errdefer alloc.destroy(arena);
             arena.* = std.heap.ArenaAllocator.init(alloc);

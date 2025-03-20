@@ -9,6 +9,8 @@ const Image = @import("image.zig");
 const url = @import("url.zig");
 const Client = @import("client.zig").Client;
 
+const Chapter = @This();
+
 // A list of the countries in which the chapter can be played, identified
 // by their ISO 3166-1 alpha-2 code
 available_markets: []const []const u8,
@@ -64,7 +66,7 @@ pub fn getOne(
     client: *Client,
     id: types.SpotifyId,
     opts: struct { market: ?[]const u8 = null },
-) !types.JsonResponse(@This()) {
+) !types.JsonResponse(Chapter) {
     const chapter_url = try url.build(
         alloc,
         url.base_url,
@@ -76,10 +78,10 @@ pub fn getOne(
 
     var request = try client.get(alloc, try std.Uri.parse(chapter_url));
     defer request.deinit();
-    return types.JsonResponse(@This()).parseRequest(alloc, &request);
+    return types.JsonResponse(Chapter).parseRequest(alloc, &request);
 }
 
-const Many = struct { chapters: []const @This() };
+const Many = struct { chapters: []const Chapter };
 
 // Get Spotify catalog information for several audiobook chapters identified by
 // their Spotify IDs.

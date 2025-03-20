@@ -21,16 +21,15 @@ pub const Token = struct {
     // If the token will expire in one minute we should refresh it
     const expire_delta_secs: i64 = std.time.s_per_min;
 
-    // Parse a token from bytes representing a JSON Token object.
-    pub fn parse(alloc: std.mem.Allocator, s: []const u8) !Token {
-        var token = try std.json.parseFromSliceLeaky(
+    pub fn parse(alloc: std.mem.Allocator, s: []const u8) !std.json.Parsed(Token) {
+        var token = try std.json.parseFromSlice(
             Token,
             alloc,
             s,
             .{ .ignore_unknown_fields = true, .allocate = .alloc_always },
         );
 
-        if (token.expiry == 0) token.expiry = std.time.timestamp() + 3600;
+        if (token.value.expiry == 0) token.value.expiry = std.time.timestamp() + 3600;
 
         return token;
     }
