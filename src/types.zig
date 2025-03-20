@@ -43,12 +43,6 @@ pub fn Paginated(comptime T: type) type {
 
         // use for paging to the next set of results if any
         pub fn getNext(self: Self, alloc: std.mem.Allocator, client: *Client) !?Self {
-            if (Self == Result) {
-                std.debug.print("trying to page a Result type...\n", .{});
-            } else {
-                std.debug.print("trying to page a non-Result type...\n", .{});
-            }
-
             if (self.next) |url| {
                 var request = try client.get(alloc, try std.Uri.parse(url));
                 defer request.deinit();
@@ -276,8 +270,6 @@ pub fn JsonResponse(comptime T: type) type {
         fn parse(alloc: std.mem.Allocator, reader: anytype, status: std.http.Status) !Self {
             const body = try reader.readAllAlloc(alloc, 1024 * 1024);
             defer alloc.free(body);
-
-            std.debug.print("{s}\n", .{body});
 
             const arena = try alloc.create(std.heap.ArenaAllocator);
             errdefer alloc.destroy(arena);
